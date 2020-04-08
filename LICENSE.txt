@@ -32,7 +32,10 @@ Licenses for included software and resources:
 Portions of this software has been adapted from libavif
 https://github.com/AOMediaCodec/libavif
 
-These portions are provided under the following license:
+These portions are provided under the BSD 2-clause license:
+https://opensource.org/licenses/BSD-2-Clause
+
+------
 
 Copyright 2019 Joe Drago. All rights reserved.
 

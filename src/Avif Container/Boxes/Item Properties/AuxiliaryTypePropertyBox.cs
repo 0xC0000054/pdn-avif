@@ -1,0 +1,68 @@
+﻿////////////////////////////////////////////////////////////////////////
+//
+// This file is part of pdn-avif, a FileType plugin for Paint.NET
+// that loads and saves AVIF images.
+//
+// Copyright (c) 2020 Nicholas Hayes
+//
+// This file is licensed under the MIT License.
+// See LICENSE.txt for complete licensing and attribution information.
+//
+////////////////////////////////////////////////////////////////////////
+
+using System;
+using System.Collections.Generic;
+
+namespace AvifFileType.AvifContainer
+{
+    internal class AuxiliaryTypePropertyBox
+        : ItemPropertyFull
+    {
+        private readonly byte[] auxSubType;
+
+        public AuxiliaryTypePropertyBox(EndianBinaryReader reader, Box header)
+            : base(reader, header)
+        {
+            this.AuxType = reader.ReadBoxString(header.End);
+            long remaining = header.End - reader.Position;
+
+            if (remaining > 0 && remaining < int.MaxValue)
+            {
+                this.auxSubType = reader.ReadBytes((int)remaining);
+            }
+            else
+            {
+                this.auxSubType = Array.Empty<byte>();
+            }
+        }
+
+        protected AuxiliaryTypePropertyBox(string auxType)
+            : base(0, 0, BoxTypes.AuxiliaryTypeProperty)
+        {
+            this.AuxType = new BoxString(auxType);
+            this.auxSubType = Array.Empty<byte>();
+        }
+
+        public IReadOnlyList<byte> AuxSubType => this.auxSubType;
+
+        public BoxString AuxType { get; }
+
+        public sealed override void Write(BigEndianBinaryWriter writer)
+        {
+            base.Write(writer);
+
+            this.AuxType.Write(writer);
+            if (this.auxSubType.Length > 0)
+            {
+                writer.Write(this.auxSubType);
+            }
+        }
+
+        protected sealed override ulong GetTotalBoxSize()
+        {
+            return base.GetTotalBoxSize()
+                   + this.AuxType.GetSize()
+                   + (ulong)this.auxSubType.Length;
+        }
+    }
+}

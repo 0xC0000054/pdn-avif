@@ -1,0 +1,125 @@
+﻿////////////////////////////////////////////////////////////////////////
+//
+// This file is part of pdn-avif, a FileType plugin for Paint.NET
+// that loads and saves AVIF images.
+//
+// Copyright (c) 2020 Nicholas Hayes
+//
+// This file is licensed under the MIT License.
+// See LICENSE.txt for complete licensing and attribution information.
+//
+////////////////////////////////////////////////////////////////////////
+
+using System;
+using System.Collections.Generic;
+
+namespace AvifFileType.AvifContainer
+{
+    internal class FileTypeBox
+        : Box
+    {
+        private readonly FourCC majorBrand;
+        private readonly uint minorVersion;
+        private readonly IReadOnlyList<FourCC> compatibleBrands;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FileTypeBox"/> class.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <param name="header">The header.</param>
+        /// <exception cref="FormatException">
+        /// The compatible brand size must be a multiple of 4.
+        /// </exception>
+        public FileTypeBox(EndianBinaryReader reader, Box header)
+            : base(header)
+        {
+            this.majorBrand = reader.ReadFourCC();
+            this.minorVersion = reader.ReadUInt32();
+
+            long compatibleBrandSize = header.End - reader.Position;
+            if ((compatibleBrandSize & 3) != 0)
+            {
+                ExceptionUtil.ThrowFormatException($"The compatible brand size must be a multiple of 4, actual value: { compatibleBrandSize }");
+            }
+
+            int compatableBrandCount = (int)(compatibleBrandSize / 4);
+            List<FourCC> brands = new List<FourCC>(compatableBrandCount);
+
+            for (int i = 0; i < compatableBrandCount; i++)
+            {
+                brands.Add(reader.ReadFourCC());
+            }
+
+            this.compatibleBrands = brands;
+        }
+
+        public FileTypeBox(YUVChromaSubsampling chromaSubsampling)
+            : base(BoxTypes.FileType)
+        {
+            this.majorBrand = AvifBrands.AVIF;
+            this.minorVersion = 0;
+            List<FourCC> compatibleBrands = new List<FourCC>
+            {
+                AvifBrands.AVIF,
+                AvifBrands.MIF1,
+                AvifBrands.MIAF
+            };
+
+            switch (chromaSubsampling)
+            {
+                case YUVChromaSubsampling.Subsampling420:
+                    compatibleBrands.Add(AvifBrands.MA1B);
+                    break;
+                case YUVChromaSubsampling.Subsampling444:
+                    compatibleBrands.Add(AvifBrands.MA1A);
+                    break;
+            }
+            this.compatibleBrands = compatibleBrands;
+        }
+
+        /// <summary>
+        /// Checks for AVIF format compatibility.
+        /// </summary>
+        /// <exception cref="FormatException">The file is not AVIF compatible.</exception>
+        public void CheckForAvifCompatibility()
+        {
+            if (this.majorBrand != AvifBrands.AVIF && this.majorBrand != AvifBrands.AV01)
+            {
+                bool isCompatible = false;
+
+                for (int i = 0; i < this.compatibleBrands.Count; i++)
+                {
+                    FourCC brand = this.compatibleBrands[i];
+
+                    if (brand == AvifBrands.AVIF || brand == AvifBrands.AV01)
+                    {
+                        isCompatible = true;
+                        break;
+                    }
+                }
+
+                if (!isCompatible)
+                {
+                    ExceptionUtil.ThrowFormatException("The file is not AVIF compatible.");
+                }
+            }
+        }
+
+        public override void Write(BigEndianBinaryWriter writer)
+        {
+            base.Write(writer);
+
+            writer.Write(this.majorBrand);
+            writer.Write(this.minorVersion);
+            for (int i = 0; i < this.compatibleBrands.Count; i++)
+            {
+                writer.Write(this.compatibleBrands[i]);
+            }
+        }
+
+        protected override ulong GetTotalBoxSize()
+        {
+            return base.GetTotalBoxSize() + FourCC.SizeOf + sizeof(uint) + ((ulong)this.compatibleBrands.Count * FourCC.SizeOf);
+        }
+    }
+}

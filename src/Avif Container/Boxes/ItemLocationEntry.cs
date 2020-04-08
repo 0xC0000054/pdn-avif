@@ -112,6 +112,14 @@ namespace AvifFileType.AvifContainer
             {
                 writer.Write(this.ItemId);
             }
+
+            if (parent.Version == 1 || parent.Version == 2)
+            {
+                // Write the reserved byte and the construction method.
+                writer.Write((byte)0);
+                writer.Write((byte)ConstructionMethod.FileOffset);
+            }
+
             writer.Write(this.DataReferenceIndex);
             switch (parent.BaseOffsetSize)
             {

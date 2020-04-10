@@ -296,6 +296,7 @@ __pycache__/
 
 # Local repository
 
+src/Resources/BuildDate.txt
 vendor/
 
 # Include the compiled lib files

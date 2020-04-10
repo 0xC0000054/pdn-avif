@@ -1,10 +1,22 @@
-﻿using System.Reflection;
+﻿////////////////////////////////////////////////////////////////////////
+//
+// This file is part of pdn-avif, a FileType plugin for Paint.NET
+// that loads and saves AVIF images.
+//
+// Copyright (c) 2020 Nicholas Hayes
+//
+// This file is licensed under the MIT License.
+// See LICENSE.txt for complete licensing and attribution information.
+//
+////////////////////////////////////////////////////////////////////////
+
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("A Paint.NET FileType plugin that save AVIF images")]
+[assembly: AssemblyTitle("A Paint.NET FileType plugin that loads and saves AVIF images")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("Beta")]
 [assembly: AssemblyCompany("null54")]

@@ -18,7 +18,7 @@ using System.IO;
 
 namespace AvifFileType
 {
-
+    [PluginSupportInfo(typeof(PluginSupportInfo))]
     internal sealed class AvifFileTypePlugin : PropertyBasedFileType
     {
         // Names of the properties

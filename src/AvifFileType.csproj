@@ -150,6 +150,7 @@
     <Compile Include="Interop\ProgressContext.cs" />
     <Compile Include="Interop\SafeDecodedImage.cs" />
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
+    <Compile Include="PluginSupportInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Interop\SafeAV1Image.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

@@ -2,10 +2,22 @@
 
 A [Paint.NET](http://www.getpaint.net) filetype plugin that allows AVIF images to be loaded and saved with transparency.
 
+Please note that this plugin is a beta version.
+You should save your work in another format first, as it is possible that the plugin could hang or crash Paint.NET.
+
 ## Installation
 
-The plugin currently requires that Paint.NET's built-in AVIF support be disabled via a hidden registry setting before it can be used.
-Because of this binaries are not provided.
+1. Close Paint.NET.
+2. Place AvifFileType.dll, AvifNative_x86.dll and AvifNative_x64.dll in the Paint.NET FileTypes folder which is usually located in one the following locations depending on the Paint.NET version you have installed.
+
+  Paint.NET Version |  FileTypes Folder Location
+  --------|----------
+  Classic | C:\Program Files\Paint.NET\FileTypes    
+  Microsoft Store | Documents\paint.net App Files\FileTypes
+
+3. Open the Windows Run dialog (Start > Run or `Windows Key` + `R`)
+4. Type `paintdotnet:/set:FileTypes/BuiltInAV1FileTypeEnabled=false` and press the `Enter` key
+5. Restart Paint.NET.
 
 ## Known issues
 

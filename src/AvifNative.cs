@@ -315,7 +315,9 @@ namespace AvifFileType
                 case DecoderStatus.DecodeFailed:
                     throw new FormatException("The AV1 decode failed.");
                 case DecoderStatus.AlphaSizeMismatch:
-                    throw new FormatException("The alpha image size does not match the color image.");
+                    throw new FormatException("The alpha image does not match the expected size.");
+                case DecoderStatus.ColorSizeMismatch:
+                    throw new FormatException("The color image does not match the expected size.");
                 default:
                     throw new FormatException("An unknown error occurred when decoding the image.");
             }

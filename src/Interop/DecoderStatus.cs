@@ -19,6 +19,7 @@ namespace AvifFileType.Interop
         OutOfMemory,
         CodecInitFailed,
         DecodeFailed,
-        AlphaSizeMismatch
+        AlphaSizeMismatch,
+        ColorSizeMismatch
     }
 }

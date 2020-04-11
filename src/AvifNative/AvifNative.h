@@ -53,7 +53,8 @@ extern "C" {
         OutOfMemory,
         CodecInitFailed,
         DecodeFailed,
-        AlphaSizeMismatch
+        AlphaSizeMismatch,
+        ColorSizeMismatch
     };
 
     // This must be kept in sync with EncoderOptions.cs
@@ -88,11 +89,10 @@ extern "C" {
         ColorInformationFormat format;
     };
 
-    struct DecodedImageInfo
+    struct DecodeInfo
     {
-        uint32_t width;
-        uint32_t height;
-        size_t stride;
+        uint32_t expectedWidth;
+        uint32_t expectedHeight;
     };
 
     struct BitmapData
@@ -127,9 +127,8 @@ extern "C" {
         const uint8_t* compressedAlphaImage,
         size_t compressedAlphaImageSize,
         const ColorConversionInfo* colorInfo,
-        DecodedImageInfo* decodedImageInfo,
-        void** decodedImage
-    );
+        const DecodeInfo* decodeInfo,
+        BitmapData* outputImage);
 
     __declspec(dllexport) EncoderStatus __stdcall CompressImage(
         const BitmapData* bitmap,

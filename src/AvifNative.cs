@@ -175,116 +175,122 @@ namespace AvifFileType
         public static void Decompress(SafeProcessHeapBuffer colorImage,
                                       SafeProcessHeapBuffer alphaImage,
                                       ColorConversionInfo colorConversionInfo,
-                                      out DecodedBGRAImage decodedImage)
+                                      DecodeInfo decodeInfo,
+                                      Surface fullSurface)
         {
             if (colorImage is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(colorImage));
             }
 
+            if (decodeInfo is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(decodeInfo));
+            }
+
+            if (fullSurface is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(fullSurface));
+            }
+
             if (alphaImage != null)
             {
-                DecompressWithTransparency(colorImage, alphaImage, colorConversionInfo, out decodedImage);
+                DecompressWithTransparency(colorImage, alphaImage, colorConversionInfo, decodeInfo, fullSurface);
             }
             else
             {
-                DecompressWithoutTransparency(colorImage, colorConversionInfo, out decodedImage);
+                DecompressWithoutTransparency(colorImage, colorConversionInfo, decodeInfo, fullSurface);
             }
         }
 
         private static void DecompressWithTransparency(SafeProcessHeapBuffer colorImage,
                                                    SafeProcessHeapBuffer alphaImage,
                                                    ColorConversionInfo colorConversionInfo,
-                                                   out DecodedBGRAImage decodedImage)
+                                                   DecodeInfo decodeInfo,
+                                                   Surface surface)
         {
-            DecodedImageInfo imageInfo;
+            BitmapData bitmapData = new BitmapData
+            {
+                scan0 = surface.Scan0.Pointer,
+                width = (uint)surface.Width,
+                height = (uint)surface.Height,
+                stride = (uint)surface.Stride
+            };
+
             UIntPtr colorImageSize = new UIntPtr(colorImage.ByteLength);
             UIntPtr alphaImageSize = new UIntPtr(alphaImage.ByteLength);
 
             if (IntPtr.Size == 8)
             {
-                SafeDecodedImageX64 image;
-
                 DecoderStatus status = AvifNative_64.DecompressImage(colorImage,
                                                                      colorImageSize,
                                                                      alphaImage,
                                                                      alphaImageSize,
                                                                      colorConversionInfo,
-                                                                     out imageInfo,
-                                                                     out image);
+                                                                     decodeInfo,
+                                                                     ref bitmapData);
                 if (status != DecoderStatus.Ok)
                 {
                     HandleError(status);
                 }
-
-                image.Initialize(imageInfo.stride.ToUInt64() * imageInfo.height);
-                decodedImage = new DecodedBGRAImage(image, imageInfo);
             }
             else
             {
-                SafeDecodedImageX86 image;
-
                 DecoderStatus status = AvifNative_86.DecompressImage(colorImage,
                                                                      colorImageSize,
                                                                      alphaImage,
                                                                      alphaImageSize,
                                                                      colorConversionInfo,
-                                                                     out imageInfo,
-                                                                     out image);
+                                                                     decodeInfo,
+                                                                     ref bitmapData);
                 if (status != DecoderStatus.Ok)
                 {
                     HandleError(status);
                 }
-
-                image.Initialize(imageInfo.stride.ToUInt64() * imageInfo.height);
-                decodedImage = new DecodedBGRAImage(image, imageInfo);
             }
         }
 
         private static void DecompressWithoutTransparency(SafeProcessHeapBuffer colorImage,
                                                           ColorConversionInfo colorConversionInfo,
-                                                          out DecodedBGRAImage decodedImage)
+                                                          DecodeInfo decodeInfo,
+                                                          Surface surface)
         {
-            DecodedImageInfo imageInfo;
+            BitmapData bitmapData = new BitmapData
+            {
+                scan0 = surface.Scan0.Pointer,
+                width = (uint)surface.Width,
+                height = (uint)surface.Height,
+                stride = (uint)surface.Stride
+            };
             UIntPtr colorImageSize = new UIntPtr(colorImage.ByteLength);
 
             if (IntPtr.Size == 8)
             {
-                SafeDecodedImageX64 image;
-
                 DecoderStatus status = AvifNative_64.DecompressImage(colorImage,
                                                                      colorImageSize,
                                                                      IntPtr.Zero,
                                                                      UIntPtr.Zero,
                                                                      colorConversionInfo,
-                                                                     out imageInfo,
-                                                                     out image);
+                                                                     decodeInfo,
+                                                                     ref bitmapData);
                 if (status != DecoderStatus.Ok)
                 {
                     HandleError(status);
                 }
-
-                image.Initialize(imageInfo.stride.ToUInt64() * imageInfo.height);
-                decodedImage = new DecodedBGRAImage(image, imageInfo);
             }
             else
             {
-                SafeDecodedImageX86 image;
-
                 DecoderStatus status = AvifNative_86.DecompressImage(colorImage,
                                                                      colorImageSize,
                                                                      IntPtr.Zero,
                                                                      UIntPtr.Zero,
                                                                      colorConversionInfo,
-                                                                     out imageInfo,
-                                                                     out image);
+                                                                     decodeInfo,
+                                                                     ref bitmapData);
                 if (status != DecoderStatus.Ok)
                 {
                     HandleError(status);
                 }
-
-                image.Initialize(imageInfo.stride.ToUInt64() * imageInfo.height);
-                decodedImage = new DecodedBGRAImage(image, imageInfo);
             }
         }
 

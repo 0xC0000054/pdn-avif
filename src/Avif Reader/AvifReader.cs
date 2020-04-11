@@ -17,7 +17,6 @@ using PaintDotNet.IO;
 using System;
 using System.Drawing;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace AvifFileType
 {
@@ -64,14 +63,33 @@ namespace AvifFileType
             VerifyNotDisposed();
             EnsureCompressedImagesAreAV1();
 
-            Surface surface = null;
+            Size colorSize = GetImageSize(this.primaryItemId, "color");
 
-            using (DecodedBGRAImage image = DecodeImage())
+            Surface surface = new Surface(colorSize);
+            bool disposeSurface = true;
+
+            try
             {
-                surface = CreateSurfaceFromDecodedImage(image);
-            }
+                DecodeInfo decodeInfo = new DecodeInfo
+                {
+                    expectedWidth = (uint)colorSize.Width,
+                    expectedHeight = (uint)colorSize.Height
+                };
 
-            ApplyImageTransforms(ref surface);
+                DecodeImage(decodeInfo, surface);
+                ApplyImageTransforms(ref surface);
+
+                disposeSurface = false;
+            }
+            finally
+            {
+                // Free the surface if an exception was thrown when populating it.
+                if (disposeSurface)
+                {
+                    surface.Dispose();
+                    surface = null;
+                }
+            }
 
             return surface;
         }
@@ -277,6 +295,44 @@ namespace AvifFileType
             }
         }
 
+        private Size GetImageSize(uint itemId, string imageName)
+        {
+            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+
+            uint width;
+            uint height;
+
+            if (entry.ItemType == ItemInfoEntryTypes.AV01)
+            {
+                IItemProperty property = this.parser.TryGetAssociatedItemProperty(itemId, BoxTypes.ImageSpatialExtents);
+
+                if (property == null)
+                {
+                    ExceptionUtil.ThrowFormatException($"The { imageName } image size property was not found.");
+                }
+
+                ImageSpatialExtentsBox extents = (ImageSpatialExtentsBox)property;
+
+                width = extents.ImageWidth;
+                height = extents.ImageHeight;
+            }
+            else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
+            {
+                throw new FormatException("AV1 image grids are not supported.");
+            }
+            else
+            {
+                throw new FormatException($"The { imageName } image is not a supported format.");
+            }
+
+            if (width > int.MaxValue || height > int.MaxValue)
+            {
+                throw new FormatException($"The { imageName } image dimensions are too large.");
+            }
+
+            return new Size((int)width, (int)height);
+        }
+
         private void CheckImageItemType(uint itemId, string imageName)
         {
             IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
@@ -298,50 +354,8 @@ namespace AvifFileType
             }
         }
 
-        private static unsafe Surface CreateSurfaceFromDecodedImage(DecodedBGRAImage image)
+        private void DecodeImage(DecodeInfo decodeInfo, Surface fullSurface)
         {
-            Surface surface = new Surface((int)image.Width, (int)image.Height);
-
-            byte* srcScan0 = null;
-
-            System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                image.Data.AcquirePointer(ref srcScan0);
-
-                Parallel.For(0, surface.Height, delegate (int y)
-                {
-                    ColorBgra* srcRow = (ColorBgra*)(srcScan0 + ((ulong)y * image.Stride));
-                    ColorBgra* dstRow = surface.GetRowAddressUnchecked(y);
-
-                    for (int x = 0; x < surface.Width; x++)
-                    {
-                        // A for loop is used because Buffer.MemoryCopy does not
-                        // work correctly for some images.
-                        // It appears as if there is a padding/alignment issue, even though
-                        // the two image buffers are the same size and format.
-                        dstRow->Bgra = srcRow->Bgra;
-
-                        srcRow++;
-                        dstRow++;
-                    }
-                });
-            }
-            finally
-            {
-                if (srcScan0 != null)
-                {
-                    image.Data.ReleasePointer();
-                }
-            }
-
-            return surface;
-        }
-
-        private DecodedBGRAImage DecodeImage()
-        {
-            DecodedBGRAImage decodedImage = null;
-
             SafeProcessHeapBuffer color = null;
             SafeProcessHeapBuffer alpha = null;
 
@@ -356,15 +370,13 @@ namespace AvifFileType
                     colorConversionInfo = new ColorConversionInfo(this.colorInfoBox);
                 }
 
-                AvifNative.Decompress(color, alpha, colorConversionInfo, out decodedImage);
+                AvifNative.Decompress(color, alpha, colorConversionInfo, decodeInfo, fullSurface);
             }
             finally
             {
                 color?.Dispose();
                 alpha?.Dispose();
             }
-
-            return decodedImage;
         }
 
         private SafeProcessHeapBuffer ReadAlphaImage()

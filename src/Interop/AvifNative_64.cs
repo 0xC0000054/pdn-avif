@@ -48,8 +48,8 @@ namespace AvifFileType.Interop
             SafeProcessHeapBuffer compressedAlphaImage,
             UIntPtr compressedAlphaImageSize,
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(ColorConversionInfoMarshaler))] ColorConversionInfo colorInfo,
-            out DecodedImageInfo decodedImageInfo,
-            out SafeDecodedImageX64 decodedImage);
+            DecodeInfo decodeInfo,
+            [In] ref BitmapData fullImage);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
         internal static extern DecoderStatus DecompressImage(
@@ -58,8 +58,8 @@ namespace AvifFileType.Interop
             IntPtr compressedAlphaImage_MustBeZero,
             UIntPtr compressedAlphaImageSize_MustBeZero,
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(ColorConversionInfoMarshaler))] ColorConversionInfo colorInfo,
-            out DecodedImageInfo decodedImageInfo,
-            out SafeDecodedImageX64 decodedImage);
+            DecodeInfo decodeInfo,
+            [In] ref BitmapData fullImage);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.U1)]

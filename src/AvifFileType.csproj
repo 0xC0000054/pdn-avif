@@ -119,7 +119,6 @@
     <Compile Include="AvifFileTypeFactory.cs" />
     <Compile Include="AvifFileType.cs" />
     <Compile Include="CompressionMode.cs" />
-    <Compile Include="DecodedBGRAImage.cs" />
     <Compile Include="EndianBinaryReader.cs" />
     <Compile Include="Endianess.cs" />
     <Compile Include="ExceptionUtil.cs" />
@@ -143,12 +142,11 @@
     <Compile Include="Interop\BitmapData.cs" />
     <Compile Include="Interop\ColorConversionInfo.cs" />
     <Compile Include="Interop\ColorConversionInfoMarshaler.cs" />
-    <Compile Include="Interop\DecodedImageInfo.cs" />
+    <Compile Include="Interop\DecodeInfo.cs" />
     <Compile Include="Interop\DecoderStatus.cs" />
     <Compile Include="Interop\EncoderOptions.cs" />
     <Compile Include="Interop\EncoderStatus.cs" />
     <Compile Include="Interop\ProgressContext.cs" />
-    <Compile Include="Interop\SafeDecodedImage.cs" />
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
     <Compile Include="PluginSupportInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

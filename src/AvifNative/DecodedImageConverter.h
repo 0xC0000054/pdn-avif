@@ -18,10 +18,8 @@
 DecoderStatus ConvertColorImage(
     const aom_image_t* frame,
     const ColorConversionInfo* containerColorInfo,
-    DecodedImageInfo* outputImageInfo,
-    void** outputBGRAImageData);
+    BitmapData* outputBGRAImageData);
 
 DecoderStatus ConvertAlphaImage(
     const aom_image_t* frame,
-    const DecodedImageInfo* outputImageInfo,
-    uint8_t* outputBGRAImageData);
+    BitmapData* outputBGRAImageData);

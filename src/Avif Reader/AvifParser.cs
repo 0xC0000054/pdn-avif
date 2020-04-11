@@ -140,6 +140,26 @@ namespace AvifFileType
             return offset;
         }
 
+        public IItemProperty TryGetAssociatedItemProperty(uint itemId, FourCC propertyType)
+        {
+            IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);
+
+            if (items != null)
+            {
+                for (int i = 0; i < items.Count; i++)
+                {
+                    IItemProperty property = TryGetItemProperty(items[i].PropertyIndex);
+
+                    if (property != null && property.Type == propertyType)
+                    {
+                        return property;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public ColorInformationBox TryGetColorInfoBox(uint itemId)
         {
             IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);

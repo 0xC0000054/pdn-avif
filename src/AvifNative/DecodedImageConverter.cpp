@@ -123,8 +123,7 @@ namespace
     void YUV16ToRGB8Color(
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
-        const DecodedImageInfo* bgraImageInfo,
-        uint8_t* bgraImage)
+        BitmapData* bgraImage)
     {
         const float kr = yuvCoefficiants.kr;
         const float kg = yuvCoefficiants.kg;
@@ -151,7 +150,7 @@ namespace
             uint16_t* ptrU = reinterpret_cast<uint16_t*>(&image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])]);
             uint16_t* ptrV = reinterpret_cast<uint16_t*>(&image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])]);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage + (y * bgraImageInfo->stride));
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
 
             for (uint32_t x = 0; x < image->d_w; ++x)
             {
@@ -192,8 +191,7 @@ namespace
     void YUV16ToRGB8Mono(
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
-        const DecodedImageInfo* bgraImageInfo,
-        uint8_t* bgraImage)
+        BitmapData* bgraImage)
     {
         const float kr = yuvCoefficiants.kr;
         const float kg = yuvCoefficiants.kg;
@@ -206,7 +204,7 @@ namespace
         {
             uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage + (y * bgraImageInfo->stride));
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
 
             for (uint32_t x = 0; x < image->d_w; ++x)
             {
@@ -242,8 +240,7 @@ namespace
     void YUV8ToRGB8Color(
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
-        const DecodedImageInfo* bgraImageInfo,
-        uint8_t* bgraImage)
+        BitmapData* bgraImage)
     {
         const float kr = yuvCoefficiants.kr;
         const float kg = yuvCoefficiants.kg;
@@ -270,7 +267,7 @@ namespace
             uint8_t* ptrU = &image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])];
             uint8_t* ptrV = &image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])];
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage + (y * bgraImageInfo->stride));
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
 
             for (uint32_t x = 0; x < image->d_w; ++x)
             {
@@ -311,8 +308,7 @@ namespace
     void YUV8ToRGB8Mono(
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
-        const DecodedImageInfo* bgraImageInfo,
-        uint8_t* bgraImage)
+        BitmapData* bgraImage)
     {
         const float kr = yuvCoefficiants.kr;
         const float kg = yuvCoefficiants.kg;
@@ -325,7 +321,7 @@ namespace
         {
             uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage + (y * bgraImageInfo->stride));
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
 
             for (uint32_t x = 0; x < image->d_w; ++x)
             {
@@ -360,8 +356,7 @@ namespace
 
     void YUV16ToAlpha8(
         const aom_image_t* image,
-        const DecodedImageInfo* bgraImageInfo,
-        uint8_t* bgraImage)
+        BitmapData* bgraImage)
     {
         float yuvMaxChannel = (float)((1 << image->bit_depth) - 1);
         float rgbMaxChannel = 255.0f;
@@ -370,7 +365,7 @@ namespace
         {
             uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage + (y * bgraImageInfo->stride));
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
 
             for (uint32_t x = 0; x < image->d_w; ++x)
             {
@@ -396,8 +391,7 @@ namespace
 
     void YUV8ToAlpha8(
         const aom_image_t* image,
-        const DecodedImageInfo* bgraImageInfo,
-        uint8_t* bgraImage)
+        BitmapData* bgraImage)
     {
         float yuvMaxChannel = (float)((1 << image->bit_depth) - 1);
         float rgbMaxChannel = 255.0f;
@@ -406,7 +400,7 @@ namespace
         {
             uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage + (y * bgraImageInfo->stride));
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
 
             for (uint32_t x = 0; x < image->d_w; ++x)
             {
@@ -434,37 +428,13 @@ namespace
 DecoderStatus ConvertColorImage(
     const aom_image_t* frame,
     const ColorConversionInfo* containerColorInfo,
-    DecodedImageInfo* outputImageInfo,
-    void** outputBGRAImageData)
+    BitmapData* outputImage)
 {
-    if (!frame || !outputImageInfo || !outputBGRAImageData)
+    if (!frame || !outputImage)
     {
         return DecoderStatus::NullParameter;
     }
-
-    size_t stride;
-    if (FAILED(SizeTMult(frame->d_w, sizeof(ColorBgra), &stride)))
-    {
-        return DecoderStatus::OutOfMemory;
-    }
-
-    outputImageInfo->width = frame->d_w;
-    outputImageInfo->height = frame->d_h;
-    outputImageInfo->stride = stride;
-
-    size_t imageDataSize;
-    if (FAILED(SizeTMult(stride, frame->d_h, &imageDataSize)))
-    {
-        return DecoderStatus::OutOfMemory;
-    }
-
-    *outputBGRAImageData = AvifMemory::Allocate(imageDataSize);
-
-    if (!outputBGRAImageData)
-    {
-        return DecoderStatus::OutOfMemory;
-    }
-
+   
     ColorConversionInfo colorInfo = {};
 
     if (containerColorInfo)
@@ -489,15 +459,13 @@ DecoderStatus ConvertColorImage(
         {
             YUV16ToRGB8Color(frame,
                              yuvCoefficiants,
-                             outputImageInfo,
-                             static_cast<uint8_t*>(*outputBGRAImageData));
+                             outputImage);
         }
         else
         {
             YUV16ToRGB8Mono(frame,
-                yuvCoefficiants,
-                outputImageInfo,
-                static_cast<uint8_t*>(*outputBGRAImageData));
+                            yuvCoefficiants,
+                            outputImage);
         }
     }
     else
@@ -506,16 +474,14 @@ DecoderStatus ConvertColorImage(
         {
             YUV8ToRGB8Color(frame,
                             yuvCoefficiants,
-                            outputImageInfo,
-                            static_cast<uint8_t*>(*outputBGRAImageData));
+                            outputImage);
         }
         else
         {
 
             YUV8ToRGB8Mono(frame,
                            yuvCoefficiants,
-                           outputImageInfo,
-                           static_cast<uint8_t*>(*outputBGRAImageData));
+                           outputImage);
         }
     }
 
@@ -524,10 +490,9 @@ DecoderStatus ConvertColorImage(
 
 DecoderStatus ConvertAlphaImage(
     const aom_image_t* frame,
-    const DecodedImageInfo* outputImageInfo,
-    uint8_t* outputBGRAImageData)
+    BitmapData* outputBGRAImageData)
 {
-    if (!frame || !outputImageInfo || !outputBGRAImageData)
+    if (!frame || !outputBGRAImageData)
     {
         return DecoderStatus::NullParameter;
     }
@@ -535,13 +500,11 @@ DecoderStatus ConvertAlphaImage(
     if (frame->bit_depth > 8)
     {
         YUV16ToAlpha8(frame,
-                      outputImageInfo,
                       outputBGRAImageData);
     }
     else
     {
         YUV8ToAlpha8(frame,
-                     outputImageInfo,
                      outputBGRAImageData);
 
     }

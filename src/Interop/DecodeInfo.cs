@@ -10,14 +10,14 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using System;
+using System.Runtime.InteropServices;
 
 namespace AvifFileType.Interop
 {
-    internal struct DecodedImageInfo
+    [StructLayout(LayoutKind.Sequential)]
+    internal sealed class DecodeInfo
     {
-        public uint width;
-        public uint height;
-        public UIntPtr stride;
+        public uint expectedWidth;
+        public uint expectedHeight;
     }
 }

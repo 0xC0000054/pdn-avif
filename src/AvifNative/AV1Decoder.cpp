@@ -47,13 +47,13 @@ namespace
         }
     }
 
-    void SetAlphaToOpaque(const DecodedImageInfo* info, uint8_t* imageData)
+    void SetAlphaToOpaque(BitmapData* bitmap)
     {
-        for (uint32_t y = 0; y < info->height; ++y)
+        for (uint32_t y = 0; y < bitmap->height; ++y)
         {
-            ColorBgra* ptr = reinterpret_cast<ColorBgra*>(imageData + (y * info->stride));
+            ColorBgra* ptr = reinterpret_cast<ColorBgra*>(bitmap->scan0 + (static_cast<size_t>(y) * bitmap->stride));
 
-            for (uint32_t x = 0; x < info->width; ++x)
+            for (uint32_t x = 0; x < bitmap->width; ++x)
             {
                 ptr->a = 255;
                 ptr++;
@@ -65,8 +65,8 @@ namespace
         aom_codec_ctx_t* codec,
         const uint8_t* compressedAlphaImage,
         size_t compressedAlphaImageSize,
-        const DecodedImageInfo* decodedImageInfo,
-        void* decodedImageData)
+        const DecodeInfo* decodeInfo,
+        BitmapData* decodedImage)
     {
         DecoderStatus status = DecoderStatus::Ok;
 
@@ -83,22 +83,20 @@ namespace
 
             if (status == DecoderStatus::Ok)
             {
-                if (aomImage->d_w != decodedImageInfo->width ||
-                    aomImage->d_h != decodedImageInfo->height)
+                if (aomImage->d_w != decodeInfo->expectedWidth ||
+                    aomImage->d_h != decodeInfo->expectedHeight)
                 {
                     status = DecoderStatus::AlphaSizeMismatch;
                 }
                 else
                 {
-                    status = ConvertAlphaImage(aomImage,
-                                               decodedImageInfo,
-                                               static_cast<uint8_t*>(decodedImageData));
+                    status = ConvertAlphaImage(aomImage, decodedImage);
                 }
             }
         }
         else
         {
-            SetAlphaToOpaque(decodedImageInfo, static_cast<uint8_t*>(decodedImageData));
+            SetAlphaToOpaque(decodedImage);
         }
 
         return status;
@@ -111,11 +109,10 @@ DecoderStatus DecompressAV1Image(
     const uint8_t* compressedAlphaImage,
     size_t compressedAlphaImageSize,
     const ColorConversionInfo* colorInfo,
-    DecodedImageInfo* decodedImageInfo,
-    void** decodedImage
-    )
+    const DecodeInfo* decodeInfo,
+    BitmapData* decodedImage)
 {
-    if (!compressedColorImage || !compressedColorImageSize || !decodedImageInfo || !decodedImage)
+    if (!compressedColorImage || !compressedColorImageSize || !decodedImage)
     {
         return DecoderStatus::NullParameter;
     }
@@ -139,20 +136,22 @@ DecoderStatus DecompressAV1Image(
 
     if (status == DecoderStatus::Ok)
     {
-        status = ConvertColorImage(aomImage, colorInfo, decodedImageInfo, decodedImage);
-
-        if (status == DecoderStatus::Ok)
+        if (aomImage->d_w != decodeInfo->expectedWidth ||
+            aomImage->d_h != decodeInfo->expectedHeight)
         {
-            status = DecodeAlphaImage(&codec,
-                                      compressedAlphaImage,
-                                      compressedAlphaImageSize,
-                                      decodedImageInfo,
-                                      *decodedImage);
+            status = DecoderStatus::ColorSizeMismatch;
+        }
+        else
+        {
+            status = ConvertColorImage(aomImage, colorInfo, decodedImage);
 
-            if (status != DecoderStatus::Ok)
+            if (status == DecoderStatus::Ok)
             {
-                AvifMemory::Free(*decodedImage);
-                *decodedImage = nullptr;
+                status = DecodeAlphaImage(&codec,
+                    compressedAlphaImage,
+                    compressedAlphaImageSize,
+                    decodeInfo,
+                    decodedImage);
             }
         }
     }

@@ -20,6 +20,5 @@ DecoderStatus DecompressAV1Image(
     const uint8_t* compressedAlphaImage,
     size_t compressedAlphaImageSize,
     const ColorConversionInfo* colorInfo,
-    DecodedImageInfo* decodedImageInfo,
-    void** decodedImage
-    );
+    const DecodeInfo* decodeInfo,
+    BitmapData* outputImage);

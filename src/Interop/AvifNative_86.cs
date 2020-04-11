@@ -42,22 +42,17 @@ namespace AvifFileType.Interop
             IntPtr alphaImageSize_MustBeZero);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static extern DecoderStatus DecompressImage(
+        internal static extern DecoderStatus DecompressColorImage(
             SafeProcessHeapBuffer compressedColorImage,
             UIntPtr compressedColorImageSize,
-            SafeProcessHeapBuffer compressedAlphaImage,
-            UIntPtr compressedAlphaImageSize,
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(ColorConversionInfoMarshaler))] ColorConversionInfo colorInfo,
             DecodeInfo decodeInfo,
             [In] ref BitmapData fullImage);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static extern DecoderStatus DecompressImage(
-            SafeProcessHeapBuffer compressedColorImage,
-            UIntPtr compressedColorImageSize,
-            IntPtr compressedAlphaImage_MustBeZero,
-            UIntPtr compressedAlphaImageSize_MustBeZero,
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(ColorConversionInfoMarshaler))] ColorConversionInfo colorInfo,
+        internal static extern DecoderStatus DecompressAlphaImage(
+            SafeProcessHeapBuffer compressedAlphaImage,
+            UIntPtr compressedAlphaImageSize,
             DecodeInfo decodeInfo,
             [In] ref BitmapData fullImage);
 

@@ -46,68 +46,11 @@ namespace
             return DecoderStatus::Ok;
         }
     }
-
-    void SetAlphaToOpaque(BitmapData* bitmap)
-    {
-        for (uint32_t y = 0; y < bitmap->height; ++y)
-        {
-            ColorBgra* ptr = reinterpret_cast<ColorBgra*>(bitmap->scan0 + (static_cast<size_t>(y) * bitmap->stride));
-
-            for (uint32_t x = 0; x < bitmap->width; ++x)
-            {
-                ptr->a = 255;
-                ptr++;
-            }
-        }
-    }
-
-    DecoderStatus DecodeAlphaImage(
-        aom_codec_ctx_t* codec,
-        const uint8_t* compressedAlphaImage,
-        size_t compressedAlphaImageSize,
-        const DecodeInfo* decodeInfo,
-        BitmapData* decodedImage)
-    {
-        DecoderStatus status = DecoderStatus::Ok;
-
-        if (compressedAlphaImage && compressedAlphaImageSize)
-        {
-            // The image is owned by the decoder
-
-            aom_image_t* aomImage = nullptr;
-
-            status = DecodeAV1Image(codec,
-                                    compressedAlphaImage,
-                                    compressedAlphaImageSize,
-                                    &aomImage);
-
-            if (status == DecoderStatus::Ok)
-            {
-                if (aomImage->d_w != decodeInfo->expectedWidth ||
-                    aomImage->d_h != decodeInfo->expectedHeight)
-                {
-                    status = DecoderStatus::AlphaSizeMismatch;
-                }
-                else
-                {
-                    status = ConvertAlphaImage(aomImage, decodedImage);
-                }
-            }
-        }
-        else
-        {
-            SetAlphaToOpaque(decodedImage);
-        }
-
-        return status;
-    }
 }
 
-DecoderStatus DecompressAV1Image(
+DecoderStatus DecodeColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
-    const uint8_t* compressedAlphaImage,
-    size_t compressedAlphaImageSize,
     const ColorConversionInfo* colorInfo,
     const DecodeInfo* decodeInfo,
     BitmapData* decodedImage)
@@ -144,15 +87,52 @@ DecoderStatus DecompressAV1Image(
         else
         {
             status = ConvertColorImage(aomImage, colorInfo, decodedImage);
+        }
+    }
 
-            if (status == DecoderStatus::Ok)
-            {
-                status = DecodeAlphaImage(&codec,
-                    compressedAlphaImage,
-                    compressedAlphaImageSize,
-                    decodeInfo,
-                    decodedImage);
-            }
+    aom_codec_destroy(&codec);
+
+    return status;
+}
+
+DecoderStatus DecodeAlphaImage(
+    const uint8_t* compressedAlphaImage,
+    size_t compressedAlphaImageSize,
+    const DecodeInfo* decodeInfo,
+    BitmapData* outputImage)
+{
+    if (!compressedAlphaImage || !compressedAlphaImageSize || !outputImage)
+    {
+        return DecoderStatus::NullParameter;
+    }
+
+    aom_codec_ctx_t codec;
+
+    aom_codec_iface_t* iface = aom_codec_av1_dx();
+
+    if (aom_codec_dec_init(&codec, iface, nullptr, 0) != AOM_CODEC_OK)
+    {
+        return DecoderStatus::CodecInitFailed;
+    }
+    // The image is owned by the decoder.
+
+    aom_image_t* aomImage = nullptr;
+
+    DecoderStatus status = DecodeAV1Image(&codec,
+        compressedAlphaImage,
+        compressedAlphaImageSize,
+        &aomImage);
+
+    if (status == DecoderStatus::Ok)
+    {
+        if (aomImage->d_w != decodeInfo->expectedWidth ||
+            aomImage->d_h != decodeInfo->expectedHeight)
+        {
+            status = DecoderStatus::AlphaSizeMismatch;
+        }
+        else
+        {
+            status = ConvertAlphaImage(aomImage, outputImage);
         }
     }
 

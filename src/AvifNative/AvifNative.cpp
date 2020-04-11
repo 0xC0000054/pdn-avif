@@ -18,21 +18,30 @@
 #include <memory>
 
 
-DecoderStatus __stdcall DecompressImage(
+DecoderStatus __stdcall DecompressColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
-    const uint8_t* compressedAlphaImage,
-    size_t compressedAlphaImageSize,
     const ColorConversionInfo* colorInfo,
     const DecodeInfo* decodeInfo,
     BitmapData* outputImage)
 {
-    return DecompressAV1Image(
+    return DecodeColorImage(
         compressedColorImage,
         compressedColorImageSize,
+        colorInfo,
+        decodeInfo,
+        outputImage);
+}
+
+DecoderStatus __stdcall DecompressAlphaImage(
+    const uint8_t* compressedAlphaImage,
+    size_t compressedAlphaImageSize,
+    const DecodeInfo* decodeInfo,
+    BitmapData* outputImage)
+{
+    return DecodeAlphaImage(
         compressedAlphaImage,
         compressedAlphaImageSize,
-        colorInfo,
         decodeInfo,
         outputImage);
 }

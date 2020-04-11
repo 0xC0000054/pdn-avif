@@ -14,11 +14,15 @@
 
 #include "AvifNative.h"
 
-DecoderStatus DecompressAV1Image(
+DecoderStatus DecodeColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
+    const ColorConversionInfo* colorInfo,
+    const DecodeInfo* decodeInfo,
+    BitmapData* outputImage);
+
+DecoderStatus DecodeAlphaImage(
     const uint8_t* compressedAlphaImage,
     size_t compressedAlphaImageSize,
-    const ColorConversionInfo* colorInfo,
     const DecodeInfo* decodeInfo,
     BitmapData* outputImage);

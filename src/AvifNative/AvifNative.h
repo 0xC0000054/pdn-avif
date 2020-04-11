@@ -120,12 +120,16 @@ extern "C" {
         uint32_t progressTotal;
     };
 
-    __declspec(dllexport) DecoderStatus __stdcall DecompressImage(
+    __declspec(dllexport) DecoderStatus __stdcall DecompressColorImage(
         const uint8_t* compressedColorImage,
         size_t compressedColorImageSize,
+        const ColorConversionInfo* colorInfo,
+        const DecodeInfo* decodeInfo,
+        BitmapData* outputImage);
+
+    __declspec(dllexport) DecoderStatus __stdcall DecompressAlphaImage(
         const uint8_t* compressedAlphaImage,
         size_t compressedAlphaImageSize,
-        const ColorConversionInfo* colorInfo,
         const DecodeInfo* decodeInfo,
         BitmapData* outputImage);
 

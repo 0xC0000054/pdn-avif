@@ -76,7 +76,8 @@ namespace AvifFileType
                     expectedHeight = (uint)colorSize.Height
                 };
 
-                DecodeImage(decodeInfo, surface);
+                DecodeColorImage(decodeInfo, surface);
+                DecodeAlphaImage(decodeInfo, surface);
                 ApplyImageTransforms(ref surface);
 
                 disposeSurface = false;
@@ -354,15 +355,13 @@ namespace AvifFileType
             }
         }
 
-        private void DecodeImage(DecodeInfo decodeInfo, Surface fullSurface)
+        private void DecodeColorImage(DecodeInfo decodeInfo, Surface fullSurface)
         {
             SafeProcessHeapBuffer color = null;
-            SafeProcessHeapBuffer alpha = null;
 
             try
             {
                 color = ReadColorImage();
-                alpha = ReadAlphaImage();
 
                 ColorConversionInfo colorConversionInfo = null;
                 if (this.colorInfoBox != null)
@@ -370,22 +369,40 @@ namespace AvifFileType
                     colorConversionInfo = new ColorConversionInfo(this.colorInfoBox);
                 }
 
-                AvifNative.Decompress(color, alpha, colorConversionInfo, decodeInfo, fullSurface);
+                AvifNative.DecompressColor(color, colorConversionInfo, decodeInfo, fullSurface);
             }
             finally
             {
                 color?.Dispose();
-                alpha?.Dispose();
+            }
+        }
+
+        private void DecodeAlphaImage(DecodeInfo decodeInfo, Surface fullSurface)
+        {
+            if (this.alphaItemId != 0)
+            {
+                SafeProcessHeapBuffer alpha = null;
+
+                try
+                {
+                    alpha = ReadAlphaImage();
+
+                    AvifNative.DecompressAlpha(alpha, decodeInfo, fullSurface);
+                }
+                finally
+                {
+                    alpha?.Dispose();
+                }
+            }
+            else
+            {
+                // The AVIF file does not have an alpha channel.
+                new UnaryPixelOps.SetAlphaChannelTo255().Apply(fullSurface, fullSurface.Bounds);
             }
         }
 
         private SafeProcessHeapBuffer ReadAlphaImage()
         {
-            if (this.alphaItemId == 0)
-            {
-                return null;
-            }
-
             ItemLocationEntry entry = this.parser.TryGetItemLocation(this.alphaItemId);
 
             if (entry is null)

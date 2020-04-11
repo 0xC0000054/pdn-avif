@@ -18,28 +18,31 @@ using System.Linq;
 
 namespace AvifFileType
 {
-    internal sealed class AvifParser
+    internal sealed class AvifParser : IDisposable
     {
         private FileTypeBox fileTypeBox;
         private MetaBox metaBox;
+        private EndianBinaryReader reader;
         private readonly ulong fileLength;
 
-        private AvifParser(EndianBinaryReader reader)
+        public AvifParser(Stream stream, bool leaveOpen)
         {
-            if (reader is null)
+            if (stream is null)
             {
-                ExceptionUtil.ThrowArgumentNullException(nameof(reader));
+                ExceptionUtil.ThrowArgumentNullException(nameof(stream));
             }
 
-            Parse(reader);
-            this.fileLength = (ulong)reader.Length;
+            this.reader = new EndianBinaryReader(stream, Endianess.Big, leaveOpen);
+            Parse();
+            this.fileLength = (ulong)stream.Length;
         }
 
-        public static AvifParser CreateFromStream(Stream stream, bool leaveOpen)
+        public void Dispose()
         {
-            using (EndianBinaryReader reader = new EndianBinaryReader(stream, Endianess.Big, leaveOpen))
+            if (this.reader != null)
             {
-                return new AvifParser(reader);
+                this.reader.Dispose();
+                this.reader = null;
             }
         }
 
@@ -334,11 +337,11 @@ namespace AvifFileType
             return false;
         }
 
-        private void Parse(EndianBinaryReader reader)
+        private void Parse()
         {
-            while (reader.Position < reader.Length)
+            while (this.reader.Position < this.reader.Length)
             {
-                Box header = new Box(reader);
+                Box header = new Box(this.reader);
 
                 if (header.Type == BoxTypes.FileType)
                 {
@@ -347,7 +350,7 @@ namespace AvifFileType
                         ExceptionUtil.ThrowFormatException("The file contains multiple FileType boxes.");
                     }
 
-                    this.fileTypeBox = new FileTypeBox(reader, header);
+                    this.fileTypeBox = new FileTypeBox(this.reader, header);
                     this.fileTypeBox.CheckForAvifCompatibility();
                 }
                 else if (header.Type == BoxTypes.Meta)
@@ -357,12 +360,12 @@ namespace AvifFileType
                         ExceptionUtil.ThrowFormatException("The file contains multiple Meta boxes.");
                     }
 
-                    this.metaBox = new MetaBox(reader, header);
+                    this.metaBox = new MetaBox(this.reader, header);
                 }
                 else
                 {
                     // Skip any other boxes
-                    reader.Position = header.End;
+                    this.reader.Position = header.End;
                 }
             }
 

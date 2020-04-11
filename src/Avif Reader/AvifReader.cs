@@ -23,6 +23,7 @@ namespace AvifFileType
     internal sealed class AvifReader : IDisposable
     {
         private Stream stream;
+        private bool disposed;
         private readonly bool leaveOpen;
         private readonly AvifParser parser;
         private readonly uint primaryItemId;
@@ -46,7 +47,7 @@ namespace AvifFileType
 
             // The parser is initialized first because it will throw an exception
             // if the AVIF file is invalid or not supported.
-            this.parser = AvifParser.CreateFromStream(input, leaveOpen: true);
+            this.parser = new AvifParser(input, leaveOpen: true);
             this.stream = input;
             this.leaveOpen = leaveOpen;
             this.primaryItemId = this.parser.GetPrimaryItemId();
@@ -105,8 +106,11 @@ namespace AvifFileType
 
         public void Dispose()
         {
-            if (this.stream != null)
+            if (!this.disposed)
             {
+                this.disposed = true;
+
+                this.parser?.Dispose();
                 if (!this.leaveOpen)
                 {
                     this.stream.Dispose();
@@ -465,7 +469,7 @@ namespace AvifFileType
 
         private void VerifyNotDisposed()
         {
-            if (this.stream == null)
+            if (this.disposed)
             {
                 ExceptionUtil.ThrowObjectDisposedException(nameof(AvifReader));
             }

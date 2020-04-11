@@ -58,7 +58,7 @@ namespace AvifFileType.AvifContainer
                 }
                 else if (itemHeader.Type == BoxTypes.ItemData)
                 {
-                    this.ItemData = new ItemDataBox(header);
+                    this.ItemData = new ItemDataBox(itemHeader);
                 }
 
                 reader.Position = itemHeader.End;

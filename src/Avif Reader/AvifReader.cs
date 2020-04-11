@@ -77,7 +77,15 @@ namespace AvifFileType
                 };
 
                 DecodeColorImage(decodeInfo, surface);
-                DecodeAlphaImage(decodeInfo, surface);
+                if (this.alphaItemId != 0)
+                {
+                    DecodeAlphaImage(decodeInfo, surface);
+                }
+                else
+                {
+                    // The AVIF file does not have an alpha channel.
+                    new UnaryPixelOps.SetAlphaChannelTo255().Apply(surface, surface.Bounds);
+                }
                 ApplyImageTransforms(ref surface);
 
                 disposeSurface = false;
@@ -379,25 +387,17 @@ namespace AvifFileType
 
         private void DecodeAlphaImage(DecodeInfo decodeInfo, Surface fullSurface)
         {
-            if (this.alphaItemId != 0)
+            SafeProcessHeapBuffer alpha = null;
+
+            try
             {
-                SafeProcessHeapBuffer alpha = null;
+                alpha = ReadAlphaImage();
 
-                try
-                {
-                    alpha = ReadAlphaImage();
-
-                    AvifNative.DecompressAlpha(alpha, decodeInfo, fullSurface);
-                }
-                finally
-                {
-                    alpha?.Dispose();
-                }
+                AvifNative.DecompressAlpha(alpha, decodeInfo, fullSurface);
             }
-            else
+            finally
             {
-                // The AVIF file does not have an alpha channel.
-                new UnaryPixelOps.SetAlphaChannelTo255().Apply(fullSurface, fullSurface.Bounds);
+                alpha?.Dispose();
             }
         }
 

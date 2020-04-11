@@ -23,7 +23,9 @@ YUVAImage::~YUVAImage()
     Reset();
 }
 
-EncoderStatus YUVAImage::Initialize(const BitmapData* bgraImage, YUVChromaSubsampling yuvFormat) noexcept
+EncoderStatus YUVAImage::Initialize(const BitmapData* bgraImage,
+                                    bool includeTransparency,
+                                    YUVChromaSubsampling yuvFormat) noexcept
 {
     Reset();
 
@@ -99,7 +101,7 @@ EncoderStatus YUVAImage::Initialize(const BitmapData* bgraImage, YUVChromaSubsam
         return EncoderStatus::OutOfMemory;
     }
 
-    if (bgraImage->hasTransparency)
+    if (includeTransparency)
     {
         // The size_t overflow check for bgraImage->width * bgraImage->height was already performed
         // above when allocating the Y plane.

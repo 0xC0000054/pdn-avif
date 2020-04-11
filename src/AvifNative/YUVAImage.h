@@ -32,7 +32,9 @@ public:
 
     ~YUVAImage();
 
-    EncoderStatus Initialize(const BitmapData* bgraImage, YUVChromaSubsampling yuvFormat) noexcept;
+    EncoderStatus Initialize(const BitmapData* bgraImage,
+                             bool includeTransparency,
+                             YUVChromaSubsampling yuvFormat) noexcept;
 
     void Reset() noexcept;
 

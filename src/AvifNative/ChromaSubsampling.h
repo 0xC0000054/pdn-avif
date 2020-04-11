@@ -17,6 +17,7 @@
 
 EncoderStatus ConvertBitmapDataToYUVA(
     const BitmapData* bgraImage,
+    bool includeTransparency,
     const ColorConversionInfo* colorInfo,
     YUVChromaSubsampling yuvFormat,
     YUVAImage* yuvaImage);

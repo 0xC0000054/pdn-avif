@@ -47,8 +47,7 @@ EncoderStatus __stdcall CompressImage(
     void** compressedAlphaImage,
     size_t* compressedAlphaImageSize)
 {
-    if (!image || !encodeOptions || !progressContext || !compressedColorImage || !compressedColorImageSize ||
-        image->hasTransparency && (!compressedAlphaImage || !compressedAlphaImageSize))
+    if (!image || !encodeOptions || !progressContext || !compressedColorImage || !compressedColorImageSize)
     {
         return EncoderStatus::NullParameter;
     }
@@ -64,7 +63,13 @@ EncoderStatus __stdcall CompressImage(
         return EncoderStatus::OutOfMemory;
     }
 
-    EncoderStatus error = ConvertBitmapDataToYUVA(image, colorInfo, encodeOptions->yuvFormat, yuvaImage.get());
+    const bool includeTransparency = compressedAlphaImage && compressedAlphaImageSize;
+
+    EncoderStatus error = ConvertBitmapDataToYUVA(image,
+                                                  includeTransparency,
+                                                  colorInfo,
+                                                  encodeOptions->yuvFormat,
+                                                  yuvaImage.get());
 
     if (error == EncoderStatus::Ok)
     {

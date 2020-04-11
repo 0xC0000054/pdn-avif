@@ -88,11 +88,12 @@ namespace
 
 EncoderStatus ConvertBitmapDataToYUVA(
     const BitmapData* bgraImage,
+    bool includeTransparency,
     const ColorConversionInfo* colorInfo,
     YUVChromaSubsampling yuvFormat,
     YUVAImage* yuvaImage)
 {
-    EncoderStatus error = yuvaImage->Initialize(bgraImage, yuvFormat);
+    EncoderStatus error = yuvaImage->Initialize(bgraImage, includeTransparency, yuvFormat);
     if (error != EncoderStatus::Ok)
     {
         return error;

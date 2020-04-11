@@ -22,7 +22,5 @@ namespace AvifFileType.Interop
         public uint width;
         public uint height;
         public uint stride;
-        [MarshalAs(UnmanagedType.U1)]
-        public bool hasTransparency;
     }
 }

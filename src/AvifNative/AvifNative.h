@@ -101,7 +101,6 @@ extern "C" {
         uint32_t width;
         uint32_t height;
         uint32_t stride;
-        bool hasTransparency;
     };
 
     struct ColorBgra

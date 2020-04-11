@@ -32,8 +32,7 @@ namespace AvifFileType
                 scan0 = surface.Scan0.Pointer,
                 width = (uint)surface.Width,
                 height = (uint)surface.Height,
-                stride = (uint)surface.Stride,
-                hasTransparency = true
+                stride = (uint)surface.Stride
             };
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
@@ -113,8 +112,7 @@ namespace AvifFileType
                 scan0 = surface.Scan0.Pointer,
                 width = (uint)surface.Width,
                 height = (uint)surface.Height,
-                stride = (uint)surface.Stride,
-                hasTransparency = false
+                stride = (uint)surface.Stride
             };
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);

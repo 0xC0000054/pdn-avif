@@ -128,9 +128,14 @@ namespace AvifFileType
                     return null;
                 }
 
+                if ((entry.Extent.Offset + entry.Extent.Length) > (ulong)dataBox.Length)
+                {
+                    return null;
+                }
+
                 offset = (ulong)dataBox.Offset + entry.Extent.Offset;
 
-                if ((offset + entry.Extent.Length) > (ulong)dataBox.Length)
+                if ((offset + entry.Extent.Length) > this.fileLength)
                 {
                     return null;
                 }

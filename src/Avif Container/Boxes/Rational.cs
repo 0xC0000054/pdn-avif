@@ -16,12 +16,12 @@ namespace AvifFileType.AvifContainer
 {
     internal readonly struct Rational : IEquatable<Rational>
     {
-        private readonly uint numerator;
+        private readonly int numerator;
         private readonly uint denominator;
 
         public Rational(EndianBinaryReader reader)
         {
-            this.numerator = reader.ReadUInt32();
+            this.numerator = reader.ReadInt32();
             this.denominator = reader.ReadUInt32();
         }
 

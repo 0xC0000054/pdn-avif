@@ -19,11 +19,6 @@ You should save your work in another format first, as it is possible that the pl
 4. Type `paintdotnet:/set:FileTypes/BuiltInAV1FileTypeEnabled=false` and press the `Enter` key
 5. Restart Paint.NET.
 
-## Known issues
-
-AV1 files that use image grids are not supported.   
-For example, [Summer_in_Tomsk_720p_5x4_grid.avif](https://github.com/AOMediaCodec/av1-avif/blob/master/testFiles/Microsoft/Summer_in_Tomsk_720p_5x4_grid.avif).
-
 ## License
 
 This project is licensed under the terms of the MIT License.   

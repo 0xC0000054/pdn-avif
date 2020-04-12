@@ -146,6 +146,7 @@
     <Compile Include="Interop\DecoderStatus.cs" />
     <Compile Include="Interop\EncoderOptions.cs" />
     <Compile Include="Interop\EncoderStatus.cs" />
+    <Compile Include="Interop\NclxColorData.cs" />
     <Compile Include="Interop\ProgressContext.cs" />
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
     <Compile Include="PluginSupportInfo.cs" />

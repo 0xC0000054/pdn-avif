@@ -21,14 +21,6 @@ namespace AvifFileType.Interop
         Nclx
     }
 
-    internal struct NclxColorData
-    {
-        public ushort colorPrimaries;
-        public ushort transferCharacteristics;
-        public ushort matrixCoefficients;
-        public bool fullRange;
-    }
-
     [StructLayout(LayoutKind.Sequential)]
     internal sealed class ColorConversionInfo
     {

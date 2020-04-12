@@ -20,6 +20,7 @@ namespace AvifFileType.Interop
         CodecInitFailed,
         DecodeFailed,
         AlphaSizeMismatch,
-        ColorSizeMismatch
+        ColorSizeMismatch,
+        TileNclxProfileMismatch
     }
 }

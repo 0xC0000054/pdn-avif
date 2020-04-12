@@ -203,6 +203,20 @@ namespace AvifFileType
             return null;
         }
 
+        public ImageGridInfo TryGetImageGridInfo(uint itemId)
+        {
+            ImageGridDescriptor gridDescriptor = TryGetImageGridDescriptor(itemId);
+
+            if (gridDescriptor != null)
+            {
+                IItemReferenceEntry derivedImageProperty = GetMatchingReferences(itemId, ReferenceTypes.DerivedImage).First();
+
+                return new ImageGridInfo(derivedImageProperty.ToItemIds, gridDescriptor);
+            }
+
+            return null;
+        }
+
         public IItemInfoEntry TryGetItemInfoEntry(uint itemId)
         {
             IReadOnlyList<IItemInfoEntry> entries = this.metaBox.ItemInfo.Entries;
@@ -403,6 +417,35 @@ namespace AvifFileType
             {
                 ExceptionUtil.ThrowFormatException("The file does not have an ItemProperties box.");
             }
+        }
+
+        private ImageGridDescriptor TryGetImageGridDescriptor(uint itemId)
+        {
+            IItemInfoEntry entry = TryGetItemInfoEntry(itemId);
+
+            if (entry != null && entry.ItemType == ItemInfoEntryTypes.ImageGrid)
+            {
+                ItemLocationEntry locationEntry = TryGetItemLocation(itemId);
+
+                if (locationEntry != null)
+                {
+                    if (locationEntry.Extent.Length < ImageGridDescriptor.SmallDescriptorLength)
+                    {
+                        ExceptionUtil.ThrowFormatException("Invalid image grid descriptor length.");
+                    }
+
+                    ulong? offset = TryCalculateItemOffset(locationEntry);
+                    if (!offset.HasValue)
+                    {
+                        ExceptionUtil.ThrowFormatException("The image grid descriptor has an invalid file offset.");
+                    }
+
+                    this.reader.Position = (long)offset.Value;
+                    return new ImageGridDescriptor(this.reader, locationEntry.Extent.Length);
+                }
+            }
+
+            return null;
         }
     }
 }

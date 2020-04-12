@@ -19,5 +19,10 @@ namespace AvifFileType.Interop
     {
         public uint expectedWidth;
         public uint expectedHeight;
+        public uint tileColumnIndex;
+        public uint tileRowIndex;
+        public NclxColorData firstTileNclxProfile;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool usingTileNclxProfile;
     }
 }

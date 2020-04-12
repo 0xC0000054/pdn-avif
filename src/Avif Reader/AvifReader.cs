@@ -15,6 +15,7 @@ using AvifFileType.Interop;
 using PaintDotNet;
 using PaintDotNet.IO;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 
@@ -32,6 +33,8 @@ namespace AvifFileType
         private readonly CleanApertureBox cleanApertureBox;
         private readonly ImageRotateBox imageRotateBox;
         private readonly ImageMirrorBox imageMirrorBox;
+        private readonly ImageGridInfo colorGridInfo;
+        private readonly ImageGridInfo alphaGridInfo;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AvifReader"/> class.
@@ -57,6 +60,15 @@ namespace AvifFileType
                                                     out this.cleanApertureBox,
                                                     out this.imageRotateBox,
                                                     out this.imageMirrorBox);
+            this.colorGridInfo = this.parser.TryGetImageGridInfo(this.primaryItemId);
+            if (this.alphaItemId != 0)
+            {
+                this.alphaGridInfo = this.parser.TryGetImageGridInfo(this.alphaItemId);
+            }
+            else
+            {
+                this.alphaGridInfo = null;
+            }
         }
 
         public Surface Decode()
@@ -64,23 +76,24 @@ namespace AvifFileType
             VerifyNotDisposed();
             EnsureCompressedImagesAreAV1();
 
-            Size colorSize = GetImageSize(this.primaryItemId, "color");
+            Size colorSize = GetImageSize(this.primaryItemId, this.colorGridInfo, "color");
 
             Surface surface = new Surface(colorSize);
             bool disposeSurface = true;
 
             try
             {
-                DecodeInfo decodeInfo = new DecodeInfo
-                {
-                    expectedWidth = (uint)colorSize.Width,
-                    expectedHeight = (uint)colorSize.Height
-                };
-
-                DecodeColorImage(decodeInfo, surface);
+                ProcessColorImage(surface);
                 if (this.alphaItemId != 0)
                 {
-                    DecodeAlphaImage(decodeInfo, surface);
+                    Size alphaSize = GetImageSize(this.alphaItemId, this.alphaGridInfo, "alpha");
+
+                    if (alphaSize != colorSize)
+                    {
+                        ExceptionUtil.ThrowFormatException("The alpha image size does not match the color image.");
+                    }
+
+                    ProcessAlphaImage(surface);
                 }
                 else
                 {
@@ -300,15 +313,15 @@ namespace AvifFileType
 
         private void EnsureCompressedImagesAreAV1()
         {
-            CheckImageItemType(this.primaryItemId, "color");
+            CheckImageItemType(this.primaryItemId, this.colorGridInfo, "color");
 
             if (this.alphaItemId != 0)
             {
-                CheckImageItemType(this.alphaItemId, "alpha");
+                CheckImageItemType(this.alphaItemId, this.alphaGridInfo, "alpha");
             }
         }
 
-        private Size GetImageSize(uint itemId, string imageName)
+        private Size GetImageSize(uint itemId, ImageGridInfo gridInfo, string imageName)
         {
             IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
 
@@ -331,7 +344,8 @@ namespace AvifFileType
             }
             else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
             {
-                throw new FormatException("AV1 image grids are not supported.");
+                width = gridInfo.OutputWidth;
+                height = gridInfo.OutputHeight;
             }
             else
             {
@@ -346,7 +360,7 @@ namespace AvifFileType
             return new Size((int)width, (int)height);
         }
 
-        private void CheckImageItemType(uint itemId, string imageName)
+        private void CheckImageItemType(uint itemId, ImageGridInfo gridInfo, string imageName, bool checkingGridChildren = false)
         {
             IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
 
@@ -358,7 +372,17 @@ namespace AvifFileType
             {
                 if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
                 {
-                    ExceptionUtil.ThrowFormatException("AV1 image grids are not supported.");
+                    if (checkingGridChildren)
+                    {
+                        ExceptionUtil.ThrowFormatException("Nested image grids are not supported.");
+                    }
+
+                    IReadOnlyList<uint> childImageIds = gridInfo.ChildImageIds;
+
+                    for (int i = 0; i < childImageIds.Count; i++)
+                    {
+                        CheckImageItemType(childImageIds[i], null, imageName, true);
+                    }
                 }
                 else
                 {
@@ -367,19 +391,13 @@ namespace AvifFileType
             }
         }
 
-        private void DecodeColorImage(DecodeInfo decodeInfo, Surface fullSurface)
+        private void DecodeColorImage(uint itemId, DecodeInfo decodeInfo, ColorConversionInfo colorConversionInfo, Surface fullSurface)
         {
             SafeProcessHeapBuffer color = null;
 
             try
             {
-                color = ReadColorImage();
-
-                ColorConversionInfo colorConversionInfo = null;
-                if (this.colorInfoBox != null)
-                {
-                    colorConversionInfo = new ColorConversionInfo(this.colorInfoBox);
-                }
+                color = ReadColorImage(itemId);
 
                 AvifNative.DecompressColor(color, colorConversionInfo, decodeInfo, fullSurface);
             }
@@ -389,13 +407,13 @@ namespace AvifFileType
             }
         }
 
-        private void DecodeAlphaImage(DecodeInfo decodeInfo, Surface fullSurface)
+        private void DecodeAlphaImage(uint itemId, DecodeInfo decodeInfo, Surface fullSurface)
         {
             SafeProcessHeapBuffer alpha = null;
 
             try
             {
-                alpha = ReadAlphaImage();
+                alpha = ReadAlphaImage(itemId);
 
                 AvifNative.DecompressAlpha(alpha, decodeInfo, fullSurface);
             }
@@ -405,9 +423,113 @@ namespace AvifFileType
             }
         }
 
-        private SafeProcessHeapBuffer ReadAlphaImage()
+        private void FillAlphaImageGrid(Surface fullSurface)
         {
-            ItemLocationEntry entry = this.parser.TryGetItemLocation(this.alphaItemId);
+            this.alphaGridInfo.CheckAvailableTileCount();
+            DecodeInfo decodeInfo = new DecodeInfo
+            {
+                expectedWidth = 0,
+                expectedHeight = 0,
+                usingTileNclxProfile = false
+            };
+
+            IReadOnlyList<uint> childImageIds = this.alphaGridInfo.ChildImageIds;
+
+            // The tiles are encoded from top to bottom then left to right.
+
+            for (int row = 0; row < this.alphaGridInfo.VerticalTileCount; row++)
+            {
+                decodeInfo.tileRowIndex = (uint)row;
+                int startIndex = row * this.alphaGridInfo.HorizontalTileCount;
+
+                for (int col = 0; col < this.alphaGridInfo.HorizontalTileCount; col++)
+                {
+                    decodeInfo.tileColumnIndex = (uint)col;
+
+                    DecodeAlphaImage(childImageIds[startIndex + col], decodeInfo, fullSurface);
+                }
+            }
+        }
+
+        private void FillColorImageGrid(ColorConversionInfo colorInfo, Surface fullSurface)
+        {
+            this.colorGridInfo.CheckAvailableTileCount();
+            DecodeInfo decodeInfo = new DecodeInfo
+            {
+                expectedWidth = 0,
+                expectedHeight = 0,
+                usingTileNclxProfile = false
+            };
+
+            IReadOnlyList<uint> childImageIds = this.colorGridInfo.ChildImageIds;
+
+            // The tiles are encoded from top to bottom then left to right.
+
+            for (int row = 0; row < this.colorGridInfo.VerticalTileCount; row++)
+            {
+                decodeInfo.tileRowIndex = (uint)row;
+                int startIndex = row * this.colorGridInfo.HorizontalTileCount;
+
+                for (int col = 0; col < this.colorGridInfo.HorizontalTileCount; col++)
+                {
+                    decodeInfo.tileColumnIndex = (uint)col;
+
+                    DecodeColorImage(childImageIds[startIndex + col], decodeInfo, colorInfo, fullSurface);
+                }
+            }
+        }
+
+        private void ProcessAlphaImage(Surface fullSurface)
+        {
+            if (this.alphaGridInfo != null)
+            {
+                FillAlphaImageGrid(fullSurface);
+            }
+            else
+            {
+                DecodeInfo decodeInfo = new DecodeInfo
+                {
+                    tileColumnIndex = 0,
+                    tileRowIndex = 0,
+                    expectedWidth = (uint)fullSurface.Width,
+                    expectedHeight = (uint)fullSurface.Height,
+                    usingTileNclxProfile = false
+                };
+
+                DecodeAlphaImage(this.alphaItemId, decodeInfo, fullSurface);
+            }
+        }
+
+        private void ProcessColorImage(Surface fullSurface)
+        {
+            ColorConversionInfo colorConversionInfo = null;
+            if (this.colorInfoBox != null)
+            {
+                colorConversionInfo = new ColorConversionInfo(this.colorInfoBox);
+            }
+
+            if (this.colorGridInfo != null)
+            {
+                FillColorImageGrid(colorConversionInfo, fullSurface);
+            }
+            else
+            {
+                DecodeInfo decodeInfo = new DecodeInfo
+                {
+                    tileColumnIndex = 0,
+                    tileRowIndex = 0,
+                    expectedWidth = (uint)fullSurface.Width,
+                    expectedHeight = (uint)fullSurface.Height,
+                    usingTileNclxProfile = false
+                };
+
+                DecodeColorImage(this.primaryItemId, decodeInfo, colorConversionInfo, fullSurface);
+            }
+        }
+
+        private SafeProcessHeapBuffer ReadAlphaImage(uint itemId)
+        {
+            ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
 
             if (entry is null)
             {
@@ -424,9 +546,9 @@ namespace AvifFileType
             return alphaImage;
         }
 
-        private SafeProcessHeapBuffer ReadColorImage()
+        private SafeProcessHeapBuffer ReadColorImage(uint itemId)
         {
-            ItemLocationEntry entry = this.parser.TryGetItemLocation(this.primaryItemId);
+            ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
 
             if (entry is null)
             {

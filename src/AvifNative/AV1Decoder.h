@@ -18,11 +18,11 @@ DecoderStatus DecodeColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
     const ColorConversionInfo* colorInfo,
-    const DecodeInfo* decodeInfo,
+    DecodeInfo* decodeInfo,
     BitmapData* outputImage);
 
 DecoderStatus DecodeAlphaImage(
     const uint8_t* compressedAlphaImage,
     size_t compressedAlphaImageSize,
-    const DecodeInfo* decodeInfo,
+    DecodeInfo* decodeInfo,
     BitmapData* outputImage);

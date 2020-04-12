@@ -52,7 +52,7 @@ DecoderStatus DecodeColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
     const ColorConversionInfo* colorInfo,
-    const DecodeInfo* decodeInfo,
+    DecodeInfo* decodeInfo,
     BitmapData* decodedImage)
 {
     if (!compressedColorImage || !compressedColorImageSize || !decodedImage)
@@ -79,14 +79,15 @@ DecoderStatus DecodeColorImage(
 
     if (status == DecoderStatus::Ok)
     {
-        if (aomImage->d_w != decodeInfo->expectedWidth ||
-            aomImage->d_h != decodeInfo->expectedHeight)
+        // The expected width/height will be zero for the first tile in an image grid.
+        if (decodeInfo->expectedWidth != 0 && aomImage->d_w != decodeInfo->expectedWidth ||
+            decodeInfo->expectedHeight != 0 && aomImage->d_h != decodeInfo->expectedHeight)
         {
             status = DecoderStatus::ColorSizeMismatch;
         }
         else
         {
-            status = ConvertColorImage(aomImage, colorInfo, decodedImage);
+            status = ConvertColorImage(aomImage, colorInfo, decodeInfo, decodedImage);
         }
     }
 
@@ -98,7 +99,7 @@ DecoderStatus DecodeColorImage(
 DecoderStatus DecodeAlphaImage(
     const uint8_t* compressedAlphaImage,
     size_t compressedAlphaImageSize,
-    const DecodeInfo* decodeInfo,
+    DecodeInfo* decodeInfo,
     BitmapData* outputImage)
 {
     if (!compressedAlphaImage || !compressedAlphaImageSize || !outputImage)
@@ -125,14 +126,15 @@ DecoderStatus DecodeAlphaImage(
 
     if (status == DecoderStatus::Ok)
     {
-        if (aomImage->d_w != decodeInfo->expectedWidth ||
-            aomImage->d_h != decodeInfo->expectedHeight)
+        // The expected width/height will be zero for the first tile in an image grid.
+        if (decodeInfo->expectedWidth != 0 && aomImage->d_w != decodeInfo->expectedWidth ||
+            decodeInfo->expectedHeight != 0 && aomImage->d_h != decodeInfo->expectedHeight)
         {
             status = DecoderStatus::AlphaSizeMismatch;
         }
         else
         {
-            status = ConvertAlphaImage(aomImage, outputImage);
+            status = ConvertAlphaImage(aomImage, decodeInfo, outputImage);
         }
     }
 

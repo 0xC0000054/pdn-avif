@@ -54,7 +54,8 @@ extern "C" {
         CodecInitFailed,
         DecodeFailed,
         AlphaSizeMismatch,
-        ColorSizeMismatch
+        ColorSizeMismatch,
+        TileNclxProfileMismatch
     };
 
     // This must be kept in sync with EncoderOptions.cs
@@ -93,6 +94,10 @@ extern "C" {
     {
         uint32_t expectedWidth;
         uint32_t expectedHeight;
+        uint32_t tileColumnIndex;
+        uint32_t tileRowIndex;
+        NclxColorData firstTileNclxProfile;
+        bool usingFirstTileNclxProfile;
     };
 
     struct BitmapData
@@ -124,13 +129,13 @@ extern "C" {
         const uint8_t* compressedColorImage,
         size_t compressedColorImageSize,
         const ColorConversionInfo* colorInfo,
-        const DecodeInfo* decodeInfo,
+        DecodeInfo* decodeInfo,
         BitmapData* outputImage);
 
     __declspec(dllexport) DecoderStatus __stdcall DecompressAlphaImage(
         const uint8_t* compressedAlphaImage,
         size_t compressedAlphaImageSize,
-        const DecodeInfo* decodeInfo,
+        DecodeInfo* decodeInfo,
         BitmapData* outputImage);
 
     __declspec(dllexport) EncoderStatus __stdcall CompressImage(

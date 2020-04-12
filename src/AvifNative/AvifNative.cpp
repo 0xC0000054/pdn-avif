@@ -22,7 +22,7 @@ DecoderStatus __stdcall DecompressColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
     const ColorConversionInfo* colorInfo,
-    const DecodeInfo* decodeInfo,
+    DecodeInfo* decodeInfo,
     BitmapData* outputImage)
 {
     return DecodeColorImage(
@@ -36,7 +36,7 @@ DecoderStatus __stdcall DecompressColorImage(
 DecoderStatus __stdcall DecompressAlphaImage(
     const uint8_t* compressedAlphaImage,
     size_t compressedAlphaImageSize,
-    const DecodeInfo* decodeInfo,
+    DecodeInfo* decodeInfo,
     BitmapData* outputImage)
 {
     return DecodeAlphaImage(

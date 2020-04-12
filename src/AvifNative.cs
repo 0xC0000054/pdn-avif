@@ -318,6 +318,8 @@ namespace AvifFileType
                     throw new FormatException("The alpha image does not match the expected size.");
                 case DecoderStatus.ColorSizeMismatch:
                     throw new FormatException("The color image does not match the expected size.");
+                case DecoderStatus.TileNclxProfileMismatch:
+                    throw new FormatException("The color image tiles must use an identical color profile.");
                 default:
                     throw new FormatException("An unknown error occurred when decoding the image.");
             }

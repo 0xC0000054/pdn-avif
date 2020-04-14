@@ -19,6 +19,7 @@ namespace AvifFileType.Interop
         public ushort colorPrimaries;
         public ushort transferCharacteristics;
         public ushort matrixCoefficients;
+        [MarshalAs(UnmanagedType.U1)]
         public bool fullRange;
     }
 }

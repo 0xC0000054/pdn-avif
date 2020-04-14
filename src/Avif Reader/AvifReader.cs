@@ -282,6 +282,14 @@ namespace AvifFileType
 
         private void Crop(ref Surface surface)
         {
+            if (this.cleanApertureBox.Width.Denominator == 0 ||
+                this.cleanApertureBox.Height.Denominator == 0 ||
+                this.cleanApertureBox.HorizontalOffset.Denominator == 0||
+                this.cleanApertureBox.VerticalOffset.Denominator == 0)
+            {
+                return;
+            }
+
             int cropWidth = this.cleanApertureBox.Width.ToInt32();
             int cropHeight = this.cleanApertureBox.Height.ToInt32();
 

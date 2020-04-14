@@ -29,17 +29,17 @@ namespace AvifFileType.AvifContainer
             }
 
             this.ChildImageIds = childImageIds;
-            this.HorizontalTileCount = grid.ColumnsMinusOne + 1;
-            this.VerticalTileCount = grid.RowsMinusOne + 1;
+            this.TileColumnCount = grid.ColumnsMinusOne + 1;
+            this.TileRowCount = grid.RowsMinusOne + 1;
             this.OutputWidth = grid.OutputWidth;
             this.OutputHeight = grid.OutputHeight;
         }
 
         public IReadOnlyList<uint> ChildImageIds { get; }
 
-        public int HorizontalTileCount { get; }
+        public int TileColumnCount { get; }
 
-        public int VerticalTileCount { get; }
+        public int TileRowCount { get; }
 
         public uint OutputWidth { get; }
 
@@ -47,7 +47,7 @@ namespace AvifFileType.AvifContainer
 
         public void CheckAvailableTileCount()
         {
-            int requiredTileCount = this.HorizontalTileCount * this.VerticalTileCount;
+            int requiredTileCount = this.TileColumnCount * this.TileRowCount;
 
             if (this.ChildImageIds.Count != requiredTileCount)
             {

@@ -450,12 +450,12 @@ namespace AvifFileType
 
             // The tiles are encoded from top to bottom then left to right.
 
-            for (int row = 0; row < this.alphaGridInfo.VerticalTileCount; row++)
+            for (int row = 0; row < this.alphaGridInfo.TileRowCount; row++)
             {
                 decodeInfo.tileRowIndex = (uint)row;
-                int startIndex = row * this.alphaGridInfo.HorizontalTileCount;
+                int startIndex = row * this.alphaGridInfo.TileColumnCount;
 
-                for (int col = 0; col < this.alphaGridInfo.HorizontalTileCount; col++)
+                for (int col = 0; col < this.alphaGridInfo.TileColumnCount; col++)
                 {
                     decodeInfo.tileColumnIndex = (uint)col;
 
@@ -478,12 +478,12 @@ namespace AvifFileType
 
             // The tiles are encoded from top to bottom then left to right.
 
-            for (int row = 0; row < this.colorGridInfo.VerticalTileCount; row++)
+            for (int row = 0; row < this.colorGridInfo.TileRowCount; row++)
             {
                 decodeInfo.tileRowIndex = (uint)row;
-                int startIndex = row * this.colorGridInfo.HorizontalTileCount;
+                int startIndex = row * this.colorGridInfo.TileColumnCount;
 
-                for (int col = 0; col < this.colorGridInfo.HorizontalTileCount; col++)
+                for (int col = 0; col < this.colorGridInfo.TileColumnCount; col++)
                 {
                     decodeInfo.tileColumnIndex = (uint)col;
 

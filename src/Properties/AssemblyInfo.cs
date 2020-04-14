@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("Beta")]
 [assembly: AssemblyCompany("null54")]
-[assembly: AssemblyProduct("AvifSaveFileType")]
+[assembly: AssemblyProduct("AvifFileType")]
 [assembly: AssemblyCopyright("Copyright © 2020 Nicholas Hayes (aka null54)")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

@@ -385,6 +385,11 @@ namespace AvifFileType
                         ExceptionUtil.ThrowFormatException("Nested image grids are not supported.");
                     }
 
+                    if (gridInfo == null)
+                    {
+                        ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
+                    }
+
                     IReadOnlyList<uint> childImageIds = gridInfo.ChildImageIds;
 
                     for (int i = 0; i < childImageIds.Count; i++)

@@ -73,7 +73,6 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-
         public ItemLocationExtent(ulong length)
         {
             this.Index = 0;

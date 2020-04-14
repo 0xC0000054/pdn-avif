@@ -75,9 +75,6 @@ namespace AvifFileType.AvifContainer
             this.BoxDataSize = -1;
         }
 
-
-
-
         public long End
         {
             get

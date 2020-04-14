@@ -16,14 +16,15 @@ namespace AvifFileType.AvifContainer
 {
     internal readonly struct Rational : IEquatable<Rational>
     {
-        private readonly int numerator;
-        private readonly uint denominator;
-
         public Rational(EndianBinaryReader reader)
         {
-            this.numerator = reader.ReadInt32();
-            this.denominator = reader.ReadUInt32();
+            this.Numerator = reader.ReadInt32();
+            this.Denominator = reader.ReadUInt32();
         }
+
+        public int Numerator { get; }
+
+        public uint Denominator { get; }
 
         public override bool Equals(object obj)
         {
@@ -32,7 +33,7 @@ namespace AvifFileType.AvifContainer
 
         public bool Equals(Rational other)
         {
-            return this.numerator == other.numerator && this.denominator == other.denominator;
+            return this.Numerator == other.Numerator && this.Denominator == other.Denominator;
         }
 
         public override int GetHashCode()
@@ -41,8 +42,8 @@ namespace AvifFileType.AvifContainer
 
             unchecked
             {
-                hashCode = (hashCode * -1521134295) + this.numerator.GetHashCode();
-                hashCode = (hashCode * -1521134295) + this.denominator.GetHashCode();
+                hashCode = (hashCode * -1521134295) + this.Numerator.GetHashCode();
+                hashCode = (hashCode * -1521134295) + this.Denominator.GetHashCode();
             }
 
             return hashCode;
@@ -50,12 +51,12 @@ namespace AvifFileType.AvifContainer
 
         public double ToDouble()
         {
-            if (this.denominator == 0)
+            if (this.Denominator == 0)
             {
                 return 0.0;
             }
 
-            return (double)this.numerator / this.denominator;
+            return (double)this.Numerator / this.Denominator;
         }
 
         public int ToInt32()

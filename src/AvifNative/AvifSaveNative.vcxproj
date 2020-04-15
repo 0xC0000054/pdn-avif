@@ -26,7 +26,6 @@
     <ClInclude Include="Memory.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="TargetVer.h" />
-    <ClInclude Include="YUVAImage.h" />
     <ClInclude Include="DecodedImageConverter.h" />
     <ClInclude Include="YUVConversionHelpers.h" />
   </ItemGroup>
@@ -36,7 +35,6 @@
     <ClCompile Include="AvifNative.cpp" />
     <ClCompile Include="ChromaSubsampling.cpp" />
     <ClCompile Include="Memory.cpp" />
-    <ClCompile Include="YUVAImage.cpp" />
     <ClCompile Include="DecodedImageConverter.cpp" />
     <ClCompile Include="YUVConversionHelpers.cpp" />
   </ItemGroup>

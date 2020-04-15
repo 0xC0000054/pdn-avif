@@ -13,14 +13,15 @@
 #pragma once
 
 #include "AvifNative.h"
-#include "YUVAImage.h"
+#include "aom/aom_image.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-EncoderStatus CompressYUVAImage(
-    const YUVAImage* image,
+EncoderStatus CompressAOMImages(
+    const aom_image* color,
+    const aom_image* alpha,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
     void** compressedColorImage,

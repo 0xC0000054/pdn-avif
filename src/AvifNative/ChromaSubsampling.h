@@ -13,11 +13,12 @@
 #pragma once
 
 #include "AvifNative.h"
-#include "YUVAImage.h"
+#include "aom/aom_image.h"
 
-EncoderStatus ConvertBitmapDataToYUVA(
+aom_image_t* ConvertColorToAOMImage(
     const BitmapData* bgraImage,
-    bool includeTransparency,
     const ColorConversionInfo* colorInfo,
     YUVChromaSubsampling yuvFormat,
-    YUVAImage* yuvaImage);
+    aom_img_fmt aomFormat);
+
+aom_image_t* ConvertAlphaToAOMImage(const BitmapData* bgraImage);

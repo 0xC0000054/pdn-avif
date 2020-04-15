@@ -105,106 +105,6 @@ namespace
         return encoderThreadCount;
     }
 
-    aom_img_fmt GetAOMChromaSubsampling(const YUVAImage* image, bool alpha)
-    {
-        if (alpha)
-        {
-            // Chroma sub-sampling does not matter for the alpha channel
-            return AOM_IMG_FMT_I420;
-        }
-        else
-        {
-            switch (image->GetFormat())
-            {
-            case YUVFormat::I420:
-                return AOM_IMG_FMT_I420;
-            case YUVFormat::I422:
-                return AOM_IMG_FMT_I422;
-            case YUVFormat::I444:
-                return AOM_IMG_FMT_I444;
-            default:
-                return AOM_IMG_FMT_NONE;
-            }
-        }
-    }
-
-    uint32_t GetUVHeight(const YUVAImage* image)
-    {
-        switch (image->GetFormat())
-        {
-        case YUVFormat::I420:
-            return image->GetHeight() / 2;
-        case YUVFormat::I422:
-        case YUVFormat::I444:
-        default:
-            return image->GetHeight();
-        }
-    }
-
-    void FillAOMImage(const YUVAImage* image, aom_image_t* aomImage, bool alpha)
-    {
-        aomImage->range = AOM_CR_FULL_RANGE;
-
-        const uint32_t imageHeight = image->GetHeight();
-
-        if (alpha)
-        {
-            aomImage->monochrome = 1;
-
-            const size_t alphaPlaneStride = image->GetAlphaPlaneStride();
-
-            for (uint32_t y = 0; y < imageHeight; ++y)
-            {
-                const uint8_t* const srcAlphaRow = image->GetAlphaRowPointerReadOnly(y);
-                uint8_t* dstAlphaRow = &aomImage->planes[0][y * aomImage->stride[0]];
-                memcpy_s(dstAlphaRow, alphaPlaneStride, srcAlphaRow, alphaPlaneStride);
-            }
-
-            // The alpha plane is always YUV 4:2:0
-            const uint32_t uvHeight = imageHeight / 2;
-
-            for (uint32_t y = 0; y < uvHeight; ++y)
-            {
-                // Zero out U and V
-                memset(&aomImage->planes[1][y * aomImage->stride[1]], 0, aomImage->stride[1]);
-                memset(&aomImage->planes[2][y * aomImage->stride[2]], 0, aomImage->stride[2]);
-            }
-        }
-        else
-        {
-            const uint32_t uvHeight = GetUVHeight(image);
-
-            const size_t yPlaneStride = image->GetYPlaneStride();
-            const size_t uPlaneStride = image->GetUPlaneStride();
-            const size_t vPlaneStride = image->GetVPlaneStride();
-
-
-            // Copy the Y plane
-            for (uint32_t y = 0; y < imageHeight; ++y)
-            {
-                const uint8_t* const srcRow = image->GetYRowPointerReadOnly(y);
-                uint8_t* dstRow = &aomImage->planes[AOM_PLANE_Y][y * aomImage->stride[AOM_PLANE_Y]];
-                memcpy_s(dstRow, yPlaneStride, srcRow, yPlaneStride);
-            }
-
-            // Copy the V plane
-            for (uint32_t y = 0; y < uvHeight; ++y)
-            {
-                const uint8_t* const srcRow = image->GetURowPointerReadOnly(y);
-                uint8_t* dstRow = &aomImage->planes[AOM_PLANE_U][y * aomImage->stride[AOM_PLANE_U]];
-                memcpy_s(dstRow, uPlaneStride, srcRow, uPlaneStride);
-            }
-
-            // Copy the V plane
-            for (uint32_t y = 0; y < uvHeight; ++y)
-            {
-                const uint8_t* const srcRow = image->GetVRowPointerReadOnly(y);
-                uint8_t* dstRow = &aomImage->planes[AOM_PLANE_V][y * aomImage->stride[AOM_PLANE_V]];
-                memcpy_s(dstRow, vPlaneStride, srcRow, vPlaneStride);
-            }
-        }
-    }
-
     EncoderStatus InitializeEncoder(
         aom_codec_ctx* codec,
         aom_codec_iface_t* iface,
@@ -370,41 +270,11 @@ namespace
 
         return error;
     }
-
-    EncoderStatus EncodeYUVAImage(
-        aom_codec_iface_t* iface,
-        const AvifEncoderOptions& encodeOptions,
-        ProgressContext* progressContext,
-        const YUVAImage* image,
-        bool alpha,
-        void** compressedImage,
-        size_t* compressedImageSize)
-    {
-        const aom_img_fmt aomFormat = GetAOMChromaSubsampling(image, alpha);
-        if (aomFormat == AOM_IMG_FMT_NONE)
-        {
-            return EncoderStatus::UnknownYUVFormat;
-        }
-
-        aom_image* frame = aom_img_alloc(nullptr, aomFormat, image->GetWidth(), image->GetHeight(), 16);
-        if (!frame)
-        {
-            return EncoderStatus::OutOfMemory;
-        }
-
-        FillAOMImage(image, frame, alpha);
-
-        EncoderStatus status = EncodeAOMImage(iface, encodeOptions, progressContext, frame,
-                                              compressedImage, compressedImageSize);
-
-        aom_img_free(frame);
-
-        return status;
-    }
 }
 
-EncoderStatus CompressYUVAImage(
-    const YUVAImage* image,
+EncoderStatus CompressAOMImages(
+    const aom_image* color,
+    const aom_image* alpha,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
     void** compressedColorImage,
@@ -422,7 +292,7 @@ EncoderStatus CompressYUVAImage(
         return EncoderStatus::NullParameter;
     }
 
-    if (image->HasAlphaChannel())
+    if (alpha)
     {
         if (compressedAlphaImage && compressedAlphaImageSize)
         {
@@ -444,13 +314,13 @@ EncoderStatus CompressYUVAImage(
         return EncoderStatus::UserCancelled;
     }
 
-    EncoderStatus status = EncodeYUVAImage(iface, options, progressContext, image,
-                                           false, compressedColorImage, compressedColorImageSize);
+    EncoderStatus status = EncodeAOMImage(iface, options, progressContext, color,
+                                           compressedColorImage, compressedColorImageSize);
 
-    if (status == EncoderStatus::Ok && compressedAlphaImage && compressedAlphaImageSize)
+    if (status == EncoderStatus::Ok && alpha)
     {
-        status = EncodeYUVAImage(iface, options, progressContext, image,
-                                 true, compressedAlphaImage, compressedAlphaImageSize);
+        status = EncodeAOMImage(iface, options, progressContext, alpha,
+                                compressedAlphaImage, compressedAlphaImageSize);
 
         if (status == EncoderStatus::UserCancelled)
         {

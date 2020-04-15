@@ -83,130 +83,208 @@ namespace
 
         return  static_cast<uint8_t>(avifRoundf(v * 255.0f));
     }
-}
 
-
-EncoderStatus ConvertBitmapDataToYUVA(
-    const BitmapData* bgraImage,
-    bool includeTransparency,
-    const ColorConversionInfo* colorInfo,
-    YUVChromaSubsampling yuvFormat,
-    YUVAImage* yuvaImage)
-{
-    EncoderStatus error = yuvaImage->Initialize(bgraImage, includeTransparency, yuvFormat);
-    if (error != EncoderStatus::Ok)
+    void ColorToYUV8(
+        const BitmapData* bgraImage,
+        const ColorConversionInfo* colorInfo,
+        YUVChromaSubsampling yuvFormat,
+        uint8_t* yPlane,
+        size_t yPlaneStride,
+        uint8_t* uPlane,
+        size_t uPlaneStride,
+        uint8_t* vPlane,
+        size_t vPlaneStride)
     {
-        return error;
-    }
+        YUVCoefficiants yuvCoefficiants;
+        GetYUVCoefficiants(colorInfo, yuvCoefficiants);
 
-    YUVCoefficiants yuvCoefficiants;
-    GetYUVCoefficiants(colorInfo, yuvCoefficiants);
+        const float kr = yuvCoefficiants.kr;
+        const float kg = yuvCoefficiants.kg;
+        const float kb = yuvCoefficiants.kb;
 
-    const float kr = yuvCoefficiants.kr;
-    const float kg = yuvCoefficiants.kg;
-    const float kb = yuvCoefficiants.kb;
+        YUVBlock yuvBlock[2][2];
+        float rgbPixel[3];
 
-    YUVBlock yuvBlock[2][2];
-    float rgbPixel[3];
-
-    for (size_t imageY = 0; imageY < bgraImage->height; imageY += 2)
-    {
-        for (size_t imageX = 0; imageX < bgraImage->width; imageX += 2)
+        for (size_t imageY = 0; imageY < bgraImage->height; imageY += 2)
         {
-            size_t blockWidth = 2, blockHeight = 2;
-            if ((imageX + 1) >= bgraImage->width)
+            for (size_t imageX = 0; imageX < bgraImage->width; imageX += 2)
             {
-                blockWidth = 1;
-            }
-            if ((imageY + 1) >= bgraImage->height)
-            {
-                blockHeight = 1;
-            }
-
-            // Convert an entire 2x2 block to YUV, and populate any fully sampled channels as we go
-            for (size_t blockY = 0; blockY < blockHeight; ++blockY)
-            {
-                for (size_t blockX = 0; blockX < blockWidth; ++blockX)
+                size_t blockWidth = 2, blockHeight = 2;
+                if ((imageX + 1) >= bgraImage->width)
                 {
-                    size_t x = imageX + blockX;
-                    size_t y = imageY + blockY;
-
-                    // Unpack RGB into normalized float
-
-                    const ColorBgra* pixel = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (y * bgraImage->stride) + (x * sizeof(ColorBgra)));
-
-                    rgbPixel[0] = static_cast<float>(pixel->r) / 255.0f;
-                    rgbPixel[1] = static_cast<float>(pixel->g) / 255.0f;
-                    rgbPixel[2] = static_cast<float>(pixel->b) / 255.0f;
-
-                    // RGB -> YUV conversion
-                    float Y = (kr * rgbPixel[0]) + (kg * rgbPixel[1]) + (kb * rgbPixel[2]);
-                    yuvBlock[blockX][blockY].y = Y;
-                    yuvBlock[blockX][blockY].u = (rgbPixel[2] - Y) / (2 * (1 - kb));
-                    yuvBlock[blockX][blockY].v = (rgbPixel[0] - Y) / (2 * (1 - kr));
-
-                    yuvaImage->SetYPlaneValue(x, y, yuvToUNorm(YuvChannel::Y, yuvBlock[blockX][blockY].y));
-
-                    if (yuvFormat == YUVChromaSubsampling::Subsampling444)
-                    {
-                        // YUV444, full chroma
-                        yuvaImage->SetUPlaneValue(x, y, yuvToUNorm(YuvChannel::U, yuvBlock[blockX][blockY].u));
-                        yuvaImage->SetVPlaneValue(x, y, yuvToUNorm(YuvChannel::V, yuvBlock[blockX][blockY].v));
-                    }
-
+                    blockWidth = 1;
                 }
-            }
-
-            // Populate any subsampled channels with averages from the 2x2 block
-            if (yuvFormat == YUVChromaSubsampling::Subsampling420)
-            {
-                // YUV420, average 4 samples (2x2)
-
-                float sumU = 0.0f;
-                float sumV = 0.0f;
-                for (size_t bJ = 0; bJ < blockHeight; ++bJ)
+                if ((imageY + 1) >= bgraImage->height)
                 {
-                    for (size_t bI = 0; bI < blockWidth; ++bI)
+                    blockHeight = 1;
+                }
+
+                // Convert an entire 2x2 block to YUV, and populate any fully sampled channels as we go
+                for (size_t blockY = 0; blockY < blockHeight; ++blockY)
+                {
+                    for (size_t blockX = 0; blockX < blockWidth; ++blockX)
                     {
-                        sumU += yuvBlock[bI][bJ].u;
-                        sumV += yuvBlock[bI][bJ].v;
+                        size_t x = imageX + blockX;
+                        size_t y = imageY + blockY;
+
+                        // Unpack RGB into normalized float
+
+                        const ColorBgra* pixel = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (y * bgraImage->stride) + (x * sizeof(ColorBgra)));
+
+                        rgbPixel[0] = static_cast<float>(pixel->r) / 255.0f;
+                        rgbPixel[1] = static_cast<float>(pixel->g) / 255.0f;
+                        rgbPixel[2] = static_cast<float>(pixel->b) / 255.0f;
+
+                        // RGB -> YUV conversion
+                        float Y = (kr * rgbPixel[0]) + (kg * rgbPixel[1]) + (kb * rgbPixel[2]);
+                        yuvBlock[blockX][blockY].y = Y;
+                        yuvBlock[blockX][blockY].u = (rgbPixel[2] - Y) / (2 * (1 - kb));
+                        yuvBlock[blockX][blockY].v = (rgbPixel[0] - Y) / (2 * (1 - kr));
+
+                        yPlane[x + (y * yPlaneStride)] = yuvToUNorm(YuvChannel::Y, yuvBlock[blockX][blockY].y);
+
+                        if (yuvFormat == YUVChromaSubsampling::Subsampling444)
+                        {
+                            // YUV444, full chroma
+                            uPlane[x + (y * uPlaneStride)] = yuvToUNorm(YuvChannel::U, yuvBlock[blockX][blockY].u);
+                            vPlane[x + (y * vPlaneStride)] = yuvToUNorm(YuvChannel::V, yuvBlock[blockX][blockY].v);
+                        }
+
                     }
                 }
-                float totalSamples = static_cast<float>(blockWidth * blockHeight);
-                float avgU = sumU / totalSamples;
-                float avgV = sumV / totalSamples;
 
-                size_t x = imageX >> 1;
-                size_t y = imageY >> 1;
+                // Populate any subsampled channels with averages from the 2x2 block
+                if (yuvFormat == YUVChromaSubsampling::Subsampling420)
+                {
+                    // YUV420, average 4 samples (2x2)
 
-                yuvaImage->SetUPlaneValue(x, y, yuvToUNorm(YuvChannel::U, avgU));
-                yuvaImage->SetVPlaneValue(x, y, yuvToUNorm(YuvChannel::V, avgV));
-
-            }
-            else if (yuvFormat == YUVChromaSubsampling::Subsampling422)
-            {
-                // YUV422, average 2 samples (1x2), twice
-
-                for (size_t blockY = 0; blockY < blockHeight; ++blockY) {
                     float sumU = 0.0f;
                     float sumV = 0.0f;
-                    for (size_t blockX = 0; blockX < blockWidth; ++blockX) {
-                        sumU += yuvBlock[blockX][blockY].u;
-                        sumV += yuvBlock[blockX][blockY].v;
+                    for (size_t bJ = 0; bJ < blockHeight; ++bJ)
+                    {
+                        for (size_t bI = 0; bI < blockWidth; ++bI)
+                        {
+                            sumU += yuvBlock[bI][bJ].u;
+                            sumV += yuvBlock[bI][bJ].v;
+                        }
                     }
-                    float totalSamples = (float)blockWidth;
+                    float totalSamples = static_cast<float>(blockWidth * blockHeight);
                     float avgU = sumU / totalSamples;
                     float avgV = sumV / totalSamples;
 
                     size_t x = imageX >> 1;
-                    size_t y = imageY + blockY;
+                    size_t y = imageY >> 1;
 
-                    yuvaImage->SetUPlaneValue(x, y, yuvToUNorm(YuvChannel::U, avgU));
-                    yuvaImage->SetVPlaneValue(x, y, yuvToUNorm(YuvChannel::V, avgV));
+                    uPlane[x + (y * uPlaneStride)] = yuvToUNorm(YuvChannel::U, avgU);
+                    vPlane[x + (y * vPlaneStride)] = yuvToUNorm(YuvChannel::V, avgV);
+
+                }
+                else if (yuvFormat == YUVChromaSubsampling::Subsampling422)
+                {
+                    // YUV422, average 2 samples (1x2), twice
+
+                    for (size_t blockY = 0; blockY < blockHeight; ++blockY) {
+                        float sumU = 0.0f;
+                        float sumV = 0.0f;
+                        for (size_t blockX = 0; blockX < blockWidth; ++blockX) {
+                            sumU += yuvBlock[blockX][blockY].u;
+                            sumV += yuvBlock[blockX][blockY].v;
+                        }
+                        float totalSamples = (float)blockWidth;
+                        float avgU = sumU / totalSamples;
+                        float avgV = sumV / totalSamples;
+
+                        size_t x = imageX >> 1;
+                        size_t y = imageY + blockY;
+
+                        uPlane[x + (y * uPlaneStride)] = yuvToUNorm(YuvChannel::U, avgU);
+                        vPlane[x + (y * vPlaneStride)] = yuvToUNorm(YuvChannel::V, avgV);
+                    }
                 }
             }
         }
     }
 
-    return EncoderStatus::Ok;
+    void AlphaToY8(
+        const BitmapData* bgraImage,
+        uint8_t* yPlane,
+        size_t yPlaneStride)
+    {
+        for (uint32_t y = 0; y < bgraImage->height; ++y)
+        {
+            const ColorBgra* src = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
+            uint8_t* dst = &yPlane[y * yPlaneStride];
+
+            for (uint32_t x = 0; x < bgraImage->width; ++x)
+            {
+                *dst = src->a;
+
+                src++;
+                dst++;
+            }
+        }
+    }
+}
+
+
+aom_image_t* ConvertColorToAOMImage(
+    const BitmapData* bgraImage,
+    const ColorConversionInfo* colorInfo,
+    YUVChromaSubsampling yuvFormat,
+    aom_img_fmt aomFormat)
+{
+    aom_image_t* aomImage = aom_img_alloc(nullptr, aomFormat, bgraImage->width, bgraImage->height, 16);
+    if (!aomImage)
+    {
+        return nullptr;
+    }
+
+    aomImage->range = AOM_CR_FULL_RANGE;
+
+    ColorToYUV8(
+        bgraImage,
+        colorInfo,
+        yuvFormat,
+        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
+        static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]),
+        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_U]),
+        static_cast<size_t>(aomImage->stride[AOM_PLANE_U]),
+        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_V]),
+        static_cast<size_t>(aomImage->stride[AOM_PLANE_V]));
+
+    return aomImage;
+}
+
+aom_image_t* ConvertAlphaToAOMImage(const BitmapData* bgraImage)
+{
+    // Chroma sub-sampling does not matter for the alpha channel
+    // YUV 4:0:0 would be a better format for the alpha image than YUV 4:2:0,
+    // but it appears that libaom does not currently support it.
+
+    constexpr aom_img_fmt aomFormat = AOM_IMG_FMT_I420;
+
+    aom_image_t* aomImage = aom_img_alloc(nullptr, aomFormat, bgraImage->width, bgraImage->height, 16);
+    if (!aomImage)
+    {
+        return nullptr;
+    }
+
+    aomImage->range = AOM_CR_FULL_RANGE;
+    aomImage->monochrome = 1;
+
+    AlphaToY8(
+        bgraImage,
+        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
+        static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]));
+
+    const uint32_t uvHeight = bgraImage->height / 2;
+
+    for (uint32_t y = 0; y < uvHeight; ++y)
+    {
+        // Zero out U and V
+        memset(&aomImage->planes[AOM_PLANE_U][y * aomImage->stride[AOM_PLANE_U]], 0, aomImage->stride[AOM_PLANE_U]);
+        memset(&aomImage->planes[AOM_PLANE_V][y * aomImage->stride[AOM_PLANE_V]], 0, aomImage->stride[AOM_PLANE_V]);
+    }
+
+    return aomImage;
 }

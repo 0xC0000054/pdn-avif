@@ -18,7 +18,7 @@ namespace AvifFileType
 {
     internal static class StreamExtensions
     {
-        // The largest multiple of 4086 that is under the large object heap limit.
+        // The largest multiple of 4096 that is under the large object heap limit.
         private const int MaxBufferSize = 81920;
 
         public static long TryReadUInt32BigEndian(this Stream stream)

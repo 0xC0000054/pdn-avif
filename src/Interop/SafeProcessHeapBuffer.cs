@@ -25,16 +25,23 @@ namespace AvifFileType.Interop
 
         public static SafeProcessHeapBuffer Create(ulong length)
         {
-            SafeProcessHeapBuffer buffer = UnsafeNativeMethods.HeapAlloc(ProcessHeap, 0, (UIntPtr)length);
-
-            if (buffer.IsInvalid)
+            try
             {
-                throw new OutOfMemoryException();
+                SafeProcessHeapBuffer buffer = UnsafeNativeMethods.HeapAlloc(ProcessHeap, 0, (UIntPtr)length);
+
+                if (buffer.IsInvalid)
+                {
+                    throw new OutOfMemoryException();
+                }
+
+                buffer.Initialize(length);
+
+                return buffer;
             }
-
-            buffer.Initialize(length);
-
-            return buffer;
+            catch (OverflowException ex)
+            {
+                throw new OutOfMemoryException($"Overflow when attempting to allocate {length:F0} bytes.", ex);
+            }
         }
 
         protected override bool ReleaseHandle()

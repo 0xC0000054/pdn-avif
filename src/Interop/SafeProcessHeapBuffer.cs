@@ -17,7 +17,7 @@ namespace AvifFileType.Interop
 {
     internal sealed class SafeProcessHeapBuffer : SafeBuffer
     {
-        private static readonly Lazy<IntPtr> ProcessHeap = new Lazy<IntPtr>(() => UnsafeNativeMethods.GetProcessHeap());
+        private static readonly IntPtr ProcessHeap = UnsafeNativeMethods.GetProcessHeap();
 
         private SafeProcessHeapBuffer() : base(true)
         {
@@ -25,7 +25,7 @@ namespace AvifFileType.Interop
 
         public static SafeProcessHeapBuffer Create(ulong length)
         {
-            SafeProcessHeapBuffer buffer = UnsafeNativeMethods.HeapAlloc(ProcessHeap.Value, 0, (UIntPtr)length);
+            SafeProcessHeapBuffer buffer = UnsafeNativeMethods.HeapAlloc(ProcessHeap, 0, (UIntPtr)length);
 
             if (buffer.IsInvalid)
             {
@@ -39,7 +39,7 @@ namespace AvifFileType.Interop
 
         protected override bool ReleaseHandle()
         {
-            return UnsafeNativeMethods.HeapFree(ProcessHeap.Value, 0, this.handle);
+            return UnsafeNativeMethods.HeapFree(ProcessHeap, 0, this.handle);
         }
 
         [System.Security.SuppressUnmanagedCodeSecurity]

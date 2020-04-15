@@ -211,9 +211,17 @@ namespace
         const aom_codec_enc_cfg* cfg,
         const AvifEncoderOptions& encodeOptions)
     {
-        if (aom_codec_enc_init(codec, iface, cfg, 0) != AOM_CODEC_OK)
+        const aom_codec_err_t error = aom_codec_enc_init(codec, iface, cfg, 0);
+        if (error != AOM_CODEC_OK)
         {
-            return EncoderStatus::CodecInitFailed;
+            if (error == AOM_CODEC_MEM_ERROR)
+            {
+                return EncoderStatus::OutOfMemory;
+            }
+            else
+            {
+                return EncoderStatus::CodecInitFailed;
+            }
         }
 
         aom_codec_control(codec, AOME_SET_CPUUSED, encodeOptions.cpuUsed);

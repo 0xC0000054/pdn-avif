@@ -10,17 +10,16 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System;
 using System.IO;
 
 namespace AvifFileType.AvifContainer
 {
     internal class Box
     {
-        private readonly long startOffset;
-
         public Box(EndianBinaryReader reader)
         {
-            this.startOffset = reader.Position;
+            long startOffset = reader.Position;
             uint size32 = reader.ReadUInt32();
             this.Type = reader.ReadFourCC();
 
@@ -30,7 +29,7 @@ namespace AvifFileType.AvifContainer
             {
                 case 0:
                     // The box extends to the end of the file.
-                    this.Size = reader.Length - this.startOffset;
+                    this.Size = reader.Length - startOffset;
                     break;
                 case 1:
                     // The box size is 64-bit.
@@ -50,6 +49,14 @@ namespace AvifFileType.AvifContainer
 
             this.BoxDataStartOffset = reader.Position;
             this.BoxDataSize = this.Size - boxHeaderSize;
+            try
+            {
+                this.End = checked(startOffset + this.Size);
+            }
+            catch (OverflowException ex)
+            {
+                throw new IOException($"The box is larger than { long.MaxValue } bytes.", ex);
+            }
         }
 
         protected Box(Box header)
@@ -59,37 +66,23 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowArgumentNullException(nameof(header));
             }
 
-            this.startOffset = header.startOffset;
             this.Size = header.Size;
             this.Type = header.Type;
             this.BoxDataStartOffset = header.BoxDataStartOffset;
             this.BoxDataSize = header.BoxDataSize;
+            this.End = header.End;
         }
 
         protected Box(FourCC type)
         {
-            this.startOffset = -1;
             this.Size = -1;
             this.Type = type;
             this.BoxDataStartOffset = -1;
             this.BoxDataSize = -1;
+            this.End = -1;
         }
 
-        public long End
-        {
-            get
-            {
-                if (this.startOffset >= 0)
-                {
-                    return checked(this.startOffset + this.Size);
-                }
-                else
-                {
-                    // The box has not been read from an existing file.
-                    return -1;
-                }
-            }
-        }
+        public long End { get; }
 
         public long Size { get; }
 

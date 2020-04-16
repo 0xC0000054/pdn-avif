@@ -27,10 +27,18 @@ namespace
         size_t compressedImageSize,
         aom_image_t** decodedImage)
     {
-        if (aom_codec_decode(codec, compressedImage, compressedImageSize, nullptr) != AOM_CODEC_OK)
+        const aom_codec_err_t error = aom_codec_decode(codec, compressedImage, compressedImageSize, nullptr);
+        if (error != AOM_CODEC_OK)
         {
             *decodedImage = nullptr;
-            return DecoderStatus::DecodeFailed;
+            if (error == AOM_CODEC_MEM_ERROR)
+            {
+                return DecoderStatus::OutOfMemory;
+            }
+            else
+            {
+                return DecoderStatus::DecodeFailed;
+            }
         }
 
         aom_codec_iter_t iter = nullptr;
@@ -64,9 +72,17 @@ DecoderStatus DecodeColorImage(
 
     aom_codec_iface_t* iface = aom_codec_av1_dx();
 
-    if (aom_codec_dec_init(&codec, iface, nullptr, 0) != AOM_CODEC_OK)
+    const aom_codec_err_t error = aom_codec_dec_init(&codec, iface, nullptr, 0);
+    if (error != AOM_CODEC_OK)
     {
-        return DecoderStatus::CodecInitFailed;
+        if (error == AOM_CODEC_MEM_ERROR)
+        {
+            return DecoderStatus::OutOfMemory;
+        }
+        else
+        {
+            return DecoderStatus::DecodeFailed;
+        }
     }
     // The image is owned by the decoder.
 

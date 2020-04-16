@@ -81,7 +81,7 @@ DecoderStatus DecodeColorImage(
         }
         else
         {
-            return DecoderStatus::DecodeFailed;
+            return DecoderStatus::CodecInitFailed;
         }
     }
     // The image is owned by the decoder.
@@ -136,7 +136,7 @@ DecoderStatus DecodeAlphaImage(
         }
         else
         {
-            return DecoderStatus::DecodeFailed;
+            return DecoderStatus::CodecInitFailed;
         }
     }
     // The image is owned by the decoder.

@@ -202,7 +202,7 @@ namespace AvifFileType
         {
             VerifyNotDisposed();
 
-            ItemLocationEntry entry = this.parser.TryGetExifLocation(this.primaryItemId);
+            ItemLocationEntry entry = this.parser.TryGetXmpLocation(this.primaryItemId);
 
             if (entry != null)
             {

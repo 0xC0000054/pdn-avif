@@ -12,7 +12,8 @@
 
 namespace AvifFileType.AvifContainer
 {
-    internal abstract class ItemProperty : Box, IItemProperty
+    internal abstract class ItemProperty
+        : Box, IItemProperty
     {
         protected ItemProperty(Box header)
             : base(header)

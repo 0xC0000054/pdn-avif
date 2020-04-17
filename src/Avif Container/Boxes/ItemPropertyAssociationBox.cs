@@ -75,9 +75,9 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public bool LargeItemId => this.Version >= 1;
+        private bool LargeItemId => this.Version >= 1;
 
-        public bool LargePropertyIndex => (this.Flags & 1) == 1;
+        private bool LargePropertyIndex => (this.Flags & 1) == 1;
 
         public void Add(uint itemId, bool essential, ushort propertyIndex)
         {

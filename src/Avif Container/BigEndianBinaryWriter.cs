@@ -19,8 +19,8 @@ namespace AvifFileType.AvifContainer
         : IDisposable
     {
         private Stream stream;
-        private bool leaveOpen;
         private bool disposed;
+        private readonly bool leaveOpen;
         private readonly byte[] buffer;
 
         public BigEndianBinaryWriter(Stream stream, bool leaveOpen)

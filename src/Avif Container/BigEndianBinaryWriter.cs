@@ -40,6 +40,7 @@ namespace AvifFileType.AvifContainer
         {
             get
             {
+                VerifyNotDisposed();
                 this.stream.Flush();
                 return this.stream;
             }
@@ -47,8 +48,16 @@ namespace AvifFileType.AvifContainer
 
         public long Position
         {
-            get => this.stream.Position;
-            set => this.stream.Position = value;
+            get
+            {
+                VerifyNotDisposed();
+                return this.stream.Position;
+            }
+            set
+            {
+                VerifyNotDisposed();
+                this.stream.Position = value;
+            }
         }
 
         public void Dispose()

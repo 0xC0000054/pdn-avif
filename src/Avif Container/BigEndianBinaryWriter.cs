@@ -19,7 +19,6 @@ namespace AvifFileType.AvifContainer
         : IDisposable
     {
         private Stream stream;
-        private bool disposed;
         private readonly bool leaveOpen;
         private readonly byte[] buffer;
 
@@ -33,7 +32,6 @@ namespace AvifFileType.AvifContainer
             this.stream = stream;
             this.leaveOpen = leaveOpen;
             this.buffer = new byte[sizeof(ulong)];
-            this.disposed = false;
         }
 
         public Stream BaseStream
@@ -62,15 +60,14 @@ namespace AvifFileType.AvifContainer
 
         public void Dispose()
         {
-            if (!this.disposed)
+            if (this.stream != null)
             {
-                this.disposed = true;
-
-                if (this.stream != null && !this.leaveOpen)
+                if (!this.leaveOpen)
                 {
                     this.stream.Dispose();
-                    this.stream = null;
                 }
+
+                this.stream = null;
             }
         }
 
@@ -158,7 +155,7 @@ namespace AvifFileType.AvifContainer
 
         private void VerifyNotDisposed()
         {
-            if (this.disposed)
+            if (this.stream == null)
             {
                 ExceptionUtil.ThrowObjectDisposedException(nameof(BigEndianBinaryWriter));
             }

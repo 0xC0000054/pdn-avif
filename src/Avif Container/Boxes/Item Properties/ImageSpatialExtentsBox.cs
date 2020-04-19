@@ -14,7 +14,7 @@ using System;
 
 namespace AvifFileType.AvifContainer
 {
-    internal class ImageSpatialExtentsBox
+    internal sealed class ImageSpatialExtentsBox
         : ItemPropertyFull
     {
         public ImageSpatialExtentsBox(EndianBinaryReader reader, Box header)

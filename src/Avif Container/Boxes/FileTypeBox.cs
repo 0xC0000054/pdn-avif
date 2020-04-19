@@ -15,7 +15,7 @@ using System.Collections.Generic;
 
 namespace AvifFileType.AvifContainer
 {
-    internal class FileTypeBox
+    internal sealed class FileTypeBox
         : Box
     {
         private readonly FourCC majorBrand;

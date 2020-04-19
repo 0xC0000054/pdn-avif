@@ -14,7 +14,8 @@ using System;
 
 namespace AvifFileType.Exif
 {
-    internal readonly struct IFDEntry : IEquatable<IFDEntry>
+    internal readonly struct IFDEntry
+        : IEquatable<IFDEntry>
     {
         public const int SizeOf = 12;
 

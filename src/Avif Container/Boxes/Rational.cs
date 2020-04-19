@@ -14,7 +14,8 @@ using System;
 
 namespace AvifFileType.AvifContainer
 {
-    internal readonly struct Rational : IEquatable<Rational>
+    internal readonly struct Rational
+        : IEquatable<Rational>
     {
         public Rational(EndianBinaryReader reader)
         {

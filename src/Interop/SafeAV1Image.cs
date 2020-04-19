@@ -14,7 +14,8 @@ using System.Runtime.InteropServices;
 
 namespace AvifFileType.Interop
 {
-    internal abstract class SafeAV1Image : SafeBuffer
+    internal abstract class SafeAV1Image
+        : SafeBuffer
     {
         protected SafeAV1Image(bool ownsHandle) : base(ownsHandle)
         {

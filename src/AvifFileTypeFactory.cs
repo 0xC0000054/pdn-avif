@@ -14,7 +14,8 @@ using PaintDotNet;
 
 namespace AvifFileType
 {
-    public sealed class AvifFileTypeFactory : IFileTypeFactory2
+    public sealed class AvifFileTypeFactory
+        : IFileTypeFactory2
     {
         public FileType[] GetFileTypeInstances(IFileTypeHost host)
         {

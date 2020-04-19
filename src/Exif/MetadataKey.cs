@@ -16,7 +16,8 @@ using System.Diagnostics;
 namespace AvifFileType.Exif
 {
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
-    internal readonly struct MetadataKey : IEquatable<MetadataKey>
+    internal readonly struct MetadataKey
+        : IEquatable<MetadataKey>
     {
         public MetadataKey(MetadataSection section, ushort tagId)
         {

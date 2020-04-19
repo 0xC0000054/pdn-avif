@@ -21,7 +21,8 @@ using System.IO;
 
 namespace AvifFileType
 {
-    internal sealed class AvifReader : IDisposable
+    internal sealed class AvifReader
+        : IDisposable
     {
         private Stream stream;
         private bool disposed;

@@ -17,7 +17,8 @@ using System.Diagnostics;
 namespace AvifFileType.Exif
 {
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
-    internal sealed class MetadataEntry : IEquatable<MetadataEntry>
+    internal sealed class MetadataEntry
+        : IEquatable<MetadataEntry>
     {
         private readonly byte[] data;
 

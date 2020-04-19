@@ -16,7 +16,8 @@ using System.Reflection;
 
 namespace AvifFileType
 {
-    public sealed class PluginSupportInfo : IPluginSupportInfo
+    public sealed class PluginSupportInfo
+        : IPluginSupportInfo
     {
         public string DisplayName => "AVIF FileType";
 

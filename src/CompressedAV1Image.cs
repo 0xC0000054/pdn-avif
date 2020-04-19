@@ -15,7 +15,8 @@ using System;
 
 namespace AvifFileType
 {
-    internal sealed class CompressedAV1Image : IDisposable
+    internal sealed class CompressedAV1Image
+        : IDisposable
     {
         private SafeAV1Image data;
 

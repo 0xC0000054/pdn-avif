@@ -19,7 +19,8 @@ namespace AvifFileType.Exif
 {
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(ExifValueCollectionDebugView))]
-    internal sealed class ExifValueCollection : IEnumerable<MetadataEntry>
+    internal sealed class ExifValueCollection
+        : IEnumerable<MetadataEntry>
     {
         private readonly List<MetadataEntry> exifMetadata;
 

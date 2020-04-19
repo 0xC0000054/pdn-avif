@@ -18,7 +18,8 @@ using System.Linq;
 
 namespace AvifFileType
 {
-    internal sealed class AvifParser : IDisposable
+    internal sealed class AvifParser
+        : IDisposable
     {
         private FileTypeBox fileTypeBox;
         private MetaBox metaBox;

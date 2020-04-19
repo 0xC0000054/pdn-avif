@@ -15,7 +15,8 @@ using System.Runtime.InteropServices;
 
 namespace AvifFileType.Interop
 {
-    internal sealed class SafeProcessHeapBuffer : SafeBuffer
+    internal sealed class SafeProcessHeapBuffer
+        : SafeBuffer
     {
         private static readonly IntPtr ProcessHeap = UnsafeNativeMethods.GetProcessHeap();
 

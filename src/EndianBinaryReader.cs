@@ -18,7 +18,8 @@ namespace AvifFileType
     // Adapted from 'Problem and Solution: The Terrible Inefficiency of FileStream and BinaryReader'
     // https://jacksondunstan.com/articles/3568
 
-    internal sealed class EndianBinaryReader : IDisposable
+    internal sealed class EndianBinaryReader
+        : IDisposable
     {
 #pragma warning disable IDE0032 // Use auto property
         private Stream stream;

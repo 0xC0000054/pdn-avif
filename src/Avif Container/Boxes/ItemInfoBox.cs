@@ -57,7 +57,7 @@ namespace AvifFileType.AvifContainer
                     ExceptionUtil.ThrowFormatException($"Expected an 'infe' box, actual value: '{ entryHeader.Type }'");
                 }
 
-                this.itemInfoEntries.Add(new ItemInfoEntryBox(reader, entryHeader));
+                this.itemInfoEntries.Add(ItemInfoEntryFactory.Create(reader, entryHeader));
                 reader.Position = entryHeader.End;
             }
         }

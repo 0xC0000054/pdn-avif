@@ -56,6 +56,7 @@
     <Compile Include="Avif Container\Boxes\Enums\ImageRotation.cs" />
     <Compile Include="Avif Container\Boxes\IItemInfoEntry.cs" />
     <Compile Include="Avif Container\Boxes\IItemReferenceEntry.cs" />
+    <Compile Include="Avif Container\Boxes\Item Info Entries\ItemInfoEntryFactory.cs" />
     <Compile Include="Avif Container\Boxes\Item Properties\ItemPropertyFactory.cs" />
     <Compile Include="Avif Container\Boxes\Item Properties\ItemPropertyFull.cs" />
     <Compile Include="Avif Container\Boxes\Item Properties\ItemProperty.cs" />

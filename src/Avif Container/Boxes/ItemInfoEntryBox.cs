@@ -36,7 +36,7 @@ namespace AvifFileType.AvifContainer
             }
             else
             {
-                throw new FormatException("ItemInfoEntryBox version must be 2 or 3, actual value: " + this.Version.ToString());
+                throw new FormatException($"{ nameof(ItemInfoEntryBox) } version must be 2 or 3, actual value: { this.Version }.");
             }
             this.ItemProtectionIndex = reader.ReadUInt16();
             this.ItemType = reader.ReadFourCC();

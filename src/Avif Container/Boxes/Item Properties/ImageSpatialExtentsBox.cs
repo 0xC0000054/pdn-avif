@@ -22,7 +22,7 @@ namespace AvifFileType.AvifContainer
         {
             if (this.Version != 0)
             {
-                throw new FormatException("ImageSpatialExtentsBox version must be 0, actual value: " + this.Version.ToString());
+                throw new FormatException($"{ nameof(ImageSpatialExtentsBox) } version must be 0, actual value: { this.Version }.");
             }
 
             this.ImageWidth = reader.ReadUInt32();

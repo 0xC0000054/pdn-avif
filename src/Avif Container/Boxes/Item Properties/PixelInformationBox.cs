@@ -24,7 +24,7 @@ namespace AvifFileType.AvifContainer
         {
             if (this.Version != 0)
             {
-                throw new FormatException("ImageSpatialExtentsBox version must be 0, actual value: " + this.Version.ToString());
+                throw new FormatException($"{ nameof(PixelInformationBox) } version must be 0, actual value: { this.Version }.");
             }
 
             byte channelCount = reader.ReadByte();

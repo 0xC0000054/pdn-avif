@@ -29,7 +29,7 @@ namespace AvifFileType.AvifContainer
                     this.ItemId = reader.ReadUInt32();
                     break;
                 default:
-                    throw new FormatException("ItemLocationBox version must be 0, 1 or 2, actual value: " + parent.Version.ToString());
+                    throw new FormatException($"{ nameof(ItemLocationBox) } version must be 0, 1 or 2, actual value: { parent.Version }.");
             }
 
             if (parent.Version == 1 || parent.Version == 2)

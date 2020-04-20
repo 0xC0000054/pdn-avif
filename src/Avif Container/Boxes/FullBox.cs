@@ -33,6 +33,13 @@ namespace AvifFileType.AvifContainer
             this.Flags = versionAndFlags & 0x00ffffff;
         }
 
+        protected FullBox(FullBox header)
+            : base(header)
+        {
+            this.Version = header.Version;
+            this.Flags = header.Flags;
+        }
+
         protected FullBox(byte version, uint flags, FourCC type)
             : base(type)
         {

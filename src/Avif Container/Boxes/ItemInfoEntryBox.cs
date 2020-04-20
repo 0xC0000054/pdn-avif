@@ -44,7 +44,7 @@ namespace AvifFileType.AvifContainer
         }
 
         protected ItemInfoEntryBox(ItemInfoEntryBox header)
-            : base(header.Version, header.Flags, header.Type)
+            : base(header)
         {
             this.ItemId = header.ItemId;
             this.ItemProtectionIndex = header.ItemProtectionIndex;

@@ -15,7 +15,8 @@ using System.Collections.Generic;
 
 namespace AvifFileType.AvifContainer
 {
-    internal sealed class PixelInformationBox : FullBox, IItemProperty
+    internal sealed class PixelInformationBox
+        : ItemPropertyFull
     {
 
         public PixelInformationBox(EndianBinaryReader reader, Box header)

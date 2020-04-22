@@ -157,7 +157,7 @@ namespace
 
         if (status == EncoderStatus::Ok)
         {
-            const aom_codec_err_t encodeError = aom_codec_encode(&codec, frame, 0, 1, 0);
+            aom_codec_err_t encodeError = aom_codec_encode(&codec, frame, 0, 1, 0);
 
             if (encodeError == AOM_CODEC_OK)
             {
@@ -176,7 +176,12 @@ namespace
                             break;
                         }
 
-                        aom_codec_encode(&codec, nullptr, 0, 1, 0);
+                        encodeError = aom_codec_encode(&codec, nullptr, 0, 1, 0);
+                        if (encodeError != AOM_CODEC_OK)
+                        {
+                            status = encodeError == AOM_CODEC_MEM_ERROR ? EncoderStatus::OutOfMemory : EncoderStatus::EncodeFailed;
+                            break;
+                        }
                         flushed = true;
                     }
                     else if (pkt->kind == AOM_CODEC_CX_FRAME_PKT)
@@ -204,7 +209,7 @@ namespace
             }
             else
             {
-                status = EncoderStatus::EncodeFailed;
+                status = encodeError == AOM_CODEC_MEM_ERROR ? EncoderStatus::OutOfMemory : EncoderStatus::EncodeFailed;
             }
 
             aom_codec_destroy(&codec);

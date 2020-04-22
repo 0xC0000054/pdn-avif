@@ -13,11 +13,13 @@
 using AvifFileType.AvifContainer;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
 namespace AvifFileType
 {
+    [DebuggerTypeProxy(typeof(AvifParserDebugView))]
     internal sealed class AvifParser
         : IDisposable
     {
@@ -447,6 +449,20 @@ namespace AvifFileType
             }
 
             return null;
+        }
+
+        private sealed class AvifParserDebugView
+        {
+            private readonly AvifParser parser;
+
+            public AvifParserDebugView(AvifParser parser)
+            {
+                this.parser = parser;
+            }
+
+            public FileTypeBox FileTypeBox => this.parser.fileTypeBox;
+
+            public MetaBox MetaBox => this.parser.metaBox;
         }
     }
 }

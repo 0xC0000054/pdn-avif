@@ -16,7 +16,7 @@ using System.Text;
 
 namespace AvifFileType.AvifContainer
 {
-    [DebuggerDisplay("{Value, nq}")]
+    [DebuggerDisplay("{Value}")]
     internal sealed class BoxString
         : IEquatable<BoxString>
     {

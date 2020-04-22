@@ -88,9 +88,9 @@ namespace AvifFileType.AvifContainer
 
         public FourCC Type { get; }
 
-        protected long BoxDataStartOffset { get; }
+        protected virtual long BoxDataStartOffset { get; }
 
-        protected long BoxDataSize { get; }
+        protected virtual long BoxDataSize { get; }
 
         public ulong GetSize()
         {

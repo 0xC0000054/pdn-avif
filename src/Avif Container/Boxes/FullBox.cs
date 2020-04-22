@@ -51,6 +51,36 @@ namespace AvifFileType.AvifContainer
 
         public uint Flags { get; protected set; }
 
+        protected override long BoxDataStartOffset
+        {
+            get
+            {
+                if (base.BoxDataStartOffset != -1)
+                {
+                    return base.BoxDataStartOffset + sizeof(uint);
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+        }
+
+        protected override long BoxDataSize
+        {
+            get
+            {
+                if (base.BoxDataSize != -1)
+                {
+                    return base.BoxDataSize - sizeof(uint);
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+        }
+
         public override void Write(BigEndianBinaryWriter writer)
         {
             base.Write(writer);

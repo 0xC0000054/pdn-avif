@@ -13,7 +13,6 @@
 #include "AvifNative.h"
 #include "AV1Decoder.h"
 #include "DecodedImageConverter.h"
-#include "Memory.h"
 #include <aom/aom_decoder.h>
 #include <aom/aomdx.h>
 #include <aom/aom_image.h>

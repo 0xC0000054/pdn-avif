@@ -128,13 +128,13 @@ namespace AvifFileType
 
                     while (totalBytesRead < length)
                     {
-                        int bytesRead = (int)Math.Min(length - totalBytesRead, MaxBufferSize);
+                        ulong bytesRead = Math.Min(length - totalBytesRead, MaxBufferSize);
 
                         Buffer.MemoryCopy(readPtr + totalBytesRead, writePtr, bytesRead, bytesRead);
 
-                        stream.Write(writeBuffer, 0, bytesRead);
+                        stream.Write(writeBuffer, 0, (int)bytesRead);
 
-                        totalBytesRead += (ulong)bytesRead;
+                        totalBytesRead += bytesRead;
                     }
                 }
             }

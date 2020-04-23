@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("ItemId: {ItemId, nq}")]
     internal sealed class PrimaryItemBox
         : FullBox
     {

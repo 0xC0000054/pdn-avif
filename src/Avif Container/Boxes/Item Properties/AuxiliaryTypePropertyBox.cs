@@ -12,9 +12,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("AuxType: {AuxType, nq}")]
     internal class AuxiliaryTypePropertyBox
         : ItemPropertyFull
     {

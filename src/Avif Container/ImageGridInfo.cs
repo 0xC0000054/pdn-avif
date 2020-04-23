@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ImageGridInfo
     {
         public ImageGridInfo(IReadOnlyList<uint> childImageIds, ImageGridDescriptor grid)
@@ -44,6 +46,15 @@ namespace AvifFileType.AvifContainer
         public uint OutputWidth { get; }
 
         public uint OutputHeight { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"Columns: {this.TileColumnCount}, Rows: {this.TileRowCount}, OutputWidth {this.OutputWidth}, OutputHeight: {this.OutputHeight}";
+            }
+        }
 
         public void CheckAvailableTileCount()
         {

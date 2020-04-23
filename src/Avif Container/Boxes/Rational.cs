@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal readonly struct Rational
         : IEquatable<Rational>
     {
@@ -26,6 +28,15 @@ namespace AvifFileType.AvifContainer
         public int Numerator { get; }
 
         public uint Denominator { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"Numerator: {this.Numerator}, Denominator: {this.Denominator}";
+            }
+        }
 
         public override bool Equals(object obj)
         {
@@ -73,6 +84,11 @@ namespace AvifFileType.AvifContainer
         public static bool operator !=(Rational left, Rational right)
         {
             return !(left == right);
+        }
+
+        public override string ToString()
+        {
+            return this.Numerator.ToString() + "/" + this.Denominator.ToString();
         }
     }
 }

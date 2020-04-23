@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal class ItemInfoEntryBox
         : FullBox, IItemInfoEntry
     {
@@ -73,6 +75,22 @@ namespace AvifFileType.AvifContainer
         public FourCC ItemType { get; }
 
         public BoxString Name { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.Name.Value))
+                {
+                    return $"ItemId: { this.ItemId }, Type: '{ this.ItemType }'";
+                }
+                else
+                {
+                    return $"ItemId: { this.ItemId }, Type: '{ this.ItemType }', Name: \"{ this.Name }\"";
+                }
+            }
+        }
 
         public override void Write(BigEndianBinaryWriter writer)
         {

@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class PixelAspectRatioBox
         : ItemProperty
     {
@@ -32,6 +35,15 @@ namespace AvifFileType.AvifContainer
         public uint HorizontalSpacing { get; }
 
         public uint VerticalSpacing { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"HorizontalSpacing: {this.HorizontalSpacing}, VerticalSpacing: {this.VerticalSpacing}";
+            }
+        }
 
         public override void Write(BigEndianBinaryWriter writer)
         {

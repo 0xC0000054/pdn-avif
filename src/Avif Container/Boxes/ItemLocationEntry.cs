@@ -11,10 +11,12 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ItemLocationEntry
     {
         public ItemLocationEntry(EndianBinaryReader reader, ItemLocationBox parent)
@@ -86,6 +88,18 @@ namespace AvifFileType.AvifContainer
         public ulong BaseOffset { get; }
 
         public ItemLocationExtent Extent { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                ulong offset = this.BaseOffset + this.Extent.Offset;
+                ulong length = this.Extent.Length;
+
+                return $"ItemId: { this.ItemId }, ConstructionMethod: { this.ConstructionMethod }, Offset: { offset }, Length: { length }";
+            }
+        }
 
         public static ulong GetSize(ItemLocationBox parent)
         {

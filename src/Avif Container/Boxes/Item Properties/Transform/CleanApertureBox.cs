@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class CleanApertureBox
         : ItemProperty
     {
@@ -40,5 +43,14 @@ namespace AvifFileType.AvifContainer
         public Rational HorizontalOffset { get; }
 
         public Rational VerticalOffset { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"Width: {this.Width}, Height: {this.Height}, HorizontalOffset: {this.HorizontalOffset}, VerticalOffset: {this.VerticalOffset}";
+            }
+        }
     }
 }

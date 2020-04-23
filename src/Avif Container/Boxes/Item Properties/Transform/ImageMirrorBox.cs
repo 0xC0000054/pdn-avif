@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("Mirror: {MirrorDirection, nq}")]
     internal sealed class ImageMirrorBox
         : ItemProperty
     {

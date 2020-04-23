@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ImageSpatialExtentsBox
         : ItemPropertyFull
     {
@@ -39,6 +41,15 @@ namespace AvifFileType.AvifContainer
         public uint ImageWidth { get; }
 
         public uint ImageHeight { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"Width: {this.ImageWidth}, Height: {this.ImageHeight}";
+            }
+        }
 
         public override void Write(BigEndianBinaryWriter writer)
         {

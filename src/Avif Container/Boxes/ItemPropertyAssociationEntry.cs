@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal readonly struct ItemPropertyAssociationEntry
     {
         public ItemPropertyAssociationEntry(bool essential, ushort propertyIndex)
@@ -23,5 +26,14 @@ namespace AvifFileType.AvifContainer
         public bool Essential { get; }
 
         public uint PropertyIndex { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"Essential: { this.Essential }, PropertyIndex: { this.PropertyIndex }";
+            }
+        }
     }
 }

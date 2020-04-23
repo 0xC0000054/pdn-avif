@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ImageRotateBox
         : ItemProperty
     {
@@ -42,5 +45,34 @@ namespace AvifFileType.AvifContainer
         }
 
         public ImageRotation Rotation { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                string description;
+                switch (this.Rotation)
+                {
+                    case ImageRotation.RotateNone:
+                        description = "None";
+                        break;
+                    case ImageRotation.Rotate90CCW:
+                        description = "90° counter-clockwise";
+                        break;
+                    case ImageRotation.Rotate180:
+                        description = "180°";
+                        break;
+                    case ImageRotation.Rotate270CCW:
+                        description = "270° counter-clockwise";
+                        break;
+                    default:
+                        description = $"Unknown value: {this.Rotation}";
+                        break;
+                }
+
+                return $"Rotation: { description }";
+            }
+        }
     }
 }

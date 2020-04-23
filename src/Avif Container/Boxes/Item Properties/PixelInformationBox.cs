@@ -12,9 +12,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class PixelInformationBox
         : ItemPropertyFull
     {
@@ -43,7 +45,17 @@ namespace AvifFileType.AvifContainer
         {
             this.ChannelBitDepths = monochromeImage ? new byte[1] { 8 } : new byte[3] { 8, 8, 8 };
         }
+
         public IReadOnlyList<byte> ChannelBitDepths { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"Channel count: {this.ChannelBitDepths.Count}";
+            }
+        }
 
         public override void Write(BigEndianBinaryWriter writer)
         {

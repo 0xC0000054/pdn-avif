@@ -474,6 +474,10 @@ namespace AvifFileType
             string value = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
 
             this.readOffset += length;
+            if (this.Position < this.Length)
+            {
+                this.Position++; // Skip the null-terminator if one was found at the end of the string.
+            }
 
             return new AvifContainer.BoxString(value);
         }

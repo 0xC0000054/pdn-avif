@@ -56,7 +56,7 @@ namespace AvifFileType.AvifContainer
 
         protected sealed override ulong GetTotalBoxSize()
         {
-            return base.GetTotalBoxSize() + this.ContentType.GetSize() + this.ContentEncoding?.GetSize() ?? 0;
+            return base.GetTotalBoxSize() + this.ContentType.GetSize() + (this.ContentEncoding?.GetSize() ?? 0);
         }
     }
 }

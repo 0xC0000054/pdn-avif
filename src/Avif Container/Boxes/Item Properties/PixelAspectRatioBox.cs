@@ -15,29 +15,30 @@ namespace AvifFileType.AvifContainer
     internal sealed class PixelAspectRatioBox
         : ItemProperty
     {
-        private readonly uint horizontalSpacing;
-        private readonly uint verticalSpacing;
-
         public PixelAspectRatioBox(EndianBinaryReader reader, Box header)
             : base(header)
         {
-            this.horizontalSpacing = reader.ReadUInt32();
-            this.verticalSpacing = reader.ReadUInt32();
+            this.HorizontalSpacing = reader.ReadUInt32();
+            this.VerticalSpacing = reader.ReadUInt32();
         }
 
         public PixelAspectRatioBox(uint horizontalSpacing, uint verticalSpacing)
             : base(BoxTypes.PixelAspectRatio)
         {
-            this.horizontalSpacing = horizontalSpacing;
-            this.verticalSpacing = verticalSpacing;
+            this.HorizontalSpacing = horizontalSpacing;
+            this.VerticalSpacing = verticalSpacing;
         }
+
+        public uint HorizontalSpacing { get; }
+
+        public uint VerticalSpacing { get; }
 
         public override void Write(BigEndianBinaryWriter writer)
         {
             base.Write(writer);
 
-            writer.Write(this.horizontalSpacing);
-            writer.Write(this.verticalSpacing);
+            writer.Write(this.HorizontalSpacing);
+            writer.Write(this.VerticalSpacing);
         }
 
         protected override ulong GetTotalBoxSize()

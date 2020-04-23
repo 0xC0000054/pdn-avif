@@ -76,6 +76,11 @@ namespace AvifFileType.AvifContainer
             return (int)Math.Round(ToDouble());
         }
 
+        public override string ToString()
+        {
+            return this.Numerator.ToString() + "/" + this.Denominator.ToString();
+        }
+
         public static bool operator ==(Rational left, Rational right)
         {
             return left.Equals(right);
@@ -84,11 +89,6 @@ namespace AvifFileType.AvifContainer
         public static bool operator !=(Rational left, Rational right)
         {
             return !(left == right);
-        }
-
-        public override string ToString()
-        {
-            return this.Numerator.ToString() + "/" + this.Denominator.ToString();
         }
     }
 }

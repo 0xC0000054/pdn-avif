@@ -54,7 +54,7 @@ namespace AvifFileType.AvifContainer
         {
             if (this.Denominator == 0)
             {
-                return 0.0;
+                ExceptionUtil.ThrowInvalidOperationException("The Rational denominator is zero.");
             }
 
             return (double)this.Numerator / this.Denominator;

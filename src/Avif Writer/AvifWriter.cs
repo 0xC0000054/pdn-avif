@@ -125,18 +125,35 @@ namespace AvifFileType
             // The property association ids are 1-based
             ushort propertyAssociationIndex = 1;
 
+            // Cache the property association index values for the ImageSpatialExtentsBox
+            // and PixelAspectRatioBox.
+            // These boxes can be shared between the color and alpha images, which provides
+            // a small reduction in file size.
+            ushort imageSpatialExtentsAssociationIndex = 0;
+            ushort pixelAspectRatioAssociationIndex = 0;
+
             for (int i = 0; i < items.Count; i++)
             {
                 AvifWriterItem item = items[i];
                 if (item.Image != null)
                 {
-                    itemPropertiesBox.AddProperty(new ImageSpatialExtentsBox((uint)item.Image.Width, (uint)item.Image.Height));
-                    itemPropertiesBox.AddPropertyAssociation(item.Id, false, propertyAssociationIndex);
-                    propertyAssociationIndex++;
+                    if (imageSpatialExtentsAssociationIndex == 0)
+                    {
+                        itemPropertiesBox.AddProperty(new ImageSpatialExtentsBox((uint)item.Image.Width, (uint)item.Image.Height));
+                        imageSpatialExtentsAssociationIndex = propertyAssociationIndex;
+                        propertyAssociationIndex++;
+                    }
 
-                    itemPropertiesBox.AddProperty(new PixelAspectRatioBox(1, 1));
-                    itemPropertiesBox.AddPropertyAssociation(item.Id, false, propertyAssociationIndex);
-                    propertyAssociationIndex++;
+                    itemPropertiesBox.AddPropertyAssociation(item.Id, false, imageSpatialExtentsAssociationIndex);
+
+                    if (pixelAspectRatioAssociationIndex == 0)
+                    {
+                        itemPropertiesBox.AddProperty(new PixelAspectRatioBox(1, 1));
+                        pixelAspectRatioAssociationIndex = propertyAssociationIndex;
+                        propertyAssociationIndex++;
+                    }
+
+                    itemPropertiesBox.AddPropertyAssociation(item.Id, false, pixelAspectRatioAssociationIndex);
 
                     itemPropertiesBox.AddProperty(AV1ConfigBoxBuilder.Build(item.Image, item.IsAlphaImage));
                     itemPropertiesBox.AddPropertyAssociation(item.Id, true, propertyAssociationIndex);

@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class HandlerBox
         : FullBox
     {
@@ -59,6 +61,15 @@ namespace AvifFileType.AvifContainer
         }
 
         public string Name => this.name?.Value;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"Name: \"{ this.name.Value }\"";
+            }
+        }
 
         public override void Write(BigEndianBinaryWriter writer)
         {

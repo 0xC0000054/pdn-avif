@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class UriItemEntryInfoBox
         : ItemInfoEntryBox
     {
@@ -22,6 +25,9 @@ namespace AvifFileType.AvifContainer
         {
             this.uri = reader.ReadBoxString(header.End);
         }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay => $"ItemId: { this.ItemId }, Name: \"{ this.Name }\", Uri: \"{ this.uri }\"";
 
         public UriItemEntryInfoBox(ushort itemId, ushort itemProtectionIndex, string name, string uri)
             : base(itemId, itemProtectionIndex, ItemInfoEntryTypes.Uri, name)

@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("Count = {Count}")]
     internal sealed class ItemReferenceBox
         : FullBox
     {

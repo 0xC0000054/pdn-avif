@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ItemPropertyAssociationBox
         : FullBox
     {
@@ -74,6 +76,9 @@ namespace AvifFileType.AvifContainer
                 }
             }
         }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay => "Count = " + this.entries.Count.ToString();
 
         private bool LargeItemId => this.Version >= 1;
 

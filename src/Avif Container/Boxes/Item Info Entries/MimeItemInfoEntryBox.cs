@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal class MimeItemInfoEntryBox
         : ItemInfoEntryBox
     {
@@ -45,6 +48,22 @@ namespace AvifFileType.AvifContainer
         internal BoxString ContentType { get; }
 
         internal BoxString ContentEncoding { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                if (this.ContentEncoding is null)
+                {
+                    return $"ItemId: { this.ItemId }, Name: \"{ this.Name }\", ContentType: \"{ this.ContentType }\"";
+                }
+                else
+                {
+                    return $"ItemId: { this.ItemId }, Name: \"{ this.Name }\", ContentType: \"{ this.ContentType }\", Encoding: \"{ this.ContentEncoding }\"";
+                }
+            }
+        }
 
         public sealed override void Write(BigEndianBinaryWriter writer)
         {

@@ -12,9 +12,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ItemReferenceEntryBox
         : Box, IItemReferenceEntry
     {
@@ -65,6 +67,43 @@ namespace AvifFileType.AvifContainer
         public uint FromItemId { get; }
 
         public IReadOnlyList<uint> ToItemIds => this.toItemIds;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                if (this.Type == ReferenceTypes.DerivedImage)
+                {
+                    return $"ItemId { this.FromItemId } has { this.toItemIds.Count } child images";
+                }
+                else
+                {
+                    string description;
+                    if (this.Type == ReferenceTypes.AuxiliaryImage)
+                    {
+                        description = "an auxiliary image";
+                    }
+                    else if (this.Type == ReferenceTypes.ContentDescription)
+                    {
+                        description = "a content description";
+                    }
+                    else
+                    {
+                        description = $"a(n) '{ this.Type }'";
+                    }
+
+                    if (this.toItemIds.Count == 1)
+                    {
+                        return $"ItemId { this.FromItemId } is { description } for ItemId { this.toItemIds[0] }";
+                    }
+                    else
+                    {
+                        return $"ItemId { this.FromItemId } is { description } for  {this.toItemIds.Count } items";
+                    }
+                }
+            }
+        }
 
         public ItemReferenceEntryBox(uint fromItemId, FourCC referenceType, params uint[] parentItemIds)
             : base(referenceType)

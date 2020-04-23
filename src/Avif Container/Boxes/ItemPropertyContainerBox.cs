@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ItemPropertyContainerBox
         : Box
     {
@@ -54,6 +56,9 @@ namespace AvifFileType.AvifContainer
         }
 
         public IReadOnlyList<IItemProperty> Properties => this.properties;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay => "Count = " + this.properties.Count.ToString();
 
         public void AddProperty(IItemProperty property)
         {

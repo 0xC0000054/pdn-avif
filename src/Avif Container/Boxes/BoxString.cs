@@ -59,6 +59,11 @@ namespace AvifFileType.AvifContainer
             return (ulong)Encoding.UTF8.GetByteCount(this.Value) + 1;
         }
 
+        public override string ToString()
+        {
+            return this.Value;
+        }
+
         public void Write(BigEndianBinaryWriter writer)
         {
             writer.Write(Encoding.UTF8.GetBytes(this.Value));

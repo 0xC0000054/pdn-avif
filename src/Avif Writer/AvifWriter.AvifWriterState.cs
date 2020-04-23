@@ -79,7 +79,7 @@ namespace AvifFileType
                 if (xmp != null && xmp.Length > 0)
                 {
                     itemId++;
-                    AvifWriterItem xmpItem = AvifWriterItem.CreateFromExif(itemId, xmp);
+                    AvifWriterItem xmpItem = AvifWriterItem.CreateFromXmp(itemId, xmp);
                     xmpItem.ItemReference = new ItemReferenceEntryBox(xmpItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId);
 
                     this.items.Add(xmpItem);

@@ -14,6 +14,7 @@ using AvifFileType.Properties;
 using PaintDotNet;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
+using System;
 using System.IO;
 
 namespace AvifFileType
@@ -72,10 +73,27 @@ namespace AvifFileType
             {
                 new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
                 StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionMode, CompressionMode.Normal),
-                StaticListChoiceProperty.CreateForEnum(PropertyNames.YUVChromaSubsampling, YUVChromaSubsampling.Subsampling422)
+                CreateChromaSubsampling()
             };
 
             return new PropertyCollection(props);
+
+            StaticListChoiceProperty CreateChromaSubsampling()
+            {
+                // The list is created manually because the Subsampling400 enumeration value is not shown
+                // to the user, it is used internally to improve the compression of gray-scale images.
+
+                object[] choiceValues = new object[]
+                {
+                    YUVChromaSubsampling.Subsampling420,
+                    YUVChromaSubsampling.Subsampling422,
+                    YUVChromaSubsampling.Subsampling444
+                };
+
+                int defaultChoiceIndex = Array.IndexOf(choiceValues, YUVChromaSubsampling.Subsampling422);
+
+                return new StaticListChoiceProperty(PropertyNames.YUVChromaSubsampling, choiceValues, defaultChoiceIndex);
+            }
         }
 
         /// <summary>

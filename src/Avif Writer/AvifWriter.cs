@@ -23,6 +23,7 @@ namespace AvifFileType
         private readonly AvifMetadata metadata;
         private readonly FileTypeBox fileTypeBox;
         private readonly MetaBox metaBox;
+        private readonly bool colorImageIsGrayscale;
 
         private readonly ProgressEventHandler progressCallback;
         private uint progressDone;
@@ -30,18 +31,18 @@ namespace AvifFileType
 
         public AvifWriter(CompressedAV1Image color,
                           CompressedAV1Image alpha,
-                          YUVChromaSubsampling chromaSubsampling,
                           AvifMetadata metadata,
                           ProgressEventHandler progressEventHandler,
                           uint progressDone,
                           uint progressTotal)
         {
             this.state = new AvifWriterState(color, alpha, metadata);
+            this.colorImageIsGrayscale = color.Format == YUVChromaSubsampling.Subsampling400;
             this.metadata = metadata;
             this.progressCallback = progressEventHandler;
             this.progressDone = progressDone;
             this.progressTotal = progressTotal;
-            this.fileTypeBox = new FileTypeBox(chromaSubsampling);
+            this.fileTypeBox = new FileTypeBox(color.Format);
             this.metaBox = new MetaBox(this.state.PrimaryItemId, this.state.TotalDataSize > uint.MaxValue);
             PopulateMetaBox();
         }
@@ -129,8 +130,14 @@ namespace AvifFileType
             // and PixelAspectRatioBox.
             // These boxes can be shared between the color and alpha images, which provides
             // a small reduction in file size.
+            //
+            // Gray-scale images can also share the AV1ConfigBox and PixelInformationBox
+            // between the color and alpha images.
+            // This works because the color and alpha images are the same size and YUV format.
             ushort imageSpatialExtentsAssociationIndex = 0;
             ushort pixelAspectRatioAssociationIndex = 0;
+            ushort av1ConfigAssociationIndex = 0;
+            ushort pixelInformationAssociationIndex = 0;
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -155,13 +162,23 @@ namespace AvifFileType
 
                     itemPropertiesBox.AddPropertyAssociation(item.Id, false, pixelAspectRatioAssociationIndex);
 
-                    itemPropertiesBox.AddProperty(AV1ConfigBoxBuilder.Build(item.Image, item.IsAlphaImage));
-                    itemPropertiesBox.AddPropertyAssociation(item.Id, true, propertyAssociationIndex);
-                    propertyAssociationIndex++;
+                    if (!this.colorImageIsGrayscale || av1ConfigAssociationIndex == 0)
+                    {
+                        itemPropertiesBox.AddProperty(AV1ConfigBoxBuilder.Build(item.Image));
+                        av1ConfigAssociationIndex = propertyAssociationIndex;
+                        propertyAssociationIndex++;
+                    }
 
-                    itemPropertiesBox.AddProperty(new PixelInformationBox(item.IsAlphaImage));
-                    itemPropertiesBox.AddPropertyAssociation(item.Id, true, propertyAssociationIndex);
-                    propertyAssociationIndex++;
+                    itemPropertiesBox.AddPropertyAssociation(item.Id, true, av1ConfigAssociationIndex);
+
+                    if (!this.colorImageIsGrayscale || pixelInformationAssociationIndex == 0)
+                    {
+                        itemPropertiesBox.AddProperty(new PixelInformationBox(item.Image.Format));
+                        pixelInformationAssociationIndex = propertyAssociationIndex;
+                        propertyAssociationIndex++;
+                    }
+
+                    itemPropertiesBox.AddPropertyAssociation(item.Id, true, pixelInformationAssociationIndex);
 
                     if (item.IsAlphaImage)
                     {

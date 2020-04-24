@@ -55,6 +55,7 @@ namespace
         aom_img_fmt aomFormat;
         switch (yuvFormat)
         {
+        case YUVChromaSubsampling::Subsampling400:
         case YUVChromaSubsampling::Subsampling420:
             aomFormat = AOM_IMG_FMT_I420;
             break;

@@ -32,7 +32,8 @@ extern "C" {
     {
         Subsampling420,
         Subsampling422,
-        Subsampling444
+        Subsampling444,
+        Subsampling400
     };
 
     enum class EncoderStatus

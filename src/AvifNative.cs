@@ -65,7 +65,7 @@ namespace AvifFileType
                 alphaImage.Initialize(alphaImageSize.ToUInt64());
 
                 color = new CompressedAV1Image(colorImage, surface.Width, surface.Height, options.yuvFormat);
-                alpha = new CompressedAV1Image(alphaImage, surface.Width, surface.Height, YUVChromaSubsampling.Subsampling420);
+                alpha = new CompressedAV1Image(alphaImage, surface.Width, surface.Height, YUVChromaSubsampling.Subsampling400);
             }
             else
             {
@@ -92,7 +92,7 @@ namespace AvifFileType
                 alphaImage.Initialize(alphaImageSize.ToUInt64());
 
                 color = new CompressedAV1Image(colorImage, surface.Width, surface.Height, options.yuvFormat);
-                alpha = new CompressedAV1Image(alphaImage, surface.Width, surface.Height, YUVChromaSubsampling.Subsampling420);
+                alpha = new CompressedAV1Image(alphaImage, surface.Width, surface.Height, YUVChromaSubsampling.Subsampling400);
             }
 
             progressDone = progressContext.progressDone;

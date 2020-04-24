@@ -10,6 +10,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System;
 using System.ComponentModel;
 
 namespace AvifFileType.AvifContainer
@@ -20,13 +21,34 @@ namespace AvifFileType.AvifContainer
         /// Builds the <see cref="AV1ConfigBox"/> for the specified image.
         /// </summary>
         /// <param name="image">The image.</param>
-        /// <param name="isAlphaImage"><c>true</c> if the image is a transparency mask; otherwise, <c>false</c>.</param>
         /// <returns></returns>
-        public static AV1ConfigBox Build(CompressedAV1Image image, bool isAlphaImage)
+        public static AV1ConfigBox Build(CompressedAV1Image image)
         {
             if (image is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(image));
+            }
+
+            bool chromaSubsamplingX;
+            bool chromaSubsamplingY;
+
+            switch (image.Format)
+            {
+                case YUVChromaSubsampling.Subsampling400:
+                case YUVChromaSubsampling.Subsampling420:
+                    chromaSubsamplingX = true;
+                    chromaSubsamplingY = true;
+                    break;
+                case YUVChromaSubsampling.Subsampling422:
+                    chromaSubsamplingX = false;
+                    chromaSubsamplingY = true;
+                    break;
+                case YUVChromaSubsampling.Subsampling444:
+                    chromaSubsamplingX = false;
+                    chromaSubsamplingY = false;
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown { nameof(YUVChromaSubsampling) } value: { image.Format }");
             }
 
             return new AV1ConfigBox()
@@ -36,9 +58,9 @@ namespace AvifFileType.AvifContainer
                 SeqTier0 = false,
                 HighBitDepth = false,
                 TwelveBit = false,
-                Monochrome = isAlphaImage,
-                ChromaSubsamplingX = image.Format == YUVChromaSubsampling.Subsampling420,
-                ChromaSubsamplingY = image.Format != YUVChromaSubsampling.Subsampling444,
+                Monochrome = image.Format == YUVChromaSubsampling.Subsampling400,
+                ChromaSubsamplingX = chromaSubsamplingX,
+                ChromaSubsamplingY = chromaSubsamplingY,
                 ChromaSamplePosition = 0
             };
         }
@@ -47,6 +69,7 @@ namespace AvifFileType.AvifContainer
         {
             switch (format)
             {
+                case YUVChromaSubsampling.Subsampling400:
                 case YUVChromaSubsampling.Subsampling420:
                     return SequenceProfiles.Profile0;
                 case YUVChromaSubsampling.Subsampling422:

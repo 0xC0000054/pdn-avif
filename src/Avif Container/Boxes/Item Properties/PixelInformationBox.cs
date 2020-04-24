@@ -12,6 +12,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
@@ -40,10 +41,22 @@ namespace AvifFileType.AvifContainer
             this.ChannelBitDepths = bitDepths;
         }
 
-        public PixelInformationBox(bool monochromeImage)
+        public PixelInformationBox(YUVChromaSubsampling chromaSubsampling)
             : base(0, 0, BoxTypes.PixelInformation)
         {
-            this.ChannelBitDepths = monochromeImage ? new byte[1] { 8 } : new byte[3] { 8, 8, 8 };
+            switch (chromaSubsampling)
+            {
+                case YUVChromaSubsampling.Subsampling400:
+                    this.ChannelBitDepths = new byte[1] { 8 };
+                    break;
+                case YUVChromaSubsampling.Subsampling420:
+                case YUVChromaSubsampling.Subsampling422:
+                case YUVChromaSubsampling.Subsampling444:
+                    this.ChannelBitDepths = new byte[3] { 8, 8, 8 };
+                    break;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(chromaSubsampling), (int)chromaSubsampling, typeof(YUVChromaSubsampling));
+            }
         }
 
         public IReadOnlyList<byte> ChannelBitDepths { get; }

@@ -84,6 +84,28 @@ namespace
         return  static_cast<uint8_t>(avifRoundf(v * 255.0f));
     }
 
+    uint32_t GetUVHeight(uint32_t imageHeight, aom_img_fmt_t aomFormat)
+    {
+        switch (aomFormat)
+        {
+        case AOM_IMG_FMT_I420:
+        case AOM_IMG_FMT_AOMI420:
+        case AOM_IMG_FMT_I42016:
+        case AOM_IMG_FMT_YV12:
+        case AOM_IMG_FMT_AOMYV12:
+        case AOM_IMG_FMT_YV1216:
+            return imageHeight / 2;
+        case AOM_IMG_FMT_I422:
+        case AOM_IMG_FMT_I42216:
+        case AOM_IMG_FMT_I444:
+        case AOM_IMG_FMT_I44416:
+            return imageHeight;
+        case AOM_IMG_FMT_NONE:
+        default:
+            return 0;
+        }
+    }
+
     void ColorToYUV8(
         const BitmapData* bgraImage,
         const ColorConversionInfo* colorInfo,
@@ -205,6 +227,26 @@ namespace
         }
     }
 
+    void MonoToY8(
+        const BitmapData* bgraImage,
+        uint8_t* yPlane,
+        size_t yPlaneStride)
+    {
+        for (uint32_t y = 0; y < bgraImage->height; ++y)
+        {
+            const ColorBgra* src = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
+            uint8_t* dst = &yPlane[y * yPlaneStride];
+
+            for (uint32_t x = 0; x < bgraImage->width; ++x)
+            {
+                *dst = src->r;
+
+                src++;
+                dst++;
+            }
+        }
+    }
+
     void AlphaToY8(
         const BitmapData* bgraImage,
         uint8_t* yPlane,
@@ -224,6 +266,21 @@ namespace
             }
         }
     }
+
+    void ZeroUVPlanes(
+        uint32_t uvHeight,
+        uint8_t* uPlane,
+        size_t uPlaneStride,
+        uint8_t* vPlane,
+        size_t vPlaneStride)
+    {
+        for (uint32_t y = 0; y < uvHeight; ++y)
+        {
+            // Zero out U and V
+            memset(&uPlane[y * uPlaneStride], 0, uPlaneStride);
+            memset(&vPlane[y * vPlaneStride], 0, vPlaneStride);
+        }
+    }
 }
 
 
@@ -240,17 +297,37 @@ aom_image_t* ConvertColorToAOMImage(
     }
 
     aomImage->range = AOM_CR_FULL_RANGE;
+    aomImage->monochrome = yuvFormat == YUVChromaSubsampling::Subsampling400;
 
-    ColorToYUV8(
-        bgraImage,
-        colorInfo,
-        yuvFormat,
-        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
-        static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]),
-        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_U]),
-        static_cast<size_t>(aomImage->stride[AOM_PLANE_U]),
-        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_V]),
-        static_cast<size_t>(aomImage->stride[AOM_PLANE_V]));
+    if (aomImage->monochrome)
+    {
+        MonoToY8(
+            bgraImage,
+            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
+            static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]));
+
+        const uint32_t uvHeight = GetUVHeight(bgraImage->height, aomFormat);
+
+        ZeroUVPlanes(
+            uvHeight,
+            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_U]),
+            static_cast<size_t>(aomImage->stride[AOM_PLANE_U]),
+            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_V]),
+            static_cast<size_t>(aomImage->stride[AOM_PLANE_V]));
+    }
+    else
+    {
+        ColorToYUV8(
+            bgraImage,
+            colorInfo,
+            yuvFormat,
+            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
+            static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]),
+            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_U]),
+            static_cast<size_t>(aomImage->stride[AOM_PLANE_U]),
+            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_V]),
+            static_cast<size_t>(aomImage->stride[AOM_PLANE_V]));
+    }
 
     return aomImage;
 }
@@ -277,14 +354,14 @@ aom_image_t* ConvertAlphaToAOMImage(const BitmapData* bgraImage)
         reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
         static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]));
 
-    const uint32_t uvHeight = bgraImage->height / 2;
+    const uint32_t uvHeight = GetUVHeight(bgraImage->height, aomFormat);
 
-    for (uint32_t y = 0; y < uvHeight; ++y)
-    {
-        // Zero out U and V
-        memset(&aomImage->planes[AOM_PLANE_U][y * aomImage->stride[AOM_PLANE_U]], 0, aomImage->stride[AOM_PLANE_U]);
-        memset(&aomImage->planes[AOM_PLANE_V][y * aomImage->stride[AOM_PLANE_V]], 0, aomImage->stride[AOM_PLANE_V]);
-    }
+    ZeroUVPlanes(
+        uvHeight,
+        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_U]),
+        static_cast<size_t>(aomImage->stride[AOM_PLANE_U]),
+        reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_V]),
+        static_cast<size_t>(aomImage->stride[AOM_PLANE_V]));
 
     return aomImage;
 }

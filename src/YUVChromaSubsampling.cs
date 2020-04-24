@@ -16,6 +16,13 @@ namespace AvifFileType
     {
         Subsampling420,
         Subsampling422,
-        Subsampling444
+        Subsampling444,
+        /// <summary>
+        /// YUV 4:0:0
+        /// </summary>
+        /// <remarks>
+        /// Used internally for gray-scale images, not shown to the user.
+        /// </remarks>
+        Subsampling400
     }
 }

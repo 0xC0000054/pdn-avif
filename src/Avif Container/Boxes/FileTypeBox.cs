@@ -67,6 +67,7 @@ namespace AvifFileType.AvifContainer
 
             switch (chromaSubsampling)
             {
+                case YUVChromaSubsampling.Subsampling400:
                 case YUVChromaSubsampling.Subsampling420:
                     compatibleBrands.Add(AvifBrands.MA1B);
                     break;

@@ -58,12 +58,16 @@ namespace AvifFileType
                 document.Render(args, true);
             }
 
+            bool grayscale = IsGrayscaleImage(scratchSurface);
+
             AvifMetadata metadata = CreateAvifMetadata(document);
             EncoderOptions options = new EncoderOptions
             {
                 quality = quality,
                 compressionMode = compressionMode,
-                yuvFormat = chromaSubsampling
+                // YUV 4:0:0 is always used for gray-scale images because it
+                // produces the smallest file size with no quality loss.
+                yuvFormat = grayscale ? YUVChromaSubsampling.Subsampling400 : chromaSubsampling
             };
 
             ColorConversionInfo colorConversionInfo = null;
@@ -116,7 +120,6 @@ namespace AvifFileType
 
                 AvifWriter writer = new AvifWriter(color,
                                                    alpha,
-                                                   chromaSubsampling,
                                                    metadata,
                                                    progressCallback,
                                                    progressDone,
@@ -262,6 +265,26 @@ namespace AvifFileType
             }
 
             return items;
+        }
+
+        private static unsafe bool IsGrayscaleImage(Surface surface)
+        {
+            for (int y = 0; y < surface.Height; y++)
+            {
+                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
+                ColorBgra* ptrEnd = ptr + surface.Width;
+
+                while (ptr < ptrEnd)
+                {
+                    if (!(ptr->R == ptr->G && ptr->G == ptr->B))
+                    {
+                        return false;
+                    }
+                    ptr++;
+                }
+            }
+
+            return true;
         }
 
         private static unsafe bool HasTransparency(Surface surface)

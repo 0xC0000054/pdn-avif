@@ -40,7 +40,6 @@
 #include "DecodedImageConverter.h"
 #include "Memory.h"
 #include "YUVConversionHelpers.h"
-#include <intsafe.h>
 
 namespace
 {

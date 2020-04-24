@@ -555,37 +555,36 @@ DecoderStatus ConvertColorImage(
 
     if (frame->bit_depth > 8)
     {
-        if (frame->stride[AOM_PLANE_U] && frame->stride[AOM_PLANE_V])
-        {
-            YUV16ToRGB8Color(frame,
-                             yuvCoefficiants,
-                             decodeInfo,
-                             outputImage);
-        }
-        else
+        if (frame->monochrome)
         {
             YUV16ToRGB8Mono(frame,
                             yuvCoefficiants,
                             decodeInfo,
                             outputImage);
         }
+        else
+        {
+            YUV16ToRGB8Color(frame,
+                             yuvCoefficiants,
+                             decodeInfo,
+                             outputImage);
+        }
     }
     else
     {
-        if (frame->stride[AOM_PLANE_U] && frame->stride[AOM_PLANE_V])
+        if (frame->monochrome)
+        {
+            YUV8ToRGB8Mono(frame,
+                           yuvCoefficiants,
+                           decodeInfo,
+                           outputImage);
+        }
+        else
         {
             YUV8ToRGB8Color(frame,
                             yuvCoefficiants,
                             decodeInfo,
                             outputImage);
-        }
-        else
-        {
-
-            YUV8ToRGB8Mono(frame,
-                           yuvCoefficiants,
-                           decodeInfo,
-                           outputImage);
         }
     }
 

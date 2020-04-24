@@ -158,6 +158,7 @@ namespace AvifFileType
             }
 
             byte[] colorProfileBytes = reader.GetIccProfile();
+
             if (colorProfileBytes != null)
             {
                 doc.Metadata.AddExifPropertyItem(ExifSection.Image,
@@ -166,7 +167,16 @@ namespace AvifFileType
                                                                colorProfileBytes.CloneT()));
             }
 
-            // TODO: Add XMP support
+            byte[] xmpBytes = reader.GetXmpData();
+
+            if (xmpBytes != null)
+            {
+                XmpPacket xmpPacket = XmpPacket.TryParse(xmpBytes);
+                if (xmpPacket != null)
+                {
+                    doc.Metadata.SetXmpPacket(xmpPacket);
+                }
+            }
         }
 
         private static AvifMetadata CreateAvifMetadata(Document doc)
@@ -193,7 +203,13 @@ namespace AvifFileType
                 exifBytes = new ExifWriter(doc, exifMetadata, exifColorSpace).CreateExifBlob();
             }
 
-            // TODO: Add XMP support
+            XmpPacket xmpPacket = doc.Metadata.TryGetXmpPacket();
+            if (xmpPacket != null)
+            {
+                string packetAsString = xmpPacket.ToString(XmpPacketWrapperType.ReadOnly);
+
+                xmpBytes = System.Text.Encoding.UTF8.GetBytes(packetAsString);
+            }
 
             return new AvifMetadata(exifBytes, iccProfileBytes, xmpBytes);
         }

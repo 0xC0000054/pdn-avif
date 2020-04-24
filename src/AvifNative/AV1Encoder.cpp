@@ -242,6 +242,7 @@ namespace
         aom_cfg.rc_min_quantizer = aom_cfg.rc_max_quantizer = encodeOptions.quality;
         aom_cfg.g_threads = encodeOptions.threadCount;
         aom_cfg.g_usage = AOM_USAGE_GOOD_QUALITY;
+        aom_cfg.monochrome = frame->monochrome;
 
         // Set the profile to use based on the frame format.
         // See Annex A.2 in the AV1 Specification:

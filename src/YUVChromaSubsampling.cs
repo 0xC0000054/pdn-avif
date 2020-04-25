@@ -14,9 +14,21 @@ namespace AvifFileType
 {
     internal enum YUVChromaSubsampling
     {
+        /// <summary>
+        /// YUV 4:2:0
+        /// </summary>
         Subsampling420,
+
+        /// <summary>
+        /// YUV 4:2:2
+        /// </summary>
         Subsampling422,
+
+        /// <summary>
+        /// YUV 4:4:4
+        /// </summary>
         Subsampling444,
+
         /// <summary>
         /// YUV 4:0:0
         /// </summary>

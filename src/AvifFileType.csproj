@@ -51,9 +51,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Avif Container\Boxes\AlphaChannelNames.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\NclxColorPrimaries.cs" />
     <Compile Include="Avif Container\Boxes\Enums\ConstructionMethod.cs" />
     <Compile Include="Avif Container\Boxes\Enums\ImageMirrorDirection.cs" />
     <Compile Include="Avif Container\Boxes\Enums\ImageRotation.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\NclxMatrixCoefficients.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\NclxTransferCharacteristics.cs" />
     <Compile Include="Avif Container\Boxes\IItemInfoEntry.cs" />
     <Compile Include="Avif Container\Boxes\IItemReferenceEntry.cs" />
     <Compile Include="Avif Container\Boxes\Item Info Entries\ItemInfoEntryFactory.cs" />

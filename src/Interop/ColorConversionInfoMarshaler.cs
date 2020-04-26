@@ -10,6 +10,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using AvifFileType.AvifContainer;
 using System;
 using System.Runtime.InteropServices;
 
@@ -20,9 +21,9 @@ namespace AvifFileType.Interop
     {
         private struct NativeNclxColorData
         {
-            public ushort colorPrimaries;
-            public ushort transferCharacteristics;
-            public ushort matrixCoefficients;
+            public NclxColorPrimaries colorPrimaries;
+            public NclxTransferCharacteristics transferCharacteristics;
+            public NclxMatrixCoefficients matrixCoefficients;
             public byte fullRange;
         }
 

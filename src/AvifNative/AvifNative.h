@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include "TargetVer.h"
+#include "NclxEnums.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,9 +76,9 @@ extern "C" {
 
     struct NclxColorData
     {
-        uint16_t colorPrimaries;
-        uint16_t transferCharacteristics;
-        uint16_t matrixCoefficients;
+        NclxColorPrimaries colorPrimaries;
+        NclxTransferCharacteristics transferCharacteristics;
+        NclxMatrixCoefficients matrixCoefficients;
         bool fullRange;
     };
 

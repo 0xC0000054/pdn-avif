@@ -42,6 +42,9 @@
     <ClInclude Include="DecodedImageConverter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NclxEnums.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Memory.cpp">

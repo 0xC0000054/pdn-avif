@@ -20,13 +20,16 @@ namespace AvifFileType.AvifContainer
         public NclxColorInformation(EndianBinaryReader reader, ColorInformationBox header)
             : base(header)
         {
-            this.ColorPrimaries = reader.ReadUInt16();
-            this.TransferCharacteristics = reader.ReadUInt16();
-            this.MatrixCoefficients = reader.ReadUInt16();
+            this.ColorPrimaries = (NclxColorPrimaries)reader.ReadUInt16();
+            this.TransferCharacteristics = (NclxTransferCharacteristics)reader.ReadUInt16();
+            this.MatrixCoefficients = (NclxMatrixCoefficients)reader.ReadUInt16();
             this.FullRange = (reader.ReadByte() & FullRangeMask) == FullRangeMask;
         }
 
-        public NclxColorInformation(ushort colorPrimaries, ushort transferCharacteristics, ushort matrixCoefficients, bool fullRange)
+        public NclxColorInformation(NclxColorPrimaries colorPrimaries,
+                                    NclxTransferCharacteristics transferCharacteristics,
+                                    NclxMatrixCoefficients matrixCoefficients,
+                                    bool fullRange)
             : base(ColorInformationBoxTypes.Nclx)
         {
             this.ColorPrimaries = colorPrimaries;
@@ -35,11 +38,11 @@ namespace AvifFileType.AvifContainer
             this.FullRange = fullRange;
         }
 
-        public ushort ColorPrimaries { get; }
+        public NclxColorPrimaries ColorPrimaries { get; }
 
-        public ushort TransferCharacteristics { get; }
+        public NclxTransferCharacteristics TransferCharacteristics { get; }
 
-        public ushort MatrixCoefficients { get; }
+        public NclxMatrixCoefficients MatrixCoefficients { get; }
 
         public bool FullRange { get; }
 
@@ -47,9 +50,9 @@ namespace AvifFileType.AvifContainer
         {
             base.Write(writer);
 
-            writer.Write(this.ColorPrimaries);
-            writer.Write(this.TransferCharacteristics);
-            writer.Write(this.MatrixCoefficients);
+            writer.Write((ushort)this.ColorPrimaries);
+            writer.Write((ushort)this.TransferCharacteristics);
+            writer.Write((ushort)this.MatrixCoefficients);
             writer.Write((byte)(this.FullRange ? FullRangeMask : 0));
         }
 

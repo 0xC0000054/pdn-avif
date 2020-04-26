@@ -40,6 +40,7 @@
 #include "DecodedImageConverter.h"
 #include "Memory.h"
 #include "YUVConversionHelpers.h"
+#include "NclxEnums.h"
 
 namespace
 {
@@ -522,9 +523,9 @@ DecoderStatus ConvertColorImage(
     else
     {
         colorInfo.format = ColorInformationFormat::Nclx;
-        colorInfo.nclxColorData.colorPrimaries = static_cast<uint16_t>(frame->cp);
-        colorInfo.nclxColorData.transferCharacteristics = static_cast<uint16_t>(frame->tc);
-        colorInfo.nclxColorData.matrixCoefficients = static_cast<uint16_t>(frame->mc);
+        colorInfo.nclxColorData.colorPrimaries = static_cast<NclxColorPrimaries>(frame->cp);
+        colorInfo.nclxColorData.transferCharacteristics = static_cast<NclxTransferCharacteristics>(frame->tc);
+        colorInfo.nclxColorData.matrixCoefficients = static_cast<NclxMatrixCoefficients>(frame->mc);
         colorInfo.nclxColorData.fullRange = frame->range == aom_color_range::AOM_CR_FULL_RANGE;
 
         if (isFirstTile)

@@ -305,83 +305,30 @@ namespace
 
 #pragma warning(pop)
 
-    typedef enum avifNclxColourPrimaries
-    {
-        // This is actually reserved, but libavif uses it as a sentinel value.
-        AVIF_NCLX_COLOUR_PRIMARIES_UNKNOWN = 0,
-
-        AVIF_NCLX_COLOUR_PRIMARIES_BT709 = 1,
-        AVIF_NCLX_COLOUR_PRIMARIES_BT1361_0 = 1,
-        AVIF_NCLX_COLOUR_PRIMARIES_IEC61966_2_1 = 1,
-        AVIF_NCLX_COLOUR_PRIMARIES_SRGB = 1,
-        AVIF_NCLX_COLOUR_PRIMARIES_SYCC = 1,
-        AVIF_NCLX_COLOUR_PRIMARIES_IEC61966_2_4 = 1,
-        AVIF_NCLX_COLOUR_PRIMARIES_UNSPECIFIED = 2,
-        AVIF_NCLX_COLOUR_PRIMARIES_BT470_6M = 4,
-        AVIF_NCLX_COLOUR_PRIMARIES_BT601_7_625 = 5,
-        AVIF_NCLX_COLOUR_PRIMARIES_BT470_6G = 5,
-        AVIF_NCLX_COLOUR_PRIMARIES_BT601_7_525 = 6,
-        AVIF_NCLX_COLOUR_PRIMARIES_BT1358 = 6,
-        AVIF_NCLX_COLOUR_PRIMARIES_ST240 = 7,
-        AVIF_NCLX_COLOUR_PRIMARIES_GENERIC_FILM = 8,
-        AVIF_NCLX_COLOUR_PRIMARIES_BT2020 = 9,
-        AVIF_NCLX_COLOUR_PRIMARIES_BT2100 = 9,
-        AVIF_NCLX_COLOUR_PRIMARIES_XYZ = 10,
-        AVIF_NCLX_COLOUR_PRIMARIES_ST428 = 10,
-        AVIF_NCLX_COLOUR_PRIMARIES_RP431_2 = 11,
-        AVIF_NCLX_COLOUR_PRIMARIES_EG432_1 = 12,
-        AVIF_NCLX_COLOUR_PRIMARIES_P3 = 12,
-        AVIF_NCLX_COLOUR_PRIMARIES_EBU3213E = 22
-    } avifNclxColourPrimaries;
-
-    typedef enum avifNclxMatrixCoefficients
-    {
-        AVIF_NCLX_MATRIX_COEFFICIENTS_IDENTITY = 0,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT709 = 1,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT1361_0 = 1,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_SRGB = 1,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_SYCC = 1,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_UNSPECIFIED = 2,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_USFC_73682 = 4,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT470_6B = 5,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT601_7_625 = 5,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT601_7_525 = 6,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT1700_NTSC = 6,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_ST170 = 6,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_ST240 = 7,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT2020_NCL = 9,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT2100 = 9,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_BT2020_CL = 10,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_ST2085 = 11,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL = 12,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL = 13,
-        AVIF_NCLX_MATRIX_COEFFICIENTS_ICTCP = 14
-    } avifNclxMatrixCoefficients;
-
     struct avifColourPrimariesTable
     {
-        avifNclxColourPrimaries colourPrimariesEnum;
+        NclxColorPrimaries colourPrimariesEnum;
         const char* name;
         float primaries[8]; // rX, rY, gX, gY, bX, bY, wX, wY
     };
     static const struct avifColourPrimariesTable avifColourPrimariesTables[] = {
-        { AVIF_NCLX_COLOUR_PRIMARIES_BT709, "BT.709", { 0.64f, 0.33f, 0.3f, 0.6f, 0.15f, 0.06f, 0.3127f, 0.329f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_BT470_6M, "BT470-6 System M", { 0.67f, 0.33f, 0.21f, 0.71f, 0.14f, 0.08f, 0.310f, 0.316f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_BT601_7_625, "BT.601-7 625", { 0.64f, 0.33f, 0.29f, 0.60f, 0.15f, 0.06f, 0.3127f, 0.3290f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_BT601_7_525, "BT.601-7 525", { 0.630f, 0.340f, 0.310f, 0.595f, 0.155f, 0.070f, 0.3127f, 0.3290f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_ST240, "ST 240", { 0.630f, 0.340f, 0.310f, 0.595f, 0.155f, 0.070f, 0.3127f, 0.3290f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_GENERIC_FILM, "Generic film", { 0.681f, 0.319f, 0.243f, 0.692f, 0.145f, 0.049f, 0.310f, 0.316f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_BT2020, "BT.2020", { 0.708f, 0.292f, 0.170f, 0.797f, 0.131f, 0.046f, 0.3127f, 0.3290f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_XYZ, "XYZ", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.3333f, 0.3333f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_RP431_2, "RP 431-2", { 0.680f, 0.320f, 0.265f, 0.690f, 0.150f, 0.060f, 0.314f, 0.351f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_EG432_1, "EG 432-1 (P3)", { 0.680f, 0.320f, 0.265f, 0.690f, 0.150f, 0.060f, 0.3127f, 0.3290f } },
-        { AVIF_NCLX_COLOUR_PRIMARIES_EBU3213E, "EBU 3213-E", { 0.630f, 0.340f, 0.295f, 0.605f, 0.155f, 0.077f, 0.3127f, 0.3290f } }
+        { NclxColorPrimaries::BT709, "BT.709", { 0.64f, 0.33f, 0.3f, 0.6f, 0.15f, 0.06f, 0.3127f, 0.329f } },
+        { NclxColorPrimaries::BT470M, "BT.470-6 System M", { 0.67f, 0.33f, 0.21f, 0.71f, 0.14f, 0.08f, 0.310f, 0.316f } },
+        { NclxColorPrimaries::BT470BG, "BT.470-6 System BG", { 0.64f, 0.33f, 0.29f, 0.60f, 0.15f, 0.06f, 0.3127f, 0.3290f } },
+        { NclxColorPrimaries::BT601, "BT.601", { 0.630f, 0.340f, 0.310f, 0.595f, 0.155f, 0.070f, 0.3127f, 0.3290f } },
+        { NclxColorPrimaries::Smpte240, "SMPTE 240M", { 0.630f, 0.340f, 0.310f, 0.595f, 0.155f, 0.070f, 0.3127f, 0.3290f } },
+        { NclxColorPrimaries::GenericFilm, "Generic film", { 0.681f, 0.319f, 0.243f, 0.692f, 0.145f, 0.049f, 0.310f, 0.316f } },
+        { NclxColorPrimaries::BT2020, "BT.2020", { 0.708f, 0.292f, 0.170f, 0.797f, 0.131f, 0.046f, 0.3127f, 0.3290f } },
+        { NclxColorPrimaries::Xyz, "XYZ", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.3333f, 0.3333f } },
+        { NclxColorPrimaries::Smpte431, "SMPTE RP 431-2", { 0.680f, 0.320f, 0.265f, 0.690f, 0.150f, 0.060f, 0.314f, 0.351f } },
+        { NclxColorPrimaries::Smpte432, "SMPTE EG 432-1 (DCI P3)", { 0.680f, 0.320f, 0.265f, 0.690f, 0.150f, 0.060f, 0.3127f, 0.3290f } },
+        { NclxColorPrimaries::Ebu3213, "EBU Tech. 3213-E", { 0.630f, 0.340f, 0.295f, 0.605f, 0.155f, 0.077f, 0.3127f, 0.3290f } }
     };
     static const int avifColourPrimariesTableSize = sizeof(avifColourPrimariesTables) / sizeof(avifColourPrimariesTables[0]);
 
-    void avifNclxColourPrimariesGetValues(uint16_t ancp, float outPrimaries[8]) {
+    void avifNclxColourPrimariesGetValues(NclxColorPrimaries ancp, float outPrimaries[8]) {
         for (int i = 0; i < avifColourPrimariesTableSize; ++i) {
-            if (static_cast<uint16_t>(avifColourPrimariesTables[i].colourPrimariesEnum) == ancp) {
+            if (avifColourPrimariesTables[i].colourPrimariesEnum == ancp) {
                 memcpy(outPrimaries, avifColourPrimariesTables[i].primaries, sizeof(avifColourPrimariesTables[i].primaries));
                 return;
             }
@@ -393,7 +340,7 @@ namespace
 
     struct avifMatrixCoefficientsTable
     {
-        avifNclxMatrixCoefficients matrixCoefficientsEnum;
+        NclxMatrixCoefficients matrixCoefficientsEnum;
         const char* name;
         const float kr;
         const float kb;
@@ -402,12 +349,12 @@ namespace
     // https://www.itu.int/rec/T-REC-H.273-201612-I/en
     static const struct avifMatrixCoefficientsTable matrixCoefficientsTables[] = {
         //{ AVIF_NCLX_MATRIX_COEFFICIENTS_IDENTITY, "Identity", 0.0f, 0.0f, }, // FIXME: Identity matrix can't represent using Kr and Kb.
-        { AVIF_NCLX_MATRIX_COEFFICIENTS_BT709, "BT.709", 0.2126f, 0.0722f },
-        { AVIF_NCLX_MATRIX_COEFFICIENTS_USFC_73682, "USFC 73.682", 0.30f, 0.11f },
-        { AVIF_NCLX_MATRIX_COEFFICIENTS_BT601_7_625, "BT.601-7 625", 0.299f, 0.114f },
-        { AVIF_NCLX_MATRIX_COEFFICIENTS_BT601_7_525, "BT.601-7 525", 0.299f, 0.144f },
-        { AVIF_NCLX_MATRIX_COEFFICIENTS_ST240, "ST 240", 0.212f, 0.087f },
-        { AVIF_NCLX_MATRIX_COEFFICIENTS_BT2020_NCL, "BT.2020-2 (non-constant luminance)", 0.2627f, 0.0593f },
+        { NclxMatrixCoefficients::BT709, "BT.709", 0.2126f, 0.0722f },
+        { NclxMatrixCoefficients::FCC, "FCC USFC 73.682", 0.30f, 0.11f },
+        { NclxMatrixCoefficients::BT470BG, "BT.470-6 System BG", 0.299f, 0.114f },
+        { NclxMatrixCoefficients::BT601, "BT.601", 0.299f, 0.144f },
+        { NclxMatrixCoefficients::Smpte240, "SMPTE ST 240", 0.212f, 0.087f },
+        { NclxMatrixCoefficients::BT2020NCL, "BT.2020 (non-constant luminance)", 0.2627f, 0.0593f },
         //{ AVIF_NCLX_MATRIX_COEFFICIENTS_BT2020_CL, "BT.2020 (constant luminance)", 0.2627f, 0.0593f }, // FIXME: It is not an linear transformation.
         //{ AVIF_NCLX_MATRIX_COEFFICIENTS_ST2085, "ST 2085", 0.0f, 0.0f }, // FIXME: ST2085 can't represent using Kr and Kb.
         //{ AVIF_NCLX_MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL, "Chromaticity-derived constant luminance system", 0.0f, 0.0f } // FIXME: It is not an linear transformation.
@@ -417,7 +364,7 @@ namespace
     static const int avifMatrixCoefficientsTableSize = sizeof(matrixCoefficientsTables) / sizeof(matrixCoefficientsTables[0]);
 
     bool calcYUVInfoFromNCLX(const NclxColorData& nclx, float coeffs[3]) {
-        if (nclx.matrixCoefficients == AVIF_NCLX_MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL) {
+        if (nclx.matrixCoefficients == NclxMatrixCoefficients::CromatNCL) {
             float primaries[8];
             avifNclxColourPrimariesGetValues(nclx.colorPrimaries, primaries);
             float const rX = primaries[0];

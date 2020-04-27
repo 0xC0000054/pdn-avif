@@ -142,6 +142,227 @@ namespace
 
     #undef AVIF_CLAMP
 
+    void Identity16ToRGB8Color(
+        const aom_image_t* image,
+        const DecodeInfo* decodeInfo,
+        BitmapData* bgraImage)
+    {
+        const uint32_t maxUVI = ((image->d_w + image->x_chroma_shift) >> image->x_chroma_shift) - 1;
+        const uint32_t maxUVJ = ((image->d_h + image->y_chroma_shift) >> image->y_chroma_shift) - 1;
+
+        float yuvMaxChannel = (float)((1 << image->bit_depth) - 1);
+        constexpr float rgbMaxChannel = 255.0f;
+
+        uint32_t uPlaneIndex = AOM_PLANE_U;
+        uint32_t vPlaneIndex = AOM_PLANE_V;
+
+        if (image->fmt & AOM_IMG_FMT_UV_FLIP)
+        {
+            uPlaneIndex = AOM_PLANE_V;
+            vPlaneIndex = AOM_PLANE_U;
+        }
+
+        uint32_t copyWidth;
+        uint32_t copyHeight;
+        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+
+        for (uint32_t y = 0; y < copyHeight; ++y)
+        {
+            const uint32_t uvJ = Min(y >> image->y_chroma_shift, maxUVJ);
+            uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
+            uint16_t* ptrU = reinterpret_cast<uint16_t*>(&image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])]);
+            uint16_t* ptrV = reinterpret_cast<uint16_t*>(&image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])]);
+
+            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+
+            for (uint32_t x = 0; x < copyWidth; ++x)
+            {
+                // Unpack Identity into unorm
+                uint32_t uvI = Min(x >> image->x_chroma_shift, maxUVI);
+                uint32_t unormY = ptrY[x];
+                uint32_t unormU = ptrU[uvI];
+                uint32_t unormV = ptrV[uvI];
+
+                // adjust for limited/full color range, if need be
+                if (image->range == AOM_CR_STUDIO_RANGE)
+                {
+                    // The identity matrix uses the Y plane range for U and V.
+                    unormY = avifLimitedToFullY(image->bit_depth, unormY);
+                    unormU = avifLimitedToFullY(image->bit_depth, unormU);
+                    unormV = avifLimitedToFullY(image->bit_depth, unormV);
+                }
+
+                // Convert unorm to float
+                const float Y = (float)unormY / yuvMaxChannel;
+                const float Cb = ((float)unormU / yuvMaxChannel);
+                const float Cr = ((float)unormV / yuvMaxChannel);
+
+                float G = Y;
+                float B = Cb;
+                float R = Cr;
+                R = Clamp(R, 0.0f, 1.0f);
+                G = Clamp(G, 0.0f, 1.0f);
+                B = Clamp(B, 0.0f, 1.0f);
+
+                dstPtr->r = static_cast<uint8_t>(0.5f + (R * rgbMaxChannel));
+                dstPtr->g = static_cast<uint8_t>(0.5f + (G * rgbMaxChannel));
+                dstPtr->b = static_cast<uint8_t>(0.5f + (B * rgbMaxChannel));
+                ++dstPtr;
+            }
+        }
+    }
+
+    void Identity16ToRGB8Mono(
+        const aom_image_t* image,
+        const DecodeInfo* decodeInfo,
+        BitmapData* bgraImage)
+    {
+        float yuvMaxChannel = (float)((1 << image->bit_depth) - 1);
+        constexpr float rgbMaxChannel = 255.0f;
+
+        uint32_t copyWidth;
+        uint32_t copyHeight;
+        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+
+        for (uint32_t y = 0; y < copyHeight; ++y)
+        {
+            uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
+
+            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+
+            for (uint32_t x = 0; x < copyWidth; ++x)
+            {
+                // Unpack Identity into unorm
+                uint32_t unormY = ptrY[x];
+
+                // adjust for limited/full color range, if need be
+                if (image->range == AOM_CR_STUDIO_RANGE)
+                {
+                    unormY = avifLimitedToFullY(image->bit_depth, unormY);
+                }
+
+                // Convert unorm to float
+                const float Y = Clamp(static_cast<float>(unormY) / yuvMaxChannel, 0.0f, 1.0f);
+
+                const uint8_t gray = static_cast<uint8_t>(0.5f + (Y * rgbMaxChannel));
+
+                dstPtr->g = gray;
+                dstPtr->b = gray;
+                dstPtr->r = gray;
+                ++dstPtr;
+            }
+        }
+    }
+
+    void Identity8ToRGB8Color(
+        const aom_image_t* image,
+        const DecodeInfo* decodeInfo,
+        BitmapData* bgraImage)
+    {
+        const uint32_t maxUVI = ((image->d_w + image->x_chroma_shift) >> image->x_chroma_shift) - 1;
+        const uint32_t maxUVJ = ((image->d_h + image->y_chroma_shift) >> image->y_chroma_shift) - 1;
+
+        float yuvMaxChannel = (float)((1 << image->bit_depth) - 1);
+        constexpr float rgbMaxChannel = 255.0f;
+
+        uint32_t uPlaneIndex = AOM_PLANE_U;
+        uint32_t vPlaneIndex = AOM_PLANE_V;
+
+        if (image->fmt & AOM_IMG_FMT_UV_FLIP)
+        {
+            uPlaneIndex = AOM_PLANE_V;
+            vPlaneIndex = AOM_PLANE_U;
+        }
+
+        uint32_t copyWidth;
+        uint32_t copyHeight;
+        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+
+        for (uint32_t y = 0; y < copyHeight; ++y)
+        {
+            const uint32_t uvJ = Min(y >> image->y_chroma_shift, maxUVJ);
+            uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
+            uint8_t* ptrU = &image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])];
+            uint8_t* ptrV = &image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])];
+
+            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+
+            for (uint32_t x = 0; x < copyWidth; ++x)
+            {
+                // Unpack Identity into unorm
+                uint32_t uvI = Min(x >> image->x_chroma_shift, maxUVI);
+                uint32_t unormY = ptrY[x];
+                uint32_t unormU = ptrU[uvI];
+                uint32_t unormV = ptrV[uvI];
+
+                // adjust for limited/full color range, if need be
+                if (image->range == AOM_CR_STUDIO_RANGE)
+                {
+                    // The identity matrix uses the Y plane range for U and V.
+                    unormY = avifLimitedToFullY(image->bit_depth, unormY);
+                    unormU = avifLimitedToFullY(image->bit_depth, unormU);
+                    unormV = avifLimitedToFullY(image->bit_depth, unormV);
+                }
+
+                dstPtr->g = static_cast<uint8_t>(unormY);
+                dstPtr->b = static_cast<uint8_t>(unormU);
+                dstPtr->r = static_cast<uint8_t>(unormV);
+                ++dstPtr;
+            }
+        }
+    }
+
+    void Identity8ToRGB8Mono(
+        const aom_image_t* image,
+        const DecodeInfo* decodeInfo,
+        BitmapData* bgraImage)
+    {
+        float yuvMaxChannel = (float)((1 << image->bit_depth) - 1);
+        constexpr float rgbMaxChannel = 255.0f;
+
+        uint32_t copyWidth;
+        uint32_t copyHeight;
+        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+
+        for (uint32_t y = 0; y < copyHeight; ++y)
+        {
+            uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
+
+            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+
+            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+
+            for (uint32_t x = 0; x < copyWidth; ++x)
+            {
+                // Unpack Identity into unorm
+                uint32_t unormY = ptrY[x];
+
+                // adjust for limited/full color range, if need be
+                if (image->range == AOM_CR_STUDIO_RANGE)
+                {
+                    unormY = avifLimitedToFullY(image->bit_depth, unormY);
+                }
+
+                const uint8_t gray = static_cast<uint8_t>(unormY);
+
+                dstPtr->r = gray;
+                dstPtr->g = gray;
+                dstPtr->b = gray;
+                ++dstPtr;
+            }
+        }
+    }
+
     void YUV16ToRGB8Color(
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
@@ -551,41 +772,80 @@ DecoderStatus ConvertColorImage(
         }
     }
 
-    YUVCoefficiants yuvCoefficiants;
-    GetYUVCoefficiants(&colorInfo, yuvCoefficiants);
-
-    if (frame->bit_depth > 8)
+    if (colorInfo.format == ColorInformationFormat::Nclx &&
+        colorInfo.nclxColorData.matrixCoefficients == NclxMatrixCoefficients::Identity)
     {
-        if (frame->monochrome)
+        // The Identity matrix coefficient contains RGB color values.
+
+        if (frame->bit_depth > 8)
         {
-            YUV16ToRGB8Mono(frame,
-                            yuvCoefficiants,
-                            decodeInfo,
-                            outputImage);
+            if (frame->monochrome)
+            {
+                Identity16ToRGB8Mono(frame,
+                    decodeInfo,
+                    outputImage);
+            }
+            else
+            {
+                Identity16ToRGB8Color(frame,
+                    decodeInfo,
+                    outputImage);
+            }
         }
         else
         {
-            YUV16ToRGB8Color(frame,
-                             yuvCoefficiants,
-                             decodeInfo,
-                             outputImage);
+            if (frame->monochrome)
+            {
+                Identity8ToRGB8Mono(frame,
+                    decodeInfo,
+                    outputImage);
+            }
+            else
+            {
+                Identity8ToRGB8Color(frame,
+                    decodeInfo,
+                    outputImage);
+            }
         }
     }
     else
     {
-        if (frame->monochrome)
+        YUVCoefficiants yuvCoefficiants;
+        GetYUVCoefficiants(&colorInfo, yuvCoefficiants);
+
+        if (frame->bit_depth > 8)
         {
-            YUV8ToRGB8Mono(frame,
-                           yuvCoefficiants,
-                           decodeInfo,
-                           outputImage);
+            if (frame->monochrome)
+            {
+                YUV16ToRGB8Mono(frame,
+                    yuvCoefficiants,
+                    decodeInfo,
+                    outputImage);
+            }
+            else
+            {
+                YUV16ToRGB8Color(frame,
+                    yuvCoefficiants,
+                    decodeInfo,
+                    outputImage);
+            }
         }
         else
         {
-            YUV8ToRGB8Color(frame,
-                            yuvCoefficiants,
-                            decodeInfo,
-                            outputImage);
+            if (frame->monochrome)
+            {
+                YUV8ToRGB8Mono(frame,
+                    yuvCoefficiants,
+                    decodeInfo,
+                    outputImage);
+            }
+            else
+            {
+                YUV8ToRGB8Color(frame,
+                    yuvCoefficiants,
+                    decodeInfo,
+                    outputImage);
+            }
         }
     }
 

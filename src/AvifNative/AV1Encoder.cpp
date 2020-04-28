@@ -133,8 +133,8 @@ namespace
         }
         aom_codec_control(codec, AV1E_SET_COLOR_RANGE, AOM_CR_FULL_RANGE);
         aom_codec_control(codec, AV1E_SET_FRAME_PARALLEL_DECODING, 0);
-        aom_codec_control(codec, AV1E_SET_TILE_COLUMNS, 1);
-        aom_codec_control(codec, AV1E_SET_TILE_ROWS, 1);
+        aom_codec_control(codec, AV1E_SET_TILE_COLUMNS, 0);
+        aom_codec_control(codec, AV1E_SET_TILE_ROWS, 0);
         if (cfg->g_threads > 1)
         {
             aom_codec_control(codec, AV1E_SET_ROW_MT, 1);

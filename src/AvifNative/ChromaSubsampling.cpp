@@ -106,6 +106,39 @@ namespace
         }
     }
 
+    void ColorToIdentity8(
+        const BitmapData* bgraImage,
+        uint8_t* yPlane,
+        size_t yPlaneStride,
+        uint8_t* uPlane,
+        size_t uPlaneStride,
+        uint8_t* vPlane,
+        size_t vPlaneStride)
+    {
+        for (size_t y = 0; y < bgraImage->height; ++y)
+        {
+            const ColorBgra* src = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (y * bgraImage->stride));
+            uint8_t* dstY = &yPlane[y * yPlaneStride];
+            uint8_t* dstU = &uPlane[y * uPlaneStride];
+            uint8_t* dstV = &vPlane[y * vPlaneStride];
+
+            for (size_t x = 0; x < bgraImage->width; ++x)
+            {
+                // RGB -> Identity GBR conversion
+                // Formulas 41-43 from https://www.itu.int/rec/T-REC-H.273-201612-I/en
+
+                *dstY = src->g;
+                *dstU = src->b;
+                *dstV = src->r;
+
+                ++src;
+                ++dstY;
+                ++dstU;
+                ++dstV;
+            }
+        }
+    }
+
     void ColorToYUV8(
         const BitmapData* bgraImage,
         const ColorConversionInfo* colorInfo,
@@ -317,16 +350,33 @@ aom_image_t* ConvertColorToAOMImage(
     }
     else
     {
-        ColorToYUV8(
-            bgraImage,
-            colorInfo,
-            yuvFormat,
-            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
-            static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]),
-            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_U]),
-            static_cast<size_t>(aomImage->stride[AOM_PLANE_U]),
-            reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_V]),
-            static_cast<size_t>(aomImage->stride[AOM_PLANE_V]));
+        if (yuvFormat == YUVChromaSubsampling::IdentityMatrix)
+        {
+            // The IdentityMatrix format places the RGB values into the YUV planes
+            // without any conversion.
+            // This reduces the compression efficiency, but allows for fully lossless encoding.
+            ColorToIdentity8(
+                bgraImage,
+                reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
+                static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]),
+                reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_U]),
+                static_cast<size_t>(aomImage->stride[AOM_PLANE_U]),
+                reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_V]),
+                static_cast<size_t>(aomImage->stride[AOM_PLANE_V]));
+        }
+        else
+        {
+            ColorToYUV8(
+                bgraImage,
+                colorInfo,
+                yuvFormat,
+                reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),
+                static_cast<size_t>(aomImage->stride[AOM_PLANE_Y]),
+                reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_U]),
+                static_cast<size_t>(aomImage->stride[AOM_PLANE_U]),
+                reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_V]),
+                static_cast<size_t>(aomImage->stride[AOM_PLANE_V]));
+        }
     }
 
     return aomImage;

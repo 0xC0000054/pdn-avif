@@ -23,6 +23,7 @@ namespace AvifFileType
         private readonly AvifMetadata metadata;
         private readonly FileTypeBox fileTypeBox;
         private readonly MetaBox metaBox;
+        private readonly ColorInformationBox colorInformationBox;
         private readonly bool colorImageIsGrayscale;
 
         private readonly ProgressEventHandler progressCallback;
@@ -32,6 +33,7 @@ namespace AvifFileType
         public AvifWriter(CompressedAV1Image color,
                           CompressedAV1Image alpha,
                           AvifMetadata metadata,
+                          ColorInformationBox colorInformationBox,
                           ProgressEventHandler progressEventHandler,
                           uint progressDone,
                           uint progressTotal)
@@ -39,6 +41,7 @@ namespace AvifFileType
             this.state = new AvifWriterState(color, alpha, metadata);
             this.colorImageIsGrayscale = color.Format == YUVChromaSubsampling.Subsampling400;
             this.metadata = metadata;
+            this.colorInformationBox = colorInformationBox;
             this.progressCallback = progressEventHandler;
             this.progressDone = progressDone;
             this.progressTotal = progressTotal;
@@ -188,10 +191,9 @@ namespace AvifFileType
                     }
                     else
                     {
-                        byte[] iccProfile = this.metadata.GetICCProfileBytesReadOnly();
-                        if (iccProfile != null && iccProfile.Length > 0)
+                        if (this.colorInformationBox != null)
                         {
-                            itemPropertiesBox.AddProperty(new IccProfileColorInformation(iccProfile));
+                            itemPropertiesBox.AddProperty(this.colorInformationBox);
                             itemPropertiesBox.AddPropertyAssociation(item.Id, true, propertyAssociationIndex);
                             propertyAssociationIndex++;
                         }

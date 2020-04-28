@@ -63,6 +63,7 @@ namespace
             aomFormat = AOM_IMG_FMT_I422;
             break;
         case YUVChromaSubsampling::Subsampling444:
+        case YUVChromaSubsampling::IdentityMatrix:
             aomFormat = AOM_IMG_FMT_I444;
             break;
         default:

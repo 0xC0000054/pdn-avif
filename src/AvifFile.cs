@@ -10,6 +10,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using AvifFileType.AvifContainer;
 using AvifFileType.Exif;
 using AvifFileType.Interop;
 using PaintDotNet;
@@ -71,11 +72,32 @@ namespace AvifFileType
             };
 
             ColorConversionInfo colorConversionInfo = null;
+            ColorInformationBox colorInformationBox = null;
 
-            byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
-            if (iccProfileBytes != null && iccProfileBytes.Length > 0)
+            if (quality == 100 && !grayscale)
             {
-                colorConversionInfo = new ColorConversionInfo(iccProfileBytes);
+                options.yuvFormat = YUVChromaSubsampling.IdentityMatrix;
+
+                // These NCLX color values are from the AV1 Bitstream & Decoding Process Specification.
+                const NclxColorPrimaries colorPrimaries = NclxColorPrimaries.BT709;
+                const NclxTransferCharacteristics transferCharacteristics = NclxTransferCharacteristics.Srgb;
+                const NclxMatrixCoefficients matrixCoefficients = NclxMatrixCoefficients.Identity;
+                const bool fullRange = true;
+
+                // The Identity matrix coefficient places the RGB values into the YUV planes without any conversion.
+                // This reduces the compression efficiency, but allows for fully lossless encoding.
+
+                colorConversionInfo = new ColorConversionInfo(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
+                colorInformationBox = new NclxColorInformation(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
+            }
+            else
+            {
+                byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
+                if (iccProfileBytes != null && iccProfileBytes.Length > 0)
+                {
+                    colorConversionInfo = new ColorConversionInfo(iccProfileBytes);
+                    colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
+                }
             }
 
             CompressedAV1Image color = null;
@@ -121,6 +143,7 @@ namespace AvifFileType
                 AvifWriter writer = new AvifWriter(color,
                                                    alpha,
                                                    metadata,
+                                                   colorInformationBox,
                                                    progressCallback,
                                                    progressDone,
                                                    progressTotal);

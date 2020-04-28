@@ -35,6 +35,14 @@ namespace AvifFileType
         /// <remarks>
         /// Used internally for gray-scale images, not shown to the user.
         /// </remarks>
-        Subsampling400
+        Subsampling400,
+
+        /// <summary>
+        /// The RGB color values are used directly, without YUV conversion.
+        /// </summary>
+        /// <remarks>
+        /// Used internally for lossless RGB encoding, not shown to the user.
+        /// </remarks>
+        IdentityMatrix
     }
 }

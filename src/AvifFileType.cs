@@ -58,10 +58,9 @@ namespace AvifFileType
         /// </summary>
         protected override bool IsReflexive(PropertyBasedSaveConfigToken token)
         {
-            // NOTE: The YUV444 conversion should be lossless with the default settings,
-            // but if the image has a color profile its values will be used for the YUV conversion.
+            int quality = token.GetProperty<Int32Property>(PropertyNames.Quality).Value;
 
-            return false;
+            return quality == 100;
         }
 
         /// <summary>
@@ -80,8 +79,8 @@ namespace AvifFileType
 
             StaticListChoiceProperty CreateChromaSubsampling()
             {
-                // The list is created manually because the Subsampling400 enumeration value is not shown
-                // to the user, it is used internally to improve the compression of gray-scale images.
+                // The list is created manually because some of the YUVChromaSubsampling enumeration values
+                // are used for internal signaling.
 
                 object[] choiceValues = new object[]
                 {

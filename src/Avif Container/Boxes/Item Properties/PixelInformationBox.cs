@@ -52,6 +52,7 @@ namespace AvifFileType.AvifContainer
                 case YUVChromaSubsampling.Subsampling420:
                 case YUVChromaSubsampling.Subsampling422:
                 case YUVChromaSubsampling.Subsampling444:
+                case YUVChromaSubsampling.IdentityMatrix:
                     this.ChannelBitDepths = new byte[3] { 8, 8, 8 };
                     break;
                 default:

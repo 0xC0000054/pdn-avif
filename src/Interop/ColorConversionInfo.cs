@@ -41,6 +41,18 @@ namespace AvifFileType.Interop
             this.format = ColorInformationFormat.IccProfile;
         }
 
+        public ColorConversionInfo(NclxColorPrimaries colorPrimaries,
+                                   NclxTransferCharacteristics transferCharacteristics,
+                                   NclxMatrixCoefficients matrixCoefficients,
+                                   bool fullRange)
+        {
+            this.nclxColorData.colorPrimaries = colorPrimaries;
+            this.nclxColorData.transferCharacteristics = transferCharacteristics;
+            this.nclxColorData.matrixCoefficients = matrixCoefficients;
+            this.nclxColorData.fullRange = fullRange;
+            this.format = ColorInformationFormat.Nclx;
+        }
+
         public ColorConversionInfo(ColorInformationBox colorInfoBox)
         {
             if (colorInfoBox is null)

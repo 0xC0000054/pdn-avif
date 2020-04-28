@@ -44,6 +44,9 @@ namespace AvifFileType.AvifContainer
                     chromaSubsamplingY = true;
                     break;
                 case YUVChromaSubsampling.Subsampling444:
+                // The AV1 Bitstream & Decoding Process specification requires chroma sub-sampling
+                // to be false when the NCLX Identity matrix coefficient is used.
+                case YUVChromaSubsampling.IdentityMatrix:
                     chromaSubsamplingX = false;
                     chromaSubsamplingY = false;
                     break;
@@ -71,6 +74,7 @@ namespace AvifFileType.AvifContainer
             {
                 case YUVChromaSubsampling.Subsampling400:
                 case YUVChromaSubsampling.Subsampling420:
+                case YUVChromaSubsampling.IdentityMatrix:
                     return SequenceProfiles.Profile0;
                 case YUVChromaSubsampling.Subsampling422:
                     return SequenceProfiles.Profile2;

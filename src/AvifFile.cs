@@ -29,18 +29,27 @@ namespace AvifFileType
 
             using (AvifReader reader = new AvifReader(input, leaveOpen: true))
             {
-                using (Surface surface = reader.Decode())
+                Surface surface = null;
+                bool disposeSurface = true;
+
+                try
                 {
+                    surface = reader.Decode();
+
                     doc = new Document(surface.Width, surface.Height);
 
-                    BitmapLayer layer = Layer.CreateBackgroundLayer(doc.Width, doc.Height);
+                    AddAvifMetadataToDocument(doc, reader);
 
-                    layer.Surface.CopySurface(surface);
-
-                    doc.Layers.Add(layer);
+                    doc.Layers.Add(Layer.CreateBackgroundLayer(surface, takeOwnership: true));
+                    disposeSurface = false;
                 }
-
-                AddAvifMetadataToDocument(doc, reader);
+                finally
+                {
+                    if (disposeSurface)
+                    {
+                        surface?.Dispose();
+                    }
+                }
             }
 
             return doc;

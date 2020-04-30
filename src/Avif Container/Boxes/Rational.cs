@@ -68,12 +68,12 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowInvalidOperationException("The Rational denominator is zero.");
             }
 
-            return (double)this.Numerator / this.Denominator;
+            return this.Denominator == 1 ? this.Numerator : (double)this.Numerator / this.Denominator;
         }
 
         public int ToInt32()
         {
-            return (int)Math.Round(ToDouble());
+            return this.Denominator == 1 ? this.Numerator : (int)Math.Round(ToDouble());
         }
 
         public override string ToString()

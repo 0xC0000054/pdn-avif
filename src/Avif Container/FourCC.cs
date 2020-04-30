@@ -12,6 +12,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Text;
 
 namespace AvifFileType.AvifContainer
 {
@@ -38,9 +39,7 @@ namespace AvifFileType.AvifContainer
         {
             get
             {
-                // The debugger watch windows will truncate the string
-                // if it contains embedded NULs.
-                return ToString().Replace('\0', ' ');
+                return ToString();
             }
         }
 
@@ -72,15 +71,26 @@ namespace AvifFileType.AvifContainer
         public override string ToString()
         {
             uint value = this.Value;
-            char[] chars = new char[]
-            {
-                (char)((value >> 24) & 0xff),
-                (char)((value >> 16) & 0xff),
-                (char)((value >> 8) & 0xff),
-                (char)(value & 0xff)
-            };
 
-            return new string(chars);
+            StringBuilder builder = new StringBuilder(20);
+            builder.Append('\'');
+
+            for (int i = 3; i >= 0; i--)
+            {
+                uint c = ((value >> (i * 8)) & 0xff);
+
+                // Ignore any bytes that are not printable ASCII characters
+                // because they can not be displayed in the debugger watch windows.
+
+                if (c >= 0x20 && c <= 0x7e)
+                {
+                    builder.Append((char)c);
+                }
+            }
+            builder.Append('\'');
+            builder.Append(" (0x").Append(value.ToString("X8")).Append(')');
+
+            return builder.ToString();
         }
     }
 }

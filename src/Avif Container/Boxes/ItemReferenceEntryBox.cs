@@ -90,7 +90,7 @@ namespace AvifFileType.AvifContainer
                     }
                     else
                     {
-                        description = $"a(n) '{ this.Type }'";
+                        description = $"a(n) { this.Type }";
                     }
 
                     if (this.toItemIds.Count == 1)

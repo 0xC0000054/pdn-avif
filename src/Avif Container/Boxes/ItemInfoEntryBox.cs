@@ -83,11 +83,11 @@ namespace AvifFileType.AvifContainer
             {
                 if (string.IsNullOrEmpty(this.Name.Value))
                 {
-                    return $"ItemId: { this.ItemId }, Type: '{ this.ItemType }'";
+                    return $"ItemId: { this.ItemId }, Type: { this.ItemType }";
                 }
                 else
                 {
-                    return $"ItemId: { this.ItemId }, Type: '{ this.ItemType }', Name: \"{ this.Name }\"";
+                    return $"ItemId: { this.ItemId }, Type: { this.ItemType }, Name: \"{ this.Name }\"";
                 }
             }
         }

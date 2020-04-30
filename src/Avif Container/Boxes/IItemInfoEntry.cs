@@ -14,6 +14,8 @@ namespace AvifFileType.AvifContainer
 {
     internal interface IItemInfoEntry
     {
+        bool IsHidden { get; }
+
         uint ItemId { get; }
 
         FourCC ItemType { get; }

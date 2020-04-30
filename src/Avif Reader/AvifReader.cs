@@ -76,6 +76,7 @@ namespace AvifFileType
         {
             VerifyNotDisposed();
             EnsureCompressedImagesAreAV1();
+            EnsurePrimaryItemIsNotHidden();
 
             Size colorSize = GetImageSize(this.primaryItemId, this.colorGridInfo, "color");
 
@@ -327,6 +328,20 @@ namespace AvifFileType
             if (this.alphaItemId != 0)
             {
                 CheckImageItemType(this.alphaItemId, this.alphaGridInfo, "alpha");
+            }
+        }
+
+        private void EnsurePrimaryItemIsNotHidden()
+        {
+            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(this.primaryItemId);
+
+            if (entry == null)
+            {
+                ExceptionUtil.ThrowFormatException("The primary item does not exist.");
+            }
+            else if (entry.IsHidden)
+            {
+                ExceptionUtil.ThrowFormatException("The primary item cannot be marked as hidden.");
             }
         }
 

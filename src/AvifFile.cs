@@ -104,7 +104,9 @@ namespace AvifFileType
                 byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
                 if (iccProfileBytes != null && iccProfileBytes.Length > 0)
                 {
-                    colorConversionInfo = new ColorConversionInfo(iccProfileBytes);
+                    // Gray-scale images do not need any color conversion information, it is only
+                    // required when converting color images.
+                    colorConversionInfo = grayscale ? null : new ColorConversionInfo(iccProfileBytes);
                     colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
                 }
             }

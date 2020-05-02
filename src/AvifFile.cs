@@ -23,6 +23,8 @@ namespace AvifFileType
 {
     internal static class AvifFile
     {
+        private const string NclxMetadataName = "AvifNclxData";
+
         public static Document Load(Stream input)
         {
             Document doc = null;
@@ -109,6 +111,27 @@ namespace AvifFileType
                     colorConversionInfo = grayscale ? null : new ColorConversionInfo(iccProfileBytes);
                     colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
                 }
+                else
+                {
+                    // The NCLX color conversion information is not relevant for gray-scale images.
+                    // The color conversion information determines the values used to subsample the YUV chroma planes,
+                    // and a gray-scale image does not have chroma planes.
+                    if (!grayscale)
+                    {
+                        string serializedNclx = document.Metadata.GetUserValue(NclxMetadataName);
+
+                        if (serializedNclx != null)
+                        {
+                            NclxColorInformation nclxColorInformation = NclxSerializer.TryDeserialize(serializedNclx);
+
+                            if (nclxColorInformation != null)
+                            {
+                                colorConversionInfo = new ColorConversionInfo(nclxColorInformation);
+                                colorInformationBox = nclxColorInformation;
+                            }
+                        }
+                    }
+                }
             }
 
             CompressedAV1Image color = null;
@@ -194,14 +217,26 @@ namespace AvifFileType
                 }
             }
 
-            byte[] colorProfileBytes = reader.GetIccProfile();
+            ColorInformationBox colorInformation = reader.ColorInformationBox;
 
-            if (colorProfileBytes != null)
+            if (colorInformation != null)
             {
-                doc.Metadata.AddExifPropertyItem(ExifSection.Image,
-                                                 unchecked((ushort)ExifTagID.IccProfileData),
-                                                 new ExifValue(ExifValueType.Undefined,
-                                                               colorProfileBytes.CloneT()));
+                if (colorInformation is NclxColorInformation nclx)
+                {
+                    string serializedValue = NclxSerializer.TrySerialize(nclx);
+
+                    if (serializedValue != null)
+                    {
+                        doc.Metadata.SetUserValue(NclxMetadataName, serializedValue);
+                    }
+                }
+                else if (colorInformation is IccProfileColorInformation iccProfile)
+                {
+                    doc.Metadata.AddExifPropertyItem(ExifSection.Image,
+                                                     unchecked((ushort)ExifTagID.IccProfileData),
+                                                     new ExifValue(ExifValueType.Undefined,
+                                                                   iccProfile.GetProfileBytes()));
+                }
             }
 
             byte[] xmpBytes = reader.GetXmpData();

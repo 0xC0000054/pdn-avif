@@ -26,11 +26,11 @@ namespace AvifFileType
     {
         private Stream stream;
         private bool disposed;
+        private ColorInformationBox colorInfoBox;
         private readonly bool leaveOpen;
         private readonly AvifParser parser;
         private readonly uint primaryItemId;
         private readonly uint alphaItemId;
-        private readonly ColorInformationBox colorInfoBox;
         private readonly CleanApertureBox cleanApertureBox;
         private readonly ImageRotateBox imageRotateBox;
         private readonly ImageMirrorBox imageMirrorBox;
@@ -71,6 +71,8 @@ namespace AvifFileType
                 this.alphaGridInfo = null;
             }
         }
+
+        public ColorInformationBox ColorInformationBox => this.colorInfoBox;
 
         public Surface Decode()
         {
@@ -183,18 +185,6 @@ namespace AvifFileType
                         }
                     }
                 }
-            }
-
-            return null;
-        }
-
-        public byte[] GetIccProfile()
-        {
-            VerifyNotDisposed();
-
-            if (this.colorInfoBox is IccProfileColorInformation iccColorInfo)
-            {
-                return iccColorInfo.GetProfileBytes();
             }
 
             return null;
@@ -506,6 +496,19 @@ namespace AvifFileType
                     DecodeColorImage(childImageIds[startIndex + col], decodeInfo, colorInfo, fullSurface);
                 }
             }
+
+            MaybeSetNclxColorInfoFromDecoder(decodeInfo);
+        }
+
+        private void MaybeSetNclxColorInfoFromDecoder(DecodeInfo decodeInfo)
+        {
+            if (this.colorInfoBox is null && decodeInfo.usingTileNclxProfile)
+            {
+                this.colorInfoBox = new NclxColorInformation(decodeInfo.firstTileNclxProfile.colorPrimaries,
+                                                             decodeInfo.firstTileNclxProfile.transferCharacteristics,
+                                                             decodeInfo.firstTileNclxProfile.matrixCoefficients,
+                                                             decodeInfo.firstTileNclxProfile.fullRange);
+            }
         }
 
         private void ProcessAlphaImage(Surface fullSurface)
@@ -553,6 +556,7 @@ namespace AvifFileType
                 };
 
                 DecodeColorImage(this.primaryItemId, decodeInfo, colorConversionInfo, fullSurface);
+                MaybeSetNclxColorInfoFromDecoder(decodeInfo);
             }
         }
 

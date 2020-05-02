@@ -332,6 +332,19 @@ aom_image_t* ConvertColorToAOMImage(
     aomImage->range = AOM_CR_FULL_RANGE;
     aomImage->monochrome = yuvFormat == YUVChromaSubsampling::Subsampling400;
 
+    if (colorInfo && colorInfo->format == ColorInformationFormat::Nclx)
+    {
+        aomImage->cp = static_cast<aom_color_primaries_t>(colorInfo->nclxColorData.colorPrimaries);
+        aomImage->tc = static_cast<aom_transfer_characteristics_t>(colorInfo->nclxColorData.transferCharacteristics);
+        aomImage->mc = static_cast<aom_matrix_coefficients_t>(colorInfo->nclxColorData.matrixCoefficients);
+    }
+    else
+    {
+        aomImage->cp = AOM_CICP_CP_UNSPECIFIED;
+        aomImage->tc = AOM_CICP_TC_UNSPECIFIED;
+        aomImage->mc = AOM_CICP_MC_UNSPECIFIED;
+    }
+
     if (aomImage->monochrome)
     {
         MonoToY8(

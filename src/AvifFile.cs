@@ -130,6 +130,19 @@ namespace AvifFileType
                                 colorInformationBox = nclxColorInformation;
                             }
                         }
+
+                        if (colorInformationBox == null)
+                        {
+                            // Use BT709 as the default for color images that do not
+                            // have any existing color conversion information.
+                            const NclxColorPrimaries colorPrimaries = NclxColorPrimaries.BT709;
+                            const NclxTransferCharacteristics transferCharacteristics = NclxTransferCharacteristics.BT709;
+                            const NclxMatrixCoefficients matrixCoefficients = NclxMatrixCoefficients.BT709;
+                            const bool fullRange = true;
+
+                            colorConversionInfo = new ColorConversionInfo(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
+                            colorInformationBox = new NclxColorInformation(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
+                        }
                     }
                 }
             }

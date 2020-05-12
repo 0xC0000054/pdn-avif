@@ -92,6 +92,12 @@ namespace AvifFileType
             };
             ColorInformationBox colorInformationBox = null;
 
+            byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
+            if (iccProfileBytes != null && iccProfileBytes.Length > 0)
+            {
+                colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
+            }
+
             if (quality == 100 && !grayscale)
             {
                 options.yuvFormat = YUVChromaSubsampling.IdentityMatrix;
@@ -112,43 +118,52 @@ namespace AvifFileType
                     matrixCoefficients = matrixCoefficients,
                     fullRange = fullRange
                 };
-                colorInformationBox = new NclxColorInformation(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
+
+                // Only add a NCLX color information box if the image
+                // does not have an existing ICC color profile.
+                if (colorInformationBox == null)
+                {
+                    colorInformationBox = new NclxColorInformation(colorPrimaries,
+                                                                   transferCharacteristics,
+                                                                   matrixCoefficients,
+                                                                   fullRange);
+                }
             }
             else
             {
-                byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
-                if (iccProfileBytes != null && iccProfileBytes.Length > 0)
-                {
-                    colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
-                }
-                else
-                {
-                    string serializedNclx = document.Metadata.GetUserValue(NclxMetadataName);
+                string serializedNclx = document.Metadata.GetUserValue(NclxMetadataName);
 
-                    if (serializedNclx != null)
+                if (serializedNclx != null)
+                {
+                    NclxColorInformation nclxColorInformation = NclxSerializer.TryDeserialize(serializedNclx);
+
+                    if (nclxColorInformation != null)
                     {
-                        NclxColorInformation nclxColorInformation = NclxSerializer.TryDeserialize(serializedNclx);
-
-                        if (nclxColorInformation != null)
+                        colorConversionInfo = new CICPColorData
                         {
-                            colorConversionInfo = new CICPColorData
-                            {
-                                colorPrimaries = nclxColorInformation.ColorPrimaries,
-                                transferCharacteristics = nclxColorInformation.TransferCharacteristics,
-                                matrixCoefficients = nclxColorInformation.MatrixCoefficients,
-                                fullRange = true
-                            };
+                            colorPrimaries = nclxColorInformation.ColorPrimaries,
+                            transferCharacteristics = nclxColorInformation.TransferCharacteristics,
+                            matrixCoefficients = nclxColorInformation.MatrixCoefficients,
+                            fullRange = true
+                        };
+
+                        // Only add a NCLX color information box if the image
+                        // does not have an existing ICC color profile.
+                        if (colorInformationBox == null)
+                        {
                             colorInformationBox = nclxColorInformation;
                         }
                     }
+                }
 
-                    if (colorInformationBox == null)
-                    {
-                        colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
-                                                                       colorConversionInfo.transferCharacteristics,
-                                                                       colorConversionInfo.matrixCoefficients,
-                                                                       colorConversionInfo.fullRange);
-                    }
+                // Add a NCLX color information box with the default color conversion information
+                // if the image does not have an existing ICC or NCLX color information box.
+                if (colorInformationBox == null)
+                {
+                    colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
+                                                                   colorConversionInfo.transferCharacteristics,
+                                                                   colorConversionInfo.matrixCoefficients,
+                                                                   colorConversionInfo.fullRange);
                 }
             }
 

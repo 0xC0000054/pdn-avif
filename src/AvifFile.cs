@@ -82,7 +82,14 @@ namespace AvifFileType
                 yuvFormat = grayscale ? YUVChromaSubsampling.Subsampling400 : chromaSubsampling
             };
 
-            ColorConversionInfo colorConversionInfo = null;
+            // Use BT.709 with sRGB transfer characteristics as the default.
+            CICPColorData colorConversionInfo = new CICPColorData
+            {
+                colorPrimaries = CICPColorPrimaries.BT709,
+                transferCharacteristics = CICPTransferCharacteristics.Srgb,
+                matrixCoefficients = CICPMatrixCoefficients.BT709,
+                fullRange = true
+            };
             ColorInformationBox colorInformationBox = null;
 
             if (quality == 100 && !grayscale)
@@ -98,7 +105,13 @@ namespace AvifFileType
                 // The Identity matrix coefficient places the RGB values into the YUV planes without any conversion.
                 // This reduces the compression efficiency, but allows for fully lossless encoding.
 
-                colorConversionInfo = new ColorConversionInfo(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
+                colorConversionInfo = new CICPColorData
+                {
+                    colorPrimaries = colorPrimaries,
+                    transferCharacteristics = transferCharacteristics,
+                    matrixCoefficients = matrixCoefficients,
+                    fullRange = fullRange
+                };
                 colorInformationBox = new NclxColorInformation(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
             }
             else
@@ -106,9 +119,6 @@ namespace AvifFileType
                 byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
                 if (iccProfileBytes != null && iccProfileBytes.Length > 0)
                 {
-                    // Gray-scale images do not need any color conversion information, it is only
-                    // required when converting color images.
-                    colorConversionInfo = grayscale ? null : new ColorConversionInfo(iccProfileBytes);
                     colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
                 }
                 else
@@ -121,22 +131,23 @@ namespace AvifFileType
 
                         if (nclxColorInformation != null)
                         {
-                            colorConversionInfo = new ColorConversionInfo(nclxColorInformation);
+                            colorConversionInfo = new CICPColorData
+                            {
+                                colorPrimaries = nclxColorInformation.ColorPrimaries,
+                                transferCharacteristics = nclxColorInformation.TransferCharacteristics,
+                                matrixCoefficients = nclxColorInformation.MatrixCoefficients,
+                                fullRange = true
+                            };
                             colorInformationBox = nclxColorInformation;
                         }
                     }
 
                     if (colorInformationBox == null)
                     {
-                        // Use BT709 as the default for color images that do not
-                        // have any existing color conversion information.
-                        const CICPColorPrimaries colorPrimaries = CICPColorPrimaries.BT709;
-                        const CICPTransferCharacteristics transferCharacteristics = CICPTransferCharacteristics.Srgb;
-                        const CICPMatrixCoefficients matrixCoefficients = CICPMatrixCoefficients.BT709;
-                        const bool fullRange = true;
-
-                        colorConversionInfo = new ColorConversionInfo(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
-                        colorInformationBox = new NclxColorInformation(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
+                        colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
+                                                                       colorConversionInfo.transferCharacteristics,
+                                                                       colorConversionInfo.matrixCoefficients,
+                                                                       colorConversionInfo.fullRange);
                     }
                 }
             }

@@ -17,7 +17,7 @@
 
 DecoderStatus ConvertColorImage(
     const aom_image_t* frame,
-    const ColorConversionInfo* containerColorInfo,
+    const CICPColorData* containerColorInfo,
     DecodeInfo* decodeInfo,
     BitmapData* outputBGRAImageData);
 

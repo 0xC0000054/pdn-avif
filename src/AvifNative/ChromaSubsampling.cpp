@@ -141,7 +141,7 @@ namespace
 
     void ColorToYUV8(
         const BitmapData* bgraImage,
-        const ColorConversionInfo* colorInfo,
+        const CICPColorData& colorInfo,
         YUVChromaSubsampling yuvFormat,
         uint8_t* yPlane,
         size_t yPlaneStride,
@@ -319,7 +319,7 @@ namespace
 
 aom_image_t* ConvertColorToAOMImage(
     const BitmapData* bgraImage,
-    const ColorConversionInfo* colorInfo,
+    const CICPColorData& colorInfo,
     YUVChromaSubsampling yuvFormat,
     aom_img_fmt aomFormat)
 {
@@ -332,18 +332,9 @@ aom_image_t* ConvertColorToAOMImage(
     aomImage->range = AOM_CR_FULL_RANGE;
     aomImage->monochrome = yuvFormat == YUVChromaSubsampling::Subsampling400;
 
-    if (colorInfo && colorInfo->format == ColorInformationFormat::Nclx)
-    {
-        aomImage->cp = static_cast<aom_color_primaries_t>(colorInfo->cicpColorData.colorPrimaries);
-        aomImage->tc = static_cast<aom_transfer_characteristics_t>(colorInfo->cicpColorData.transferCharacteristics);
-        aomImage->mc = static_cast<aom_matrix_coefficients_t>(colorInfo->cicpColorData.matrixCoefficients);
-    }
-    else
-    {
-        aomImage->cp = AOM_CICP_CP_UNSPECIFIED;
-        aomImage->tc = AOM_CICP_TC_UNSPECIFIED;
-        aomImage->mc = AOM_CICP_MC_UNSPECIFIED;
-    }
+    aomImage->cp = static_cast<aom_color_primaries_t>(colorInfo.colorPrimaries);
+    aomImage->tc = static_cast<aom_transfer_characteristics_t>(colorInfo.transferCharacteristics);
+    aomImage->mc = static_cast<aom_matrix_coefficients_t>(colorInfo.matrixCoefficients);
 
     if (aomImage->monochrome)
     {

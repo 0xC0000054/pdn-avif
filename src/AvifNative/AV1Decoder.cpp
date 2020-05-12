@@ -58,7 +58,7 @@ namespace
 DecoderStatus DecodeColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
-    const ColorConversionInfo* colorInfo,
+    const CICPColorData* colorInfo,
     DecodeInfo* decodeInfo,
     BitmapData* decodedImage)
 {

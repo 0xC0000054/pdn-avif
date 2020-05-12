@@ -37,274 +37,10 @@
 */
 
 #include "YUVConversionHelpers.h"
-
-#include "lcms/lcms2.h"
-#include "lcms/lcms2_plugin.h"
+#include <memory>
 
 namespace
 {
-    // ------------------------------------------------------------------------------------------------
-    // Adapted from gb_math:
-    //
-    // gb_math.h - v0.07c - public domain C math library - no warranty implied; use at your own risk
-
-    typedef float gbFloat3[3];
-
-    typedef union gbVec3
-    {
-        struct
-        {
-            float x, y, z;
-        } xyz;
-        float e[3];
-    } gbVec3;
-
-    typedef union gbMat3
-    {
-        gbVec3 col[3];
-        float e[9];
-    } gbMat3;
-
-    static gbFloat3* gb_float33_m(gbMat3* m)
-    {
-        return (gbFloat3*)m;
-    }
-
-    static void gb_float33_mul_vec3(gbVec3* out, float m[3][3], gbVec3 v)
-    {
-        out->xyz.x = m[0][0] * v.xyz.x + m[0][1] * v.xyz.y + m[0][2] * v.xyz.z;
-        out->xyz.y = m[1][0] * v.xyz.x + m[1][1] * v.xyz.y + m[1][2] * v.xyz.z;
-        out->xyz.z = m[2][0] * v.xyz.x + m[2][1] * v.xyz.y + m[2][2] * v.xyz.z;
-    }
-
-    static void gb_mat3_mul_vec3(gbVec3* out, gbMat3* m, gbVec3 in)
-    {
-        gb_float33_mul_vec3(out, gb_float33_m(m), in);
-    }
-
-    static void gb_float33_transpose(float(*vec)[3])
-    {
-        int i, j;
-        for (j = 0; j < 3; j++) {
-            for (i = j + 1; i < 3; i++) {
-                float t = vec[i][j];
-                vec[i][j] = vec[j][i];
-                vec[j][i] = t;
-            }
-        }
-    }
-
-    static void gb_mat3_transpose(gbMat3* m)
-    {
-        gb_float33_transpose(gb_float33_m(m));
-    }
-
-    static float gb_mat3_determinant(gbMat3* m)
-    {
-        gbFloat3* e = gb_float33_m(m);
-        float d = +e[0][0] * (e[1][1] * e[2][2] - e[1][2] * e[2][1]) - e[0][1] * (e[1][0] * e[2][2] - e[1][2] * e[2][0]) +
-            e[0][2] * (e[1][0] * e[2][1] - e[1][1] * e[2][0]);
-        return d;
-    }
-
-    static void gb_float33_mul(float(*out)[3], float(*mat1)[3], float(*mat2)[3])
-    {
-        int i, j;
-        float temp1[3][3], temp2[3][3];
-        if (mat1 == out) {
-            memcpy(temp1, mat1, sizeof(temp1));
-            mat1 = temp1;
-        }
-        if (mat2 == out) {
-            memcpy(temp2, mat2, sizeof(temp2));
-            mat2 = temp2;
-        }
-        for (j = 0; j < 3; j++) {
-            for (i = 0; i < 3; i++) {
-                out[j][i] = mat1[0][i] * mat2[j][0] + mat1[1][i] * mat2[j][1] + mat1[2][i] * mat2[j][2];
-            }
-        }
-    }
-
-    static void gb_mat3_mul(gbMat3* out, gbMat3* m1, gbMat3* m2)
-    {
-        gb_float33_mul(gb_float33_m(out), gb_float33_m(m1), gb_float33_m(m2));
-    }
-
-    static void gb_mat3_inverse(gbMat3* out, gbMat3* in)
-    {
-        gbFloat3* o = gb_float33_m(out);
-        gbFloat3* i = gb_float33_m(in);
-
-        float ood = 1.0f / gb_mat3_determinant(in);
-
-        o[0][0] = +(i[1][1] * i[2][2] - i[2][1] * i[1][2]) * ood;
-        o[0][1] = -(i[1][0] * i[2][2] - i[2][0] * i[1][2]) * ood;
-        o[0][2] = +(i[1][0] * i[2][1] - i[2][0] * i[1][1]) * ood;
-        o[1][0] = -(i[0][1] * i[2][2] - i[2][1] * i[0][2]) * ood;
-        o[1][1] = +(i[0][0] * i[2][2] - i[2][0] * i[0][2]) * ood;
-        o[1][2] = -(i[0][0] * i[2][1] - i[2][0] * i[0][1]) * ood;
-        o[2][0] = +(i[0][1] * i[1][2] - i[1][1] * i[0][2]) * ood;
-        o[2][1] = -(i[0][0] * i[1][2] - i[1][0] * i[0][2]) * ood;
-        o[2][2] = +(i[0][0] * i[1][1] - i[1][0] * i[0][1]) * ood;
-    }
-
-    // ------------------------------------------------------------------------------------------------
-
-    float fixedToFloat(int32_t fixed)
-    {
-        float sign = 1.0f;
-        if (fixed < 0) {
-            sign = -1.0f;
-            fixed *= -1;
-        }
-        return sign * (static_cast<float>((fixed >> 16) & 0xffff) + (static_cast<float>(fixed & 0xffff) / 65536.0f));
-    }
-
-
-#pragma warning(push)
-// Disable "C26812: Prefer 'enum class' over 'enum'" for the LCMS types
-#pragma warning(disable: 26812)
-
-    bool readXYZ(cmsHPROFILE profile, cmsTagSignature tag, float xyz[3])
-    {
-        cmsS15Fixed16Number fixedXYZ[3];
-        constexpr cmsUInt32Number bufferSize = sizeof(cmsU16Fixed16Number) * 3;
-
-        if (cmsReadRawTag(profile, tag, fixedXYZ, bufferSize) != bufferSize)
-        {
-            return false;
-        }
-
-        xyz[0] = fixedToFloat(_cmsAdjustEndianess32(fixedXYZ[0]));
-        xyz[1] = fixedToFloat(_cmsAdjustEndianess32(fixedXYZ[1]));
-        xyz[2] = fixedToFloat(_cmsAdjustEndianess32(fixedXYZ[2]));
-        return true;
-    }
-
-    bool readChromaticAdaptation(cmsHPROFILE profile, gbMat3* m)
-    {
-        cmsS15Fixed16Number buffer[9];
-        constexpr cmsUInt32Number bufferSize = sizeof(cmsU16Fixed16Number) * 9;
-
-        if (cmsReadRawTag(profile, cmsSigChromaticAdaptationTag, buffer, bufferSize) != bufferSize)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < 9; ++i)
-        {
-            m->e[i] = fixedToFloat(_cmsAdjustEndianess32(buffer[i]));
-        }
-
-        return true;
-    }
-
-    float calcMaxY(float r, float g, float b, gbMat3* colorants)
-    {
-        gbVec3 rgb, XYZ;
-        rgb.e[0] = r;
-        rgb.e[1] = g;
-        rgb.e[2] = b;
-        gb_mat3_mul_vec3(&XYZ, colorants, rgb);
-        return XYZ.xyz.y;
-    }
-
-    bool calcYUVInfoFromICC(const uint8_t* iccData, size_t iccSize, float coeffs[3]) {
-        bool rXYZPresent = false;
-        bool gXYZPresent = false;
-        bool bXYZPresent = false;
-        bool wtptPresent = false;
-        bool chadPresent = false;
-        gbMat3 colorants;
-        gbMat3 chad, invChad;
-        gbVec3 wtpt;
-        wtpt.e[0] = 0.0f;
-        wtpt.e[1] = 0.0f;
-        wtpt.e[2] = 0.0f;
-
-        cmsUInt32Number iccMajorVersion = 0;
-        cmsHPROFILE profile = cmsOpenProfileFromMem(iccData, static_cast<cmsUInt32Number>(iccSize));
-
-        if (profile) {
-            iccMajorVersion = (cmsGetEncodedICCversion(profile) >> 24) & 0xff;
-
-            if (readXYZ(profile, cmsSigRedColorantTag, &colorants.e[0])) {
-                rXYZPresent = true;
-            }
-
-            if (readXYZ(profile, cmsSigGreenColorantTag, &colorants.e[3])) {
-                gXYZPresent = true;
-            }
-
-            if (readXYZ(profile, cmsSigBlueColorantTag, &colorants.e[6])) {
-                bXYZPresent = true;
-            }
-
-            if (readXYZ(profile, cmsSigMediaWhitePointTag, &wtpt.e[0])) {
-                wtptPresent = true;
-            }
-
-            if (readChromaticAdaptation(profile, &chad)) {
-                chadPresent = true;
-            }
-
-            cmsCloseProfile(profile);
-        }
-
-        if (!rXYZPresent || !gXYZPresent || !bXYZPresent || !wtptPresent) {
-            return false;
-        }
-
-        // These are read in column order, transpose to fix
-        gb_mat3_transpose(&colorants);
-        gb_mat3_transpose(&chad);
-
-        gb_mat3_inverse(&invChad, &chad);
-
-        if (chadPresent) {
-            // TODO: make sure ICC profiles with no chad still behave?
-
-            gbMat3 tmpColorants;
-            memcpy(&tmpColorants, &colorants, sizeof(tmpColorants));
-            gb_mat3_mul(&colorants, &tmpColorants, &invChad);
-
-            // TODO: make sure older versions work well?
-            if (iccMajorVersion >= 4) {
-                gbVec3 tmp;
-                memcpy(&tmp, &wtpt, sizeof(tmp));
-                gb_mat3_mul_vec3(&wtpt, &invChad, tmp);
-            }
-        }
-
-        // white point and color primaries harvesting (unnecessary for YUV coefficients)
-#if 0
-        float whitePoint[2];
-        convertXYZToXY(&wtpt.e[0], &whitePoint, 0.0f, 0.0f);
-
-        float primaries[6];
-        {
-            // transpose to get sets of 3-tuples for R, G, B
-            gb_mat3_transpose(&colorants);
-
-            convertXYZToXY(&colorants.e[0], &primaries[0], whitePoint[0], whitePoint[1]);
-            convertXYZToXY(&colorants.e[3], &primaries[2], whitePoint[0], whitePoint[1]);
-            convertXYZToXY(&colorants.e[6], &primaries[4], whitePoint[0], whitePoint[1]);
-
-            // put it back
-            gb_mat3_transpose(&colorants);
-        }
-#endif
-
-        // YUV coefficients are simply the brightest Y that a primary can be (where the white point's Y is 1.0)
-        coeffs[0] = calcMaxY(1.0f, 0.0f, 0.0f, &colorants);
-        coeffs[2] = calcMaxY(0.0f, 0.0f, 1.0f, &colorants);
-        coeffs[1] = 1.0f - coeffs[0] - coeffs[2];
-        return true;
-    }
-
-#pragma warning(pop)
-
     struct avifColourPrimariesTable
     {
         CICPColorPrimaries colourPrimariesEnum;
@@ -363,10 +99,10 @@ namespace
 
     static const int avifMatrixCoefficientsTableSize = sizeof(matrixCoefficientsTables) / sizeof(matrixCoefficientsTables[0]);
 
-    bool calcYUVInfoFromCCIP(const CICPColorData& ccip, float coeffs[3]) {
-        if (ccip.matrixCoefficients == CICPMatrixCoefficients::CromatNCL) {
+    bool calcYUVInfoFromCICP(const CICPColorData& cicp, float coeffs[3]) {
+        if (cicp.matrixCoefficients == CICPMatrixCoefficients::CromatNCL) {
             float primaries[8];
-            avifNclxColourPrimariesGetValues(ccip.colorPrimaries, primaries);
+            avifNclxColourPrimariesGetValues(cicp.colorPrimaries, primaries);
             float const rX = primaries[0];
             float const rY = primaries[1];
             float const gX = primaries[2];
@@ -393,7 +129,7 @@ namespace
         else {
             for (int i = 0; i < avifMatrixCoefficientsTableSize; ++i) {
                 const struct avifMatrixCoefficientsTable* const table = &matrixCoefficientsTables[i];
-                if (table->matrixCoefficientsEnum == ccip.matrixCoefficients) {
+                if (table->matrixCoefficientsEnum == cicp.matrixCoefficients) {
                     coeffs[0] = table->kr;
                     coeffs[2] = table->kb;
                     coeffs[1] = 1.0f - coeffs[0] - coeffs[2];
@@ -405,40 +141,20 @@ namespace
     }
 }
 
-void GetYUVCoefficiants(const ColorConversionInfo* colorInfo, YUVCoefficiants& yuvData)
+void GetYUVCoefficiants(const CICPColorData& colorInfo, YUVCoefficiants& yuvData)
 {
     // sRGB (BT.709) defaults
     float kr = 0.2126f;
     float kb = 0.0722f;
     float kg = 1.0f - kr - kb;
 
-    if (colorInfo)
+    float coeffs[3];
+
+    if (calcYUVInfoFromCICP(colorInfo, coeffs))
     {
-        if (colorInfo->format == ColorInformationFormat::IccProfile)
-        {
-            if (colorInfo->iccProfile && colorInfo->iccProfileSize)
-            {
-                float coeffs[3];
-
-                if (calcYUVInfoFromICC(colorInfo->iccProfile, colorInfo->iccProfileSize, coeffs))
-                {
-                    kr = coeffs[0];
-                    kg = coeffs[1];
-                    kb = coeffs[2];
-                }
-            }
-        }
-        else if (colorInfo->format == ColorInformationFormat::Nclx)
-        {
-            float coeffs[3];
-
-            if (calcYUVInfoFromCCIP(colorInfo->cicpColorData, coeffs))
-            {
-                kr = coeffs[0];
-                kg = coeffs[1];
-                kb = coeffs[2];
-            }
-        }
+        kr = coeffs[0];
+        kg = coeffs[1];
+        kb = coeffs[2];
     }
 
     yuvData.kr = kr;

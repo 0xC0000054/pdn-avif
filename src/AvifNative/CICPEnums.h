@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-// This must be kept in sync with CCIPColorPrimaries.cs
+// This must be kept in sync with CICPColorPrimaries.cs
 enum class CICPColorPrimaries : uint16_t
 {
     /// <summary>
@@ -78,7 +78,7 @@ enum class CICPColorPrimaries : uint16_t
     Ebu3213 = 22
 };
 
-// This must be kept in sync with CCIPTransferCharacteristics.cs
+// This must be kept in sync with CICPTransferCharacteristics.cs
 enum class CICPTransferCharacteristics : uint16_t
 {
     /// <summary>
@@ -177,7 +177,7 @@ enum class CICPTransferCharacteristics : uint16_t
     HLG = 18
 };
 
-// This must be kept in sync with CCIPMatrixCoefficients.cs
+// This must be kept in sync with CICPMatrixCoefficients.cs
 enum class CICPMatrixCoefficients : uint16_t
 {
     /// <summary>

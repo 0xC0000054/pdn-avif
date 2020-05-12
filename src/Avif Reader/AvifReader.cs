@@ -410,7 +410,7 @@ namespace AvifFileType
             }
         }
 
-        private void DecodeColorImage(uint itemId, DecodeInfo decodeInfo, ColorConversionInfo colorConversionInfo, Surface fullSurface)
+        private void DecodeColorImage(uint itemId, DecodeInfo decodeInfo, CICPColorData? colorConversionInfo, Surface fullSurface)
         {
             SafeProcessHeapBuffer color = null;
 
@@ -470,7 +470,7 @@ namespace AvifFileType
             }
         }
 
-        private void FillColorImageGrid(ColorConversionInfo colorInfo, Surface fullSurface)
+        private void FillColorImageGrid(CICPColorData? colorInfo, Surface fullSurface)
         {
             this.colorGridInfo.CheckAvailableTileCount();
             DecodeInfo decodeInfo = new DecodeInfo
@@ -534,10 +534,16 @@ namespace AvifFileType
 
         private void ProcessColorImage(Surface fullSurface)
         {
-            ColorConversionInfo colorConversionInfo = null;
-            if (this.colorInfoBox != null)
+            CICPColorData? colorConversionInfo = null;
+            if (this.colorInfoBox is NclxColorInformation nclxColorInformation)
             {
-                colorConversionInfo = new ColorConversionInfo(this.colorInfoBox);
+                colorConversionInfo = new CICPColorData
+                {
+                    colorPrimaries = nclxColorInformation.ColorPrimaries,
+                    transferCharacteristics = nclxColorInformation.TransferCharacteristics,
+                    matrixCoefficients = nclxColorInformation.MatrixCoefficients,
+                    fullRange = nclxColorInformation.FullRange
+                };
             }
 
             if (this.colorGridInfo != null)

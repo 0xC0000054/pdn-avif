@@ -24,7 +24,7 @@ namespace AvifFileType.Interop
             [In] ref BitmapData image,
             EncoderOptions options,
             [In, Out] ProgressContext progressContext,
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(ColorConversionInfoMarshaler))] ColorConversionInfo colorInfo,
+            [In] ref CICPColorData colorInfo,
             out SafeAV1ImageX86 colorImage,
             out UIntPtr colorImageSize,
             out SafeAV1ImageX86 alphaImage,
@@ -35,17 +35,25 @@ namespace AvifFileType.Interop
             [In] ref BitmapData image,
             EncoderOptions options,
             [In, Out] ProgressContext progressContext,
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(ColorConversionInfoMarshaler))] ColorConversionInfo colorInfo,
+            [In] ref CICPColorData colorInfo,
             out SafeAV1ImageX86 colorImage,
             out UIntPtr colorImageSize,
             IntPtr alphaImage_MustBeZero,
             IntPtr alphaImageSize_MustBeZero);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static extern DecoderStatus DecompressColorImage(
+        internal static unsafe extern DecoderStatus DecompressColorImage(
             SafeProcessHeapBuffer compressedColorImage,
             UIntPtr compressedColorImageSize,
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(ColorConversionInfoMarshaler))] ColorConversionInfo colorInfo,
+            [In] ref CICPColorData colorInfo,
+            [In, Out] DecodeInfo decodeInfo,
+            [In] ref BitmapData fullImage);
+
+        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
+        internal static unsafe extern DecoderStatus DecompressColorImage(
+            SafeProcessHeapBuffer compressedColorImage,
+            UIntPtr compressedColorImageSize,
+            IntPtr colorInfo_MustBeZero,
             [In, Out] DecodeInfo decodeInfo,
             [In] ref BitmapData fullImage);
 

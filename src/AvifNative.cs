@@ -23,7 +23,7 @@ namespace AvifFileType
                                                     AvifProgressCallback avifProgress,
                                                     ref uint progressDone,
                                                     uint progressTotal,
-                                                    ColorConversionInfo colorInfo,
+                                                    CICPColorData colorInfo,
                                                     out CompressedAV1Image color,
                                                     out CompressedAV1Image alpha)
         {
@@ -48,7 +48,7 @@ namespace AvifFileType
                 EncoderStatus status = AvifNative_64.CompressImage(ref bitmapData,
                                                                    options,
                                                                    progressContext,
-                                                                   colorInfo,
+                                                                   ref colorInfo,
                                                                    out colorImage,
                                                                    out colorImageSize,
                                                                    out alphaImage,
@@ -75,7 +75,7 @@ namespace AvifFileType
                 EncoderStatus status = AvifNative_86.CompressImage(ref bitmapData,
                                                                    options,
                                                                    progressContext,
-                                                                   colorInfo,
+                                                                   ref colorInfo,
                                                                    out colorImage,
                                                                    out colorImageSize,
                                                                    out alphaImage,
@@ -104,7 +104,7 @@ namespace AvifFileType
                                                        AvifProgressCallback avifProgress,
                                                        ref uint progressDone,
                                                        uint progressTotal,
-                                                       ColorConversionInfo colorInfo,
+                                                       CICPColorData colorInfo,
                                                        out CompressedAV1Image color)
         {
             BitmapData bitmapData = new BitmapData
@@ -126,7 +126,7 @@ namespace AvifFileType
                 EncoderStatus status = AvifNative_64.CompressImage(ref bitmapData,
                                                                    options,
                                                                    progressContext,
-                                                                   colorInfo,
+                                                                   ref colorInfo,
                                                                    out colorImage,
                                                                    out colorImageSize,
                                                                    IntPtr.Zero,
@@ -149,7 +149,7 @@ namespace AvifFileType
                 EncoderStatus status = AvifNative_86.CompressImage(ref bitmapData,
                                                                    options,
                                                                    progressContext,
-                                                                   colorInfo,
+                                                                   ref colorInfo,
                                                                    out colorImage,
                                                                    out colorImageSize,
                                                                    IntPtr.Zero,
@@ -171,7 +171,7 @@ namespace AvifFileType
         }
 
         public static void DecompressColor(SafeProcessHeapBuffer colorImage,
-                                           ColorConversionInfo colorConversionInfo,
+                                           CICPColorData? colorConversionInfo,
                                            DecodeInfo decodeInfo,
                                            Surface fullSurface)
         {
@@ -201,11 +201,27 @@ namespace AvifFileType
 
             if (IntPtr.Size == 8)
             {
-                DecoderStatus status = AvifNative_64.DecompressColorImage(colorImage,
-                                                                          colorImageSize,
-                                                                          colorConversionInfo,
-                                                                          decodeInfo,
-                                                                          ref bitmapData);
+                DecoderStatus status;
+
+                if (colorConversionInfo.HasValue)
+                {
+                    CICPColorData colorData = colorConversionInfo.Value;
+
+                    status = AvifNative_64.DecompressColorImage(colorImage,
+                                                                colorImageSize,
+                                                                ref colorData,
+                                                                decodeInfo,
+                                                                ref bitmapData);
+                }
+                else
+                {
+                    status = AvifNative_64.DecompressColorImage(colorImage,
+                                                                colorImageSize,
+                                                                IntPtr.Zero,
+                                                                decodeInfo,
+                                                                ref bitmapData);
+                }
+
                 if (status != DecoderStatus.Ok)
                 {
                     HandleError(status);
@@ -213,11 +229,27 @@ namespace AvifFileType
             }
             else
             {
-                DecoderStatus status = AvifNative_86.DecompressColorImage(colorImage,
-                                                                          colorImageSize,
-                                                                          colorConversionInfo,
-                                                                          decodeInfo,
-                                                                          ref bitmapData);
+                DecoderStatus status;
+
+                if (colorConversionInfo.HasValue)
+                {
+                    CICPColorData colorData = colorConversionInfo.Value;
+
+                    status = AvifNative_86.DecompressColorImage(colorImage,
+                                                                colorImageSize,
+                                                                ref colorData,
+                                                                decodeInfo,
+                                                                ref bitmapData);
+                }
+                else
+                {
+                    status = AvifNative_64.DecompressColorImage(colorImage,
+                                                                colorImageSize,
+                                                                IntPtr.Zero,
+                                                                decodeInfo,
+                                                                ref bitmapData);
+                }
+
                 if (status != DecoderStatus.Ok)
                 {
                     HandleError(status);

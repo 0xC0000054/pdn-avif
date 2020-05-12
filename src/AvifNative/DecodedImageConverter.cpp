@@ -718,7 +718,7 @@ namespace
 
 DecoderStatus ConvertColorImage(
     const aom_image_t* frame,
-    const ColorConversionInfo* containerColorInfo,
+    const CICPColorData* containerColorInfo,
     DecodeInfo* decodeInfo,
     BitmapData* outputImage)
 {
@@ -735,7 +735,7 @@ DecoderStatus ConvertColorImage(
         decodeInfo->expectedHeight = frame->d_h;
     }
 
-    ColorConversionInfo colorInfo = {};
+    CICPColorData colorInfo = {};
 
     if (containerColorInfo)
     {
@@ -743,28 +743,27 @@ DecoderStatus ConvertColorImage(
     }
     else
     {
-        colorInfo.format = ColorInformationFormat::Nclx;
-        colorInfo.cicpColorData.colorPrimaries = static_cast<CICPColorPrimaries>(frame->cp);
-        colorInfo.cicpColorData.transferCharacteristics = static_cast<CICPTransferCharacteristics>(frame->tc);
-        colorInfo.cicpColorData.matrixCoefficients = static_cast<CICPMatrixCoefficients>(frame->mc);
-        colorInfo.cicpColorData.fullRange = frame->range == aom_color_range::AOM_CR_FULL_RANGE;
+        colorInfo.colorPrimaries = static_cast<CICPColorPrimaries>(frame->cp);
+        colorInfo.transferCharacteristics = static_cast<CICPTransferCharacteristics>(frame->tc);
+        colorInfo.matrixCoefficients = static_cast<CICPMatrixCoefficients>(frame->mc);
+        colorInfo.fullRange = frame->range == aom_color_range::AOM_CR_FULL_RANGE;
 
         if (isFirstTile)
         {
-            decodeInfo->firstTileColorData.colorPrimaries = colorInfo.cicpColorData.colorPrimaries;
-            decodeInfo->firstTileColorData.transferCharacteristics = colorInfo.cicpColorData.transferCharacteristics;
-            decodeInfo->firstTileColorData.matrixCoefficients = colorInfo.cicpColorData.matrixCoefficients;
-            decodeInfo->firstTileColorData.fullRange = colorInfo.cicpColorData.fullRange;
+            decodeInfo->firstTileColorData.colorPrimaries = colorInfo.colorPrimaries;
+            decodeInfo->firstTileColorData.transferCharacteristics = colorInfo.transferCharacteristics;
+            decodeInfo->firstTileColorData.matrixCoefficients = colorInfo.matrixCoefficients;
+            decodeInfo->firstTileColorData.fullRange = colorInfo.fullRange;
             decodeInfo->usingFirstTileColorData = true;
         }
         else
         {
             if (decodeInfo->usingFirstTileColorData)
             {
-                if (colorInfo.cicpColorData.colorPrimaries != colorInfo.cicpColorData.colorPrimaries ||
-                    colorInfo.cicpColorData.transferCharacteristics != colorInfo.cicpColorData.transferCharacteristics ||
-                    colorInfo.cicpColorData.matrixCoefficients != colorInfo.cicpColorData.matrixCoefficients ||
-                    colorInfo.cicpColorData.fullRange != colorInfo.cicpColorData.fullRange)
+                if (decodeInfo->firstTileColorData.colorPrimaries != colorInfo.colorPrimaries ||
+                    decodeInfo->firstTileColorData.transferCharacteristics != colorInfo.transferCharacteristics ||
+                    decodeInfo->firstTileColorData.matrixCoefficients != colorInfo.matrixCoefficients ||
+                    decodeInfo->firstTileColorData.fullRange != colorInfo.fullRange)
                 {
                     return DecoderStatus::TileNclxProfileMismatch;
                 }
@@ -772,8 +771,7 @@ DecoderStatus ConvertColorImage(
         }
     }
 
-    if (colorInfo.format == ColorInformationFormat::Nclx &&
-        colorInfo.cicpColorData.matrixCoefficients == CICPMatrixCoefficients::Identity)
+    if (colorInfo.matrixCoefficients == CICPMatrixCoefficients::Identity)
     {
         // The Identity matrix coefficient contains RGB color values.
 
@@ -811,7 +809,7 @@ DecoderStatus ConvertColorImage(
     else
     {
         YUVCoefficiants yuvCoefficiants;
-        GetYUVCoefficiants(&colorInfo, yuvCoefficiants);
+        GetYUVCoefficiants(colorInfo, yuvCoefficiants);
 
         if (frame->bit_depth > 8)
         {

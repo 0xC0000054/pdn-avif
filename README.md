@@ -43,4 +43,3 @@ See [License.txt](License.txt) for more information.
 This project uses the following libraries. (the required header and library files are located in the `src/deps/` sub-folders).
 
 * [aom](https://aomedia.googlesource.com/aom/) (v1.0.0-errata1-avif tag)
-* [Little CMS](https://github.com/mm2/Little-CMS)  (version 2.9)

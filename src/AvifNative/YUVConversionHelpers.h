@@ -23,5 +23,5 @@ struct YUVCoefficiants
 };
 
 void GetYUVCoefficiants(
-    const ColorConversionInfo* colorInfo,
+    const CICPColorData& colorInfo,
     YUVCoefficiants& yuvData);

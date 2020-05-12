@@ -148,8 +148,6 @@
     <Compile Include="Interop\AvifNative_86.cs" />
     <Compile Include="Interop\BitmapData.cs" />
     <Compile Include="Interop\CICPColorData.cs" />
-    <Compile Include="Interop\ColorConversionInfo.cs" />
-    <Compile Include="Interop\ColorConversionInfoMarshaler.cs" />
     <Compile Include="Interop\DecodeInfo.cs" />
     <Compile Include="Interop\DecoderStatus.cs" />
     <Compile Include="Interop\EncoderOptions.cs" />

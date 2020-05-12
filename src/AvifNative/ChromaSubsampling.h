@@ -17,7 +17,7 @@
 
 aom_image_t* ConvertColorToAOMImage(
     const BitmapData* bgraImage,
-    const ColorConversionInfo* colorInfo,
+    const CICPColorData& colorInfo,
     YUVChromaSubsampling yuvFormat,
     aom_img_fmt aomFormat);
 

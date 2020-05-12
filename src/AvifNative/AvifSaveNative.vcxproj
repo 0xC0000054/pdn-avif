@@ -133,8 +133,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(SolutionDir)deps\libs\lcms\$(ConfigurationName)\$(PlatformTarget);$(SolutionDir)deps\libs\aom\$(ConfigurationName)\$(PlatformTarget)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>aom.lib;lcms2_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)deps\libs\aom\$(ConfigurationName)\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>aom.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -155,8 +155,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(SolutionDir)deps\libs\lcms\$(ConfigurationName)\$(PlatformTarget);$(SolutionDir)deps\libs\aom\$(ConfigurationName)\$(PlatformTarget)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>aom.lib;lcms2_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)deps\libs\aom\$(ConfigurationName)\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>aom.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -177,8 +177,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(SolutionDir)deps\libs\lcms\$(ConfigurationName)\$(PlatformTarget);$(SolutionDir)deps\libs\aom\$(ConfigurationName)\$(PlatformTarget)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>aom.lib;lcms2_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)deps\libs\aom\$(ConfigurationName)\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>aom.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "D:\Program Files\paint.net\FileTypes" /y</Command>
@@ -206,8 +206,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(SolutionDir)deps\libs\lcms\$(ConfigurationName)\$(PlatformTarget);$(SolutionDir)deps\libs\aom\$(ConfigurationName)\$(PlatformTarget)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>aom.lib;lcms2_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)deps\libs\aom\$(ConfigurationName)\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>aom.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "D:\Program Files\paint.net\FileTypes" /y</Command>

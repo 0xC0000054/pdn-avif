@@ -44,7 +44,7 @@ namespace
         bool includeTransparency,
         const EncoderOptions* encodeOptions,
         ProgressContext* progressContext,
-        const ColorConversionInfo* colorInfo,
+        const CICPColorData& colorInfo,
         void** compressedColorImage,
         size_t* compressedColorImageSize,
         void** compressedAlphaImage,
@@ -101,7 +101,7 @@ namespace
 DecoderStatus __stdcall DecompressColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
-    const ColorConversionInfo* colorInfo,
+    const CICPColorData* colorInfo,
     DecodeInfo* decodeInfo,
     BitmapData* outputImage)
 {
@@ -130,7 +130,7 @@ EncoderStatus __stdcall CompressImage(
     const BitmapData* image,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
-    const ColorConversionInfo* colorInfo,
+    const CICPColorData& colorInfo,
     void** compressedColorImage,
     size_t* compressedColorImageSize,
     void** compressedAlphaImage,

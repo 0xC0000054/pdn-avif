@@ -307,26 +307,26 @@ namespace
 
     struct avifColourPrimariesTable
     {
-        NclxColorPrimaries colourPrimariesEnum;
+        CICPColorPrimaries colourPrimariesEnum;
         const char* name;
         float primaries[8]; // rX, rY, gX, gY, bX, bY, wX, wY
     };
     static const struct avifColourPrimariesTable avifColourPrimariesTables[] = {
-        { NclxColorPrimaries::BT709, "BT.709", { 0.64f, 0.33f, 0.3f, 0.6f, 0.15f, 0.06f, 0.3127f, 0.329f } },
-        { NclxColorPrimaries::BT470M, "BT.470-6 System M", { 0.67f, 0.33f, 0.21f, 0.71f, 0.14f, 0.08f, 0.310f, 0.316f } },
-        { NclxColorPrimaries::BT470BG, "BT.470-6 System BG", { 0.64f, 0.33f, 0.29f, 0.60f, 0.15f, 0.06f, 0.3127f, 0.3290f } },
-        { NclxColorPrimaries::BT601, "BT.601", { 0.630f, 0.340f, 0.310f, 0.595f, 0.155f, 0.070f, 0.3127f, 0.3290f } },
-        { NclxColorPrimaries::Smpte240, "SMPTE 240M", { 0.630f, 0.340f, 0.310f, 0.595f, 0.155f, 0.070f, 0.3127f, 0.3290f } },
-        { NclxColorPrimaries::GenericFilm, "Generic film", { 0.681f, 0.319f, 0.243f, 0.692f, 0.145f, 0.049f, 0.310f, 0.316f } },
-        { NclxColorPrimaries::BT2020, "BT.2020", { 0.708f, 0.292f, 0.170f, 0.797f, 0.131f, 0.046f, 0.3127f, 0.3290f } },
-        { NclxColorPrimaries::Xyz, "XYZ", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.3333f, 0.3333f } },
-        { NclxColorPrimaries::Smpte431, "SMPTE RP 431-2", { 0.680f, 0.320f, 0.265f, 0.690f, 0.150f, 0.060f, 0.314f, 0.351f } },
-        { NclxColorPrimaries::Smpte432, "SMPTE EG 432-1 (DCI P3)", { 0.680f, 0.320f, 0.265f, 0.690f, 0.150f, 0.060f, 0.3127f, 0.3290f } },
-        { NclxColorPrimaries::Ebu3213, "EBU Tech. 3213-E", { 0.630f, 0.340f, 0.295f, 0.605f, 0.155f, 0.077f, 0.3127f, 0.3290f } }
+        { CICPColorPrimaries::BT709, "BT.709", { 0.64f, 0.33f, 0.3f, 0.6f, 0.15f, 0.06f, 0.3127f, 0.329f } },
+        { CICPColorPrimaries::BT470M, "BT.470-6 System M", { 0.67f, 0.33f, 0.21f, 0.71f, 0.14f, 0.08f, 0.310f, 0.316f } },
+        { CICPColorPrimaries::BT470BG, "BT.470-6 System BG", { 0.64f, 0.33f, 0.29f, 0.60f, 0.15f, 0.06f, 0.3127f, 0.3290f } },
+        { CICPColorPrimaries::BT601, "BT.601", { 0.630f, 0.340f, 0.310f, 0.595f, 0.155f, 0.070f, 0.3127f, 0.3290f } },
+        { CICPColorPrimaries::Smpte240, "SMPTE 240M", { 0.630f, 0.340f, 0.310f, 0.595f, 0.155f, 0.070f, 0.3127f, 0.3290f } },
+        { CICPColorPrimaries::GenericFilm, "Generic film", { 0.681f, 0.319f, 0.243f, 0.692f, 0.145f, 0.049f, 0.310f, 0.316f } },
+        { CICPColorPrimaries::BT2020, "BT.2020", { 0.708f, 0.292f, 0.170f, 0.797f, 0.131f, 0.046f, 0.3127f, 0.3290f } },
+        { CICPColorPrimaries::Xyz, "XYZ", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.3333f, 0.3333f } },
+        { CICPColorPrimaries::Smpte431, "SMPTE RP 431-2", { 0.680f, 0.320f, 0.265f, 0.690f, 0.150f, 0.060f, 0.314f, 0.351f } },
+        { CICPColorPrimaries::Smpte432, "SMPTE EG 432-1 (DCI P3)", { 0.680f, 0.320f, 0.265f, 0.690f, 0.150f, 0.060f, 0.3127f, 0.3290f } },
+        { CICPColorPrimaries::Ebu3213, "EBU Tech. 3213-E", { 0.630f, 0.340f, 0.295f, 0.605f, 0.155f, 0.077f, 0.3127f, 0.3290f } }
     };
     static const int avifColourPrimariesTableSize = sizeof(avifColourPrimariesTables) / sizeof(avifColourPrimariesTables[0]);
 
-    void avifNclxColourPrimariesGetValues(NclxColorPrimaries ancp, float outPrimaries[8]) {
+    void avifNclxColourPrimariesGetValues(CICPColorPrimaries ancp, float outPrimaries[8]) {
         for (int i = 0; i < avifColourPrimariesTableSize; ++i) {
             if (avifColourPrimariesTables[i].colourPrimariesEnum == ancp) {
                 memcpy(outPrimaries, avifColourPrimariesTables[i].primaries, sizeof(avifColourPrimariesTables[i].primaries));
@@ -340,7 +340,7 @@ namespace
 
     struct avifMatrixCoefficientsTable
     {
-        NclxMatrixCoefficients matrixCoefficientsEnum;
+        CICPMatrixCoefficients matrixCoefficientsEnum;
         const char* name;
         const float kr;
         const float kb;
@@ -349,12 +349,12 @@ namespace
     // https://www.itu.int/rec/T-REC-H.273-201612-I/en
     static const struct avifMatrixCoefficientsTable matrixCoefficientsTables[] = {
         //{ AVIF_NCLX_MATRIX_COEFFICIENTS_IDENTITY, "Identity", 0.0f, 0.0f, }, // FIXME: Identity matrix can't represent using Kr and Kb.
-        { NclxMatrixCoefficients::BT709, "BT.709", 0.2126f, 0.0722f },
-        { NclxMatrixCoefficients::FCC, "FCC USFC 73.682", 0.30f, 0.11f },
-        { NclxMatrixCoefficients::BT470BG, "BT.470-6 System BG", 0.299f, 0.114f },
-        { NclxMatrixCoefficients::BT601, "BT.601", 0.299f, 0.144f },
-        { NclxMatrixCoefficients::Smpte240, "SMPTE ST 240", 0.212f, 0.087f },
-        { NclxMatrixCoefficients::BT2020NCL, "BT.2020 (non-constant luminance)", 0.2627f, 0.0593f },
+        { CICPMatrixCoefficients::BT709, "BT.709", 0.2126f, 0.0722f },
+        { CICPMatrixCoefficients::FCC, "FCC USFC 73.682", 0.30f, 0.11f },
+        { CICPMatrixCoefficients::BT470BG, "BT.470-6 System BG", 0.299f, 0.114f },
+        { CICPMatrixCoefficients::BT601, "BT.601", 0.299f, 0.144f },
+        { CICPMatrixCoefficients::Smpte240, "SMPTE ST 240", 0.212f, 0.087f },
+        { CICPMatrixCoefficients::BT2020NCL, "BT.2020 (non-constant luminance)", 0.2627f, 0.0593f },
         //{ AVIF_NCLX_MATRIX_COEFFICIENTS_BT2020_CL, "BT.2020 (constant luminance)", 0.2627f, 0.0593f }, // FIXME: It is not an linear transformation.
         //{ AVIF_NCLX_MATRIX_COEFFICIENTS_ST2085, "ST 2085", 0.0f, 0.0f }, // FIXME: ST2085 can't represent using Kr and Kb.
         //{ AVIF_NCLX_MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL, "Chromaticity-derived constant luminance system", 0.0f, 0.0f } // FIXME: It is not an linear transformation.
@@ -363,10 +363,10 @@ namespace
 
     static const int avifMatrixCoefficientsTableSize = sizeof(matrixCoefficientsTables) / sizeof(matrixCoefficientsTables[0]);
 
-    bool calcYUVInfoFromNCLX(const NclxColorData& nclx, float coeffs[3]) {
-        if (nclx.matrixCoefficients == NclxMatrixCoefficients::CromatNCL) {
+    bool calcYUVInfoFromCCIP(const CICPColorData& ccip, float coeffs[3]) {
+        if (ccip.matrixCoefficients == CICPMatrixCoefficients::CromatNCL) {
             float primaries[8];
-            avifNclxColourPrimariesGetValues(nclx.colorPrimaries, primaries);
+            avifNclxColourPrimariesGetValues(ccip.colorPrimaries, primaries);
             float const rX = primaries[0];
             float const rY = primaries[1];
             float const gX = primaries[2];
@@ -393,7 +393,7 @@ namespace
         else {
             for (int i = 0; i < avifMatrixCoefficientsTableSize; ++i) {
                 const struct avifMatrixCoefficientsTable* const table = &matrixCoefficientsTables[i];
-                if (table->matrixCoefficientsEnum == nclx.matrixCoefficients) {
+                if (table->matrixCoefficientsEnum == ccip.matrixCoefficients) {
                     coeffs[0] = table->kr;
                     coeffs[2] = table->kb;
                     coeffs[1] = 1.0f - coeffs[0] - coeffs[2];
@@ -432,7 +432,7 @@ void GetYUVCoefficiants(const ColorConversionInfo* colorInfo, YUVCoefficiants& y
         {
             float coeffs[3];
 
-            if (calcYUVInfoFromNCLX(colorInfo->nclxColorData, coeffs))
+            if (calcYUVInfoFromCCIP(colorInfo->cicpColorData, coeffs))
             {
                 kr = coeffs[0];
                 kg = coeffs[1];

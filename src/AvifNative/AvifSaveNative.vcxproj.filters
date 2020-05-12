@@ -42,7 +42,7 @@
     <ClInclude Include="DecodedImageConverter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NclxEnums.h">
+    <ClInclude Include="CICPEnums.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

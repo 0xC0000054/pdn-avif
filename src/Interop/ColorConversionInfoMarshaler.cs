@@ -19,11 +19,11 @@ namespace AvifFileType.Interop
     internal sealed class ColorConversionInfoMarshaler
         : ICustomMarshaler
     {
-        private struct NativeNclxColorData
+        private struct NativeCICPColorData
         {
-            public NclxColorPrimaries colorPrimaries;
-            public NclxTransferCharacteristics transferCharacteristics;
-            public NclxMatrixCoefficients matrixCoefficients;
+            public CICPColorPrimaries colorPrimaries;
+            public CICPTransferCharacteristics transferCharacteristics;
+            public CICPMatrixCoefficients matrixCoefficients;
             public byte fullRange;
         }
 
@@ -32,7 +32,7 @@ namespace AvifFileType.Interop
             public IntPtr iccProfile;
             public UIntPtr iccProfileSize;
 
-            public NativeNclxColorData nclxColorData;
+            public NativeCICPColorData cicpColorData;
 
             public ColorInformationFormat format;
         }
@@ -118,25 +118,25 @@ namespace AvifFileType.Interop
                         nativeColorInfo->iccProfile = IntPtr.Zero;
                         nativeColorInfo->iccProfileSize = UIntPtr.Zero;
                     }
-                    nativeColorInfo->nclxColorData.colorPrimaries = 0;
-                    nativeColorInfo->nclxColorData.transferCharacteristics = 0;
-                    nativeColorInfo->nclxColorData.matrixCoefficients = 0;
-                    nativeColorInfo->nclxColorData.fullRange = 0;
+                    nativeColorInfo->cicpColorData.colorPrimaries = 0;
+                    nativeColorInfo->cicpColorData.transferCharacteristics = 0;
+                    nativeColorInfo->cicpColorData.matrixCoefficients = 0;
+                    nativeColorInfo->cicpColorData.fullRange = 0;
                 }
                 else if (info.format == ColorInformationFormat.Nclx)
                 {
                     nativeColorInfo->iccProfile = IntPtr.Zero;
                     nativeColorInfo->iccProfileSize = UIntPtr.Zero;
-                    nativeColorInfo->nclxColorData.colorPrimaries = info.nclxColorData.colorPrimaries;
-                    nativeColorInfo->nclxColorData.transferCharacteristics = info.nclxColorData.transferCharacteristics;
-                    nativeColorInfo->nclxColorData.matrixCoefficients = info.nclxColorData.matrixCoefficients;
-                    if (info.nclxColorData.fullRange)
+                    nativeColorInfo->cicpColorData.colorPrimaries = info.cicpColorData.colorPrimaries;
+                    nativeColorInfo->cicpColorData.transferCharacteristics = info.cicpColorData.transferCharacteristics;
+                    nativeColorInfo->cicpColorData.matrixCoefficients = info.cicpColorData.matrixCoefficients;
+                    if (info.cicpColorData.fullRange)
                     {
-                        nativeColorInfo->nclxColorData.fullRange = 1;
+                        nativeColorInfo->cicpColorData.fullRange = 1;
                     }
                     else
                     {
-                        nativeColorInfo->nclxColorData.fullRange = 0;
+                        nativeColorInfo->cicpColorData.fullRange = 0;
                     }
                 }
             }

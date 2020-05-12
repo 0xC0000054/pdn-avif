@@ -23,8 +23,8 @@
     <ClInclude Include="AV1Encoder.h" />
     <ClInclude Include="AvifNative.h" />
     <ClInclude Include="ChromaSubsampling.h" />
+    <ClInclude Include="CICPEnums.h" />
     <ClInclude Include="Memory.h" />
-    <ClInclude Include="NclxEnums.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="TargetVer.h" />
     <ClInclude Include="DecodedImageConverter.h" />

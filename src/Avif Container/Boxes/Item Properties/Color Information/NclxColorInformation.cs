@@ -20,15 +20,15 @@ namespace AvifFileType.AvifContainer
         public NclxColorInformation(EndianBinaryReader reader, ColorInformationBox header)
             : base(header)
         {
-            this.ColorPrimaries = (NclxColorPrimaries)reader.ReadUInt16();
-            this.TransferCharacteristics = (NclxTransferCharacteristics)reader.ReadUInt16();
-            this.MatrixCoefficients = (NclxMatrixCoefficients)reader.ReadUInt16();
+            this.ColorPrimaries = (CICPColorPrimaries)reader.ReadUInt16();
+            this.TransferCharacteristics = (CICPTransferCharacteristics)reader.ReadUInt16();
+            this.MatrixCoefficients = (CICPMatrixCoefficients)reader.ReadUInt16();
             this.FullRange = (reader.ReadByte() & FullRangeMask) == FullRangeMask;
         }
 
-        public NclxColorInformation(NclxColorPrimaries colorPrimaries,
-                                    NclxTransferCharacteristics transferCharacteristics,
-                                    NclxMatrixCoefficients matrixCoefficients,
+        public NclxColorInformation(CICPColorPrimaries colorPrimaries,
+                                    CICPTransferCharacteristics transferCharacteristics,
+                                    CICPMatrixCoefficients matrixCoefficients,
                                     bool fullRange)
             : base(ColorInformationBoxTypes.Nclx)
         {
@@ -38,11 +38,11 @@ namespace AvifFileType.AvifContainer
             this.FullRange = fullRange;
         }
 
-        public NclxColorPrimaries ColorPrimaries { get; }
+        public CICPColorPrimaries ColorPrimaries { get; }
 
-        public NclxTransferCharacteristics TransferCharacteristics { get; }
+        public CICPTransferCharacteristics TransferCharacteristics { get; }
 
-        public NclxMatrixCoefficients MatrixCoefficients { get; }
+        public CICPMatrixCoefficients MatrixCoefficients { get; }
 
         public bool FullRange { get; }
 

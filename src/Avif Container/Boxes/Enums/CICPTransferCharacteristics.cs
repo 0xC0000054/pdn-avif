@@ -12,10 +12,10 @@
 
 namespace AvifFileType.AvifContainer
 {
-    // These values are from the "Color config semantics" section of the AV1 specification.
-    // https://aomediacodec.github.io/av1-spec/
+    // These values are from the ITU-T H.273 (2016) specification.
+    // https://www.itu.int/rec/T-REC-H.273-201612-I/en
 
-    internal enum NclxTransferCharacteristics : ushort
+    internal enum CICPTransferCharacteristics : ushort
     {
         /// <summary>
         /// For future use

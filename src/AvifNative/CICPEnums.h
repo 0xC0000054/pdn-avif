@@ -14,8 +14,8 @@
 
 #include <stdint.h>
 
-// This must be kept in sync with NclxColorPrimaries.cs
-enum class NclxColorPrimaries : uint16_t
+// This must be kept in sync with CCIPColorPrimaries.cs
+enum class CICPColorPrimaries : uint16_t
 {
     /// <summary>
     /// BT.709
@@ -78,8 +78,8 @@ enum class NclxColorPrimaries : uint16_t
     Ebu3213 = 22
 };
 
-// This must be kept in sync with NclxTransferCharacteristics.cs
-enum class NclxTransferCharacteristics : uint16_t
+// This must be kept in sync with CCIPTransferCharacteristics.cs
+enum class CICPTransferCharacteristics : uint16_t
 {
     /// <summary>
     /// For future use
@@ -177,8 +177,8 @@ enum class NclxTransferCharacteristics : uint16_t
     HLG = 18
 };
 
-// This must be kept in sync with NclxMatrixCoefficients.cs
-enum class NclxMatrixCoefficients : uint16_t
+// This must be kept in sync with CCIPMatrixCoefficients.cs
+enum class CICPMatrixCoefficients : uint16_t
 {
     /// <summary>
     /// Identity matrix

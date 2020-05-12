@@ -449,7 +449,7 @@ namespace AvifFileType
             {
                 expectedWidth = 0,
                 expectedHeight = 0,
-                usingTileNclxProfile = false
+                usingTileColorData = false
             };
 
             IReadOnlyList<uint> childImageIds = this.alphaGridInfo.ChildImageIds;
@@ -477,7 +477,7 @@ namespace AvifFileType
             {
                 expectedWidth = 0,
                 expectedHeight = 0,
-                usingTileNclxProfile = false
+                usingTileColorData = false
             };
 
             IReadOnlyList<uint> childImageIds = this.colorGridInfo.ChildImageIds;
@@ -497,17 +497,17 @@ namespace AvifFileType
                 }
             }
 
-            MaybeSetNclxColorInfoFromDecoder(decodeInfo);
+            MaybeUseColorDataFromDecoder(decodeInfo);
         }
 
-        private void MaybeSetNclxColorInfoFromDecoder(DecodeInfo decodeInfo)
+        private void MaybeUseColorDataFromDecoder(DecodeInfo decodeInfo)
         {
-            if (this.colorInfoBox is null && decodeInfo.usingTileNclxProfile)
+            if (this.colorInfoBox is null && decodeInfo.usingTileColorData)
             {
-                this.colorInfoBox = new NclxColorInformation(decodeInfo.firstTileNclxProfile.colorPrimaries,
-                                                             decodeInfo.firstTileNclxProfile.transferCharacteristics,
-                                                             decodeInfo.firstTileNclxProfile.matrixCoefficients,
-                                                             decodeInfo.firstTileNclxProfile.fullRange);
+                this.colorInfoBox = new NclxColorInformation(decodeInfo.firstTileColorData.colorPrimaries,
+                                                             decodeInfo.firstTileColorData.transferCharacteristics,
+                                                             decodeInfo.firstTileColorData.matrixCoefficients,
+                                                             decodeInfo.firstTileColorData.fullRange);
             }
         }
 
@@ -525,7 +525,7 @@ namespace AvifFileType
                     tileRowIndex = 0,
                     expectedWidth = (uint)fullSurface.Width,
                     expectedHeight = (uint)fullSurface.Height,
-                    usingTileNclxProfile = false
+                    usingTileColorData = false
                 };
 
                 DecodeAlphaImage(this.alphaItemId, decodeInfo, fullSurface);
@@ -552,11 +552,11 @@ namespace AvifFileType
                     tileRowIndex = 0,
                     expectedWidth = (uint)fullSurface.Width,
                     expectedHeight = (uint)fullSurface.Height,
-                    usingTileNclxProfile = false
+                    usingTileColorData = false
                 };
 
                 DecodeColorImage(this.primaryItemId, decodeInfo, colorConversionInfo, fullSurface);
-                MaybeSetNclxColorInfoFromDecoder(decodeInfo);
+                MaybeUseColorDataFromDecoder(decodeInfo);
             }
         }
 

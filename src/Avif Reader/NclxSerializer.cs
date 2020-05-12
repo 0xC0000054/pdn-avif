@@ -40,9 +40,9 @@ namespace AvifFileType
             // We always use the full RGB/YUV color range.
             const bool fullRange = true;
 
-            return new NclxColorInformation((NclxColorPrimaries)colorPrimaries,
-                                            (NclxTransferCharacteristics)transferCharacteristics,
-                                            (NclxMatrixCoefficients)matrixCoefficients,
+            return new NclxColorInformation((CICPColorPrimaries)colorPrimaries,
+                                            (CICPTransferCharacteristics)transferCharacteristics,
+                                            (CICPMatrixCoefficients)matrixCoefficients,
                                             fullRange);
         }
 
@@ -54,14 +54,14 @@ namespace AvifFileType
             }
 
             // The identity matrix coefficient is never serialized.
-            if (nclxColor.MatrixCoefficients == NclxMatrixCoefficients.Identity)
+            if (nclxColor.MatrixCoefficients == CICPMatrixCoefficients.Identity)
             {
                 return null;
             }
 
-            if (nclxColor.ColorPrimaries == NclxColorPrimaries.Unspecified ||
-                nclxColor.TransferCharacteristics == NclxTransferCharacteristics.Unspecified ||
-                nclxColor.MatrixCoefficients == NclxMatrixCoefficients.Unspecified)
+            if (nclxColor.ColorPrimaries == CICPColorPrimaries.Unspecified ||
+                nclxColor.TransferCharacteristics == CICPTransferCharacteristics.Unspecified ||
+                nclxColor.MatrixCoefficients == CICPMatrixCoefficients.Unspecified)
             {
                 return null;
             }

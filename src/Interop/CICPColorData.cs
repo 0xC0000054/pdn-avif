@@ -15,11 +15,11 @@ using System.Runtime.InteropServices;
 
 namespace AvifFileType.Interop
 {
-    internal struct NclxColorData
+    internal struct CICPColorData
     {
-        public NclxColorPrimaries colorPrimaries;
-        public NclxTransferCharacteristics transferCharacteristics;
-        public NclxMatrixCoefficients matrixCoefficients;
+        public CICPColorPrimaries colorPrimaries;
+        public CICPTransferCharacteristics transferCharacteristics;
+        public CICPMatrixCoefficients matrixCoefficients;
         [MarshalAs(UnmanagedType.U1)]
         public bool fullRange;
     }

@@ -21,8 +21,8 @@ namespace AvifFileType.Interop
         public uint expectedHeight;
         public uint tileColumnIndex;
         public uint tileRowIndex;
-        public NclxColorData firstTileNclxProfile;
+        public CICPColorData firstTileColorData;
         [MarshalAs(UnmanagedType.U1)]
-        public bool usingTileNclxProfile;
+        public bool usingTileColorData;
     }
 }

@@ -40,7 +40,7 @@
 #include "DecodedImageConverter.h"
 #include "Memory.h"
 #include "YUVConversionHelpers.h"
-#include "NclxEnums.h"
+#include "CICPEnums.h"
 
 namespace
 {
@@ -744,27 +744,27 @@ DecoderStatus ConvertColorImage(
     else
     {
         colorInfo.format = ColorInformationFormat::Nclx;
-        colorInfo.nclxColorData.colorPrimaries = static_cast<NclxColorPrimaries>(frame->cp);
-        colorInfo.nclxColorData.transferCharacteristics = static_cast<NclxTransferCharacteristics>(frame->tc);
-        colorInfo.nclxColorData.matrixCoefficients = static_cast<NclxMatrixCoefficients>(frame->mc);
-        colorInfo.nclxColorData.fullRange = frame->range == aom_color_range::AOM_CR_FULL_RANGE;
+        colorInfo.cicpColorData.colorPrimaries = static_cast<CICPColorPrimaries>(frame->cp);
+        colorInfo.cicpColorData.transferCharacteristics = static_cast<CICPTransferCharacteristics>(frame->tc);
+        colorInfo.cicpColorData.matrixCoefficients = static_cast<CICPMatrixCoefficients>(frame->mc);
+        colorInfo.cicpColorData.fullRange = frame->range == aom_color_range::AOM_CR_FULL_RANGE;
 
         if (isFirstTile)
         {
-            decodeInfo->firstTileNclxProfile.colorPrimaries = colorInfo.nclxColorData.colorPrimaries;
-            decodeInfo->firstTileNclxProfile.transferCharacteristics = colorInfo.nclxColorData.transferCharacteristics;
-            decodeInfo->firstTileNclxProfile.matrixCoefficients = colorInfo.nclxColorData.matrixCoefficients;
-            decodeInfo->firstTileNclxProfile.fullRange = colorInfo.nclxColorData.fullRange;
-            decodeInfo->usingFirstTileNclxProfile = true;
+            decodeInfo->firstTileColorData.colorPrimaries = colorInfo.cicpColorData.colorPrimaries;
+            decodeInfo->firstTileColorData.transferCharacteristics = colorInfo.cicpColorData.transferCharacteristics;
+            decodeInfo->firstTileColorData.matrixCoefficients = colorInfo.cicpColorData.matrixCoefficients;
+            decodeInfo->firstTileColorData.fullRange = colorInfo.cicpColorData.fullRange;
+            decodeInfo->usingFirstTileColorData = true;
         }
         else
         {
-            if (decodeInfo->usingFirstTileNclxProfile)
+            if (decodeInfo->usingFirstTileColorData)
             {
-                if (colorInfo.nclxColorData.colorPrimaries != colorInfo.nclxColorData.colorPrimaries ||
-                    colorInfo.nclxColorData.transferCharacteristics != colorInfo.nclxColorData.transferCharacteristics ||
-                    colorInfo.nclxColorData.matrixCoefficients != colorInfo.nclxColorData.matrixCoefficients ||
-                    colorInfo.nclxColorData.fullRange != colorInfo.nclxColorData.fullRange)
+                if (colorInfo.cicpColorData.colorPrimaries != colorInfo.cicpColorData.colorPrimaries ||
+                    colorInfo.cicpColorData.transferCharacteristics != colorInfo.cicpColorData.transferCharacteristics ||
+                    colorInfo.cicpColorData.matrixCoefficients != colorInfo.cicpColorData.matrixCoefficients ||
+                    colorInfo.cicpColorData.fullRange != colorInfo.cicpColorData.fullRange)
                 {
                     return DecoderStatus::TileNclxProfileMismatch;
                 }
@@ -773,7 +773,7 @@ DecoderStatus ConvertColorImage(
     }
 
     if (colorInfo.format == ColorInformationFormat::Nclx &&
-        colorInfo.nclxColorData.matrixCoefficients == NclxMatrixCoefficients::Identity)
+        colorInfo.cicpColorData.matrixCoefficients == CICPMatrixCoefficients::Identity)
     {
         // The Identity matrix coefficient contains RGB color values.
 

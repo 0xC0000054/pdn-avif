@@ -90,9 +90,9 @@ namespace AvifFileType
                 options.yuvFormat = YUVChromaSubsampling.IdentityMatrix;
 
                 // These NCLX color values are from the AV1 Bitstream & Decoding Process Specification.
-                const NclxColorPrimaries colorPrimaries = NclxColorPrimaries.BT709;
-                const NclxTransferCharacteristics transferCharacteristics = NclxTransferCharacteristics.Srgb;
-                const NclxMatrixCoefficients matrixCoefficients = NclxMatrixCoefficients.Identity;
+                const CICPColorPrimaries colorPrimaries = CICPColorPrimaries.BT709;
+                const CICPTransferCharacteristics transferCharacteristics = CICPTransferCharacteristics.Srgb;
+                const CICPMatrixCoefficients matrixCoefficients = CICPMatrixCoefficients.Identity;
                 const bool fullRange = true;
 
                 // The Identity matrix coefficient places the RGB values into the YUV planes without any conversion.
@@ -135,9 +135,9 @@ namespace AvifFileType
                         {
                             // Use BT709 as the default for color images that do not
                             // have any existing color conversion information.
-                            const NclxColorPrimaries colorPrimaries = NclxColorPrimaries.BT709;
-                            const NclxTransferCharacteristics transferCharacteristics = NclxTransferCharacteristics.BT709;
-                            const NclxMatrixCoefficients matrixCoefficients = NclxMatrixCoefficients.BT709;
+                            const CICPColorPrimaries colorPrimaries = CICPColorPrimaries.BT709;
+                            const CICPTransferCharacteristics transferCharacteristics = CICPTransferCharacteristics.BT709;
+                            const CICPMatrixCoefficients matrixCoefficients = CICPMatrixCoefficients.BT709;
                             const bool fullRange = true;
 
                             colorConversionInfo = new ColorConversionInfo(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);

@@ -334,9 +334,9 @@ aom_image_t* ConvertColorToAOMImage(
 
     if (colorInfo && colorInfo->format == ColorInformationFormat::Nclx)
     {
-        aomImage->cp = static_cast<aom_color_primaries_t>(colorInfo->nclxColorData.colorPrimaries);
-        aomImage->tc = static_cast<aom_transfer_characteristics_t>(colorInfo->nclxColorData.transferCharacteristics);
-        aomImage->mc = static_cast<aom_matrix_coefficients_t>(colorInfo->nclxColorData.matrixCoefficients);
+        aomImage->cp = static_cast<aom_color_primaries_t>(colorInfo->cicpColorData.colorPrimaries);
+        aomImage->tc = static_cast<aom_transfer_characteristics_t>(colorInfo->cicpColorData.transferCharacteristics);
+        aomImage->mc = static_cast<aom_matrix_coefficients_t>(colorInfo->cicpColorData.matrixCoefficients);
     }
     else
     {

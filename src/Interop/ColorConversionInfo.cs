@@ -26,7 +26,7 @@ namespace AvifFileType.Interop
     {
         public byte[] iccProfile;
 
-        public NclxColorData nclxColorData;
+        public CICPColorData cicpColorData;
 
         public ColorInformationFormat format;
 
@@ -41,15 +41,15 @@ namespace AvifFileType.Interop
             this.format = ColorInformationFormat.IccProfile;
         }
 
-        public ColorConversionInfo(NclxColorPrimaries colorPrimaries,
-                                   NclxTransferCharacteristics transferCharacteristics,
-                                   NclxMatrixCoefficients matrixCoefficients,
+        public ColorConversionInfo(CICPColorPrimaries colorPrimaries,
+                                   CICPTransferCharacteristics transferCharacteristics,
+                                   CICPMatrixCoefficients matrixCoefficients,
                                    bool fullRange)
         {
-            this.nclxColorData.colorPrimaries = colorPrimaries;
-            this.nclxColorData.transferCharacteristics = transferCharacteristics;
-            this.nclxColorData.matrixCoefficients = matrixCoefficients;
-            this.nclxColorData.fullRange = fullRange;
+            this.cicpColorData.colorPrimaries = colorPrimaries;
+            this.cicpColorData.transferCharacteristics = transferCharacteristics;
+            this.cicpColorData.matrixCoefficients = matrixCoefficients;
+            this.cicpColorData.fullRange = fullRange;
             this.format = ColorInformationFormat.Nclx;
         }
 
@@ -72,10 +72,10 @@ namespace AvifFileType.Interop
             {
                 NclxColorInformation nclxInfo = (NclxColorInformation)colorInfoBox;
 
-                this.nclxColorData.colorPrimaries = nclxInfo.ColorPrimaries;
-                this.nclxColorData.transferCharacteristics = nclxInfo.TransferCharacteristics;
-                this.nclxColorData.matrixCoefficients = nclxInfo.MatrixCoefficients;
-                this.nclxColorData.fullRange = nclxInfo.FullRange;
+                this.cicpColorData.colorPrimaries = nclxInfo.ColorPrimaries;
+                this.cicpColorData.transferCharacteristics = nclxInfo.TransferCharacteristics;
+                this.cicpColorData.matrixCoefficients = nclxInfo.MatrixCoefficients;
+                this.cicpColorData.fullRange = nclxInfo.FullRange;
                 this.format = ColorInformationFormat.Nclx;
             }
             else

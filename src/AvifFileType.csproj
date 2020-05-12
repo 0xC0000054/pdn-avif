@@ -51,12 +51,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Avif Container\Boxes\AlphaChannelNames.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\NclxColorPrimaries.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\CICPColorPrimaries.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\CICPMatrixCoefficients.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\CICPTransferCharacteristics.cs" />
     <Compile Include="Avif Container\Boxes\Enums\ConstructionMethod.cs" />
     <Compile Include="Avif Container\Boxes\Enums\ImageMirrorDirection.cs" />
     <Compile Include="Avif Container\Boxes\Enums\ImageRotation.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\NclxMatrixCoefficients.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\NclxTransferCharacteristics.cs" />
     <Compile Include="Avif Container\Boxes\IItemInfoEntry.cs" />
     <Compile Include="Avif Container\Boxes\IItemReferenceEntry.cs" />
     <Compile Include="Avif Container\Boxes\Item Info Entries\ItemInfoEntryFactory.cs" />
@@ -147,13 +147,13 @@
     <Compile Include="Interop\AvifNative_64.cs" />
     <Compile Include="Interop\AvifNative_86.cs" />
     <Compile Include="Interop\BitmapData.cs" />
+    <Compile Include="Interop\CICPColorData.cs" />
     <Compile Include="Interop\ColorConversionInfo.cs" />
     <Compile Include="Interop\ColorConversionInfoMarshaler.cs" />
     <Compile Include="Interop\DecodeInfo.cs" />
     <Compile Include="Interop\DecoderStatus.cs" />
     <Compile Include="Interop\EncoderOptions.cs" />
     <Compile Include="Interop\EncoderStatus.cs" />
-    <Compile Include="Interop\NclxColorData.cs" />
     <Compile Include="Interop\ProgressContext.cs" />
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
     <Compile Include="PluginSupportInfo.cs" />

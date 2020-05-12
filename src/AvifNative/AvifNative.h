@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 #include "TargetVer.h"
-#include "NclxEnums.h"
+#include "CICPEnums.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,11 +75,11 @@ extern "C" {
         Nclx
     };
 
-    struct NclxColorData
+    struct CICPColorData
     {
-        NclxColorPrimaries colorPrimaries;
-        NclxTransferCharacteristics transferCharacteristics;
-        NclxMatrixCoefficients matrixCoefficients;
+        CICPColorPrimaries colorPrimaries;
+        CICPTransferCharacteristics transferCharacteristics;
+        CICPMatrixCoefficients matrixCoefficients;
         bool fullRange;
     };
 
@@ -88,7 +88,7 @@ extern "C" {
         uint8_t* iccProfile;
         size_t iccProfileSize;
 
-        NclxColorData nclxColorData;
+        CICPColorData cicpColorData;
 
         ColorInformationFormat format;
     };
@@ -99,8 +99,8 @@ extern "C" {
         uint32_t expectedHeight;
         uint32_t tileColumnIndex;
         uint32_t tileRowIndex;
-        NclxColorData firstTileNclxProfile;
-        bool usingFirstTileNclxProfile;
+        CICPColorData firstTileColorData;
+        bool usingFirstTileColorData;
     };
 
     struct BitmapData

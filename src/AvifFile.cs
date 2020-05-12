@@ -131,7 +131,7 @@ namespace AvifFileType
                         // Use BT709 as the default for color images that do not
                         // have any existing color conversion information.
                         const CICPColorPrimaries colorPrimaries = CICPColorPrimaries.BT709;
-                        const CICPTransferCharacteristics transferCharacteristics = CICPTransferCharacteristics.BT709;
+                        const CICPTransferCharacteristics transferCharacteristics = CICPTransferCharacteristics.Srgb;
                         const CICPMatrixCoefficients matrixCoefficients = CICPMatrixCoefficients.BT709;
                         const bool fullRange = true;
 

@@ -113,36 +113,30 @@ namespace AvifFileType
                 }
                 else
                 {
-                    // The NCLX color conversion information is not relevant for gray-scale images.
-                    // The color conversion information determines the values used to subsample the YUV chroma planes,
-                    // and a gray-scale image does not have chroma planes.
-                    if (!grayscale)
+                    string serializedNclx = document.Metadata.GetUserValue(NclxMetadataName);
+
+                    if (serializedNclx != null)
                     {
-                        string serializedNclx = document.Metadata.GetUserValue(NclxMetadataName);
+                        NclxColorInformation nclxColorInformation = NclxSerializer.TryDeserialize(serializedNclx);
 
-                        if (serializedNclx != null)
+                        if (nclxColorInformation != null)
                         {
-                            NclxColorInformation nclxColorInformation = NclxSerializer.TryDeserialize(serializedNclx);
-
-                            if (nclxColorInformation != null)
-                            {
-                                colorConversionInfo = new ColorConversionInfo(nclxColorInformation);
-                                colorInformationBox = nclxColorInformation;
-                            }
+                            colorConversionInfo = new ColorConversionInfo(nclxColorInformation);
+                            colorInformationBox = nclxColorInformation;
                         }
+                    }
 
-                        if (colorInformationBox == null)
-                        {
-                            // Use BT709 as the default for color images that do not
-                            // have any existing color conversion information.
-                            const CICPColorPrimaries colorPrimaries = CICPColorPrimaries.BT709;
-                            const CICPTransferCharacteristics transferCharacteristics = CICPTransferCharacteristics.BT709;
-                            const CICPMatrixCoefficients matrixCoefficients = CICPMatrixCoefficients.BT709;
-                            const bool fullRange = true;
+                    if (colorInformationBox == null)
+                    {
+                        // Use BT709 as the default for color images that do not
+                        // have any existing color conversion information.
+                        const CICPColorPrimaries colorPrimaries = CICPColorPrimaries.BT709;
+                        const CICPTransferCharacteristics transferCharacteristics = CICPTransferCharacteristics.BT709;
+                        const CICPMatrixCoefficients matrixCoefficients = CICPMatrixCoefficients.BT709;
+                        const bool fullRange = true;
 
-                            colorConversionInfo = new ColorConversionInfo(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
-                            colorInformationBox = new NclxColorInformation(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
-                        }
+                        colorConversionInfo = new ColorConversionInfo(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
+                        colorInformationBox = new NclxColorInformation(colorPrimaries, transferCharacteristics, matrixCoefficients, fullRange);
                     }
                 }
             }

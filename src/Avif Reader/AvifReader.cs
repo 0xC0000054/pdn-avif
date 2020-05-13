@@ -27,6 +27,7 @@ namespace AvifFileType
         private Stream stream;
         private bool disposed;
         private ColorInformationBox colorInfoBox;
+        private CICPColorData? imageColorData;
         private readonly bool leaveOpen;
         private readonly AvifParser parser;
         private readonly uint primaryItemId;
@@ -70,9 +71,20 @@ namespace AvifFileType
             {
                 this.alphaGridInfo = null;
             }
+
+            if (this.colorInfoBox is NclxColorInformation nclx)
+            {
+                this.imageColorData = new CICPColorData
+                {
+                    colorPrimaries = nclx.ColorPrimaries,
+                    transferCharacteristics = nclx.TransferCharacteristics,
+                    matrixCoefficients = nclx.MatrixCoefficients,
+                    fullRange = nclx.FullRange
+                };
+            }
         }
 
-        public ColorInformationBox ColorInformationBox => this.colorInfoBox;
+        public CICPColorData? ImageColorData => this.imageColorData;
 
         public Surface Decode()
         {
@@ -188,6 +200,18 @@ namespace AvifFileType
             }
 
             return null;
+        }
+
+        public byte[] GetICCProfile()
+        {
+            byte[] iccProfileBytes = null;
+
+            if (this.colorInfoBox is IccProfileColorInformation iccProfile)
+            {
+                iccProfileBytes = iccProfile.GetProfileBytes();
+            }
+
+            return iccProfileBytes;
         }
 
         public byte[] GetXmpData()
@@ -502,12 +526,15 @@ namespace AvifFileType
 
         private void MaybeUseColorDataFromDecoder(DecodeInfo decodeInfo)
         {
-            if (this.colorInfoBox is null && decodeInfo.usingTileColorData)
+            if (!this.imageColorData.HasValue && decodeInfo.usingTileColorData)
             {
-                this.colorInfoBox = new NclxColorInformation(decodeInfo.firstTileColorData.colorPrimaries,
-                                                             decodeInfo.firstTileColorData.transferCharacteristics,
-                                                             decodeInfo.firstTileColorData.matrixCoefficients,
-                                                             decodeInfo.firstTileColorData.fullRange);
+                this.imageColorData = new CICPColorData
+                {
+                    colorPrimaries = decodeInfo.firstTileColorData.colorPrimaries,
+                    transferCharacteristics = decodeInfo.firstTileColorData.transferCharacteristics,
+                    matrixCoefficients = decodeInfo.firstTileColorData.matrixCoefficients,
+                    fullRange = decodeInfo.firstTileColorData.fullRange
+                };
             }
         }
 

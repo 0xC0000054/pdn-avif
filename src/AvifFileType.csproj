@@ -72,8 +72,8 @@
     <Compile Include="Avif Container\ImageGridInfo.cs" />
     <Compile Include="Avif Reader\AvifReader.cs" />
     <Compile Include="Avif Reader\AvifParser.cs" />
+    <Compile Include="Avif Reader\CICPSerializer.cs" />
     <Compile Include="Avif Reader\ImageTransform.cs" />
-    <Compile Include="Avif Reader\NclxSerializer.cs" />
     <Compile Include="Avif Writer\AvifWriter.AvifWriterItem.cs" />
     <Compile Include="Avif Writer\AvifWriter.AvifWriterState.cs" />
     <Compile Include="Avif Writer\AvifWriter.cs" />

@@ -11,25 +11,28 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
+using AvifFileType.Interop;
 using System;
 using System.Globalization;
 
 namespace AvifFileType
 {
-    internal static class NclxSerializer
+    internal static class CICPSerializer
     {
         private const string ColorPrimariesPropertyName = "ColorPrimaries";
         private const string TransferCharacteristicsPropertyName = "TransferCharacteristics";
         private const string MatrixCoefficientsPropertyName = "MatrixCoefficients";
 
-        public static NclxColorInformation TryDeserialize(string value)
+        public static CICPColorData? TryDeserialize(string value)
         {
             if (string.IsNullOrEmpty(value))
             {
                 return null;
             }
 
-            if (!value.StartsWith("<Nclx", StringComparison.Ordinal))
+            // "Nclx" was the old item signature.
+            if (!value.StartsWith("<CICP", StringComparison.Ordinal) ||
+                !value.StartsWith("<Nclx", StringComparison.Ordinal))
             {
                 return null;
             }
@@ -40,38 +43,36 @@ namespace AvifFileType
             // We always use the full RGB/YUV color range.
             const bool fullRange = true;
 
-            return new NclxColorInformation((CICPColorPrimaries)colorPrimaries,
-                                            (CICPTransferCharacteristics)transferCharacteristics,
-                                            (CICPMatrixCoefficients)matrixCoefficients,
-                                            fullRange);
+            return new CICPColorData
+            {
+                 colorPrimaries = (CICPColorPrimaries)colorPrimaries,
+                 transferCharacteristics = (CICPTransferCharacteristics)transferCharacteristics,
+                 matrixCoefficients = (CICPMatrixCoefficients)matrixCoefficients,
+                 fullRange = fullRange
+            };
         }
 
-        public static string TrySerialize(NclxColorInformation nclxColor)
+        public static string TrySerialize(CICPColorData cicpColor)
         {
-            if (nclxColor is null)
-            {
-                return null;
-            }
-
             // The identity matrix coefficient is never serialized.
-            if (nclxColor.MatrixCoefficients == CICPMatrixCoefficients.Identity)
+            if (cicpColor.matrixCoefficients == CICPMatrixCoefficients.Identity)
             {
                 return null;
             }
 
-            if (nclxColor.ColorPrimaries == CICPColorPrimaries.Unspecified ||
-                nclxColor.TransferCharacteristics == CICPTransferCharacteristics.Unspecified ||
-                nclxColor.MatrixCoefficients == CICPMatrixCoefficients.Unspecified)
+            if (cicpColor.colorPrimaries == CICPColorPrimaries.Unspecified ||
+                cicpColor.transferCharacteristics == CICPTransferCharacteristics.Unspecified ||
+                cicpColor.matrixCoefficients == CICPMatrixCoefficients.Unspecified)
             {
                 return null;
             }
 
-            ushort colorPrimaries = (ushort)nclxColor.ColorPrimaries;
-            ushort transferCharacteristics = (ushort)nclxColor.TransferCharacteristics;
-            ushort matrixCoefficients = (ushort)nclxColor.MatrixCoefficients;
+            ushort colorPrimaries = (ushort)cicpColor.colorPrimaries;
+            ushort transferCharacteristics = (ushort)cicpColor.transferCharacteristics;
+            ushort matrixCoefficients = (ushort)cicpColor.matrixCoefficients;
 
             return string.Format(CultureInfo.InvariantCulture,
-                                 "<Nclx {0}=\"{1}\" {2}=\"{3}\" {4}=\"{5}\"/>",
+                                 "<CICP {0}=\"{1}\" {2}=\"{3}\" {4}=\"{5}\"/>",
                                  ColorPrimariesPropertyName,
                                  colorPrimaries.ToString(CultureInfo.InvariantCulture),
                                  TransferCharacteristicsPropertyName,

@@ -23,6 +23,9 @@ namespace AvifFileType
 {
     internal static class AvifFile
     {
+        private const string CICPMetadataName = "AvifCICPData";
+        // This value is no longer written, but it is retained to
+        // allow the data to be read from existing PDN files.
         private const string NclxMetadataName = "AvifNclxData";
 
         public static Document Load(Stream input)
@@ -131,33 +134,25 @@ namespace AvifFileType
             }
             else
             {
-                string serializedNclx = document.Metadata.GetUserValue(NclxMetadataName);
+                Metadata docMetadata = document.Metadata;
 
-                if (serializedNclx != null)
+                // Look for NCLX meta-data if the CICP meta-data was not found.
+                // This preserves backwards compatibility with PDN files created by
+                // previous versions of this plugin.
+                string serializedData = docMetadata.GetUserValue(CICPMetadataName) ?? docMetadata.GetUserValue(NclxMetadataName);
+
+                if (serializedData != null)
                 {
-                    NclxColorInformation nclxColorInformation = NclxSerializer.TryDeserialize(serializedNclx);
+                    CICPColorData? colorData = CICPSerializer.TryDeserialize(serializedData);
 
-                    if (nclxColorInformation != null)
+                    if (colorData.HasValue)
                     {
-                        colorConversionInfo = new CICPColorData
-                        {
-                            colorPrimaries = nclxColorInformation.ColorPrimaries,
-                            transferCharacteristics = nclxColorInformation.TransferCharacteristics,
-                            matrixCoefficients = nclxColorInformation.MatrixCoefficients,
-                            fullRange = true
-                        };
-
-                        // Only add a NCLX color information box if the image
-                        // does not have an existing ICC color profile.
-                        if (colorInformationBox == null)
-                        {
-                            colorInformationBox = nclxColorInformation;
-                        }
+                        colorConversionInfo = colorData.Value;
                     }
                 }
 
-                // Add a NCLX color information box with the default color conversion information
-                // if the image does not have an existing ICC or NCLX color information box.
+                // Only add a NCLX color information box if the image
+                // does not have an existing ICC color profile.
                 if (colorInformationBox == null)
                 {
                     colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
@@ -250,26 +245,26 @@ namespace AvifFileType
                 }
             }
 
-            ColorInformationBox colorInformation = reader.ColorInformationBox;
+            CICPColorData? imageColorData = reader.ImageColorData;
 
-            if (colorInformation != null)
+            if (imageColorData.HasValue)
             {
-                if (colorInformation is NclxColorInformation nclx)
-                {
-                    string serializedValue = NclxSerializer.TrySerialize(nclx);
+                string serializedValue = CICPSerializer.TrySerialize(imageColorData.Value);
 
-                    if (serializedValue != null)
-                    {
-                        doc.Metadata.SetUserValue(NclxMetadataName, serializedValue);
-                    }
-                }
-                else if (colorInformation is IccProfileColorInformation iccProfile)
+                if (serializedValue != null)
                 {
-                    doc.Metadata.AddExifPropertyItem(ExifSection.Image,
-                                                     unchecked((ushort)ExifTagID.IccProfileData),
-                                                     new ExifValue(ExifValueType.Undefined,
-                                                                   iccProfile.GetProfileBytes()));
+                    doc.Metadata.SetUserValue(CICPMetadataName, serializedValue);
                 }
+            }
+
+            byte[] iccProfileBytes = reader.GetICCProfile();
+
+            if (iccProfileBytes != null)
+            {
+                doc.Metadata.AddExifPropertyItem(ExifSection.Image,
+                                                 unchecked((ushort)ExifTagID.IccProfileData),
+                                                 new ExifValue(ExifValueType.Undefined,
+                                                               iccProfileBytes));
             }
 
             byte[] xmpBytes = reader.GetXmpData();

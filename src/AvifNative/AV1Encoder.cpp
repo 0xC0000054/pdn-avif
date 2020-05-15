@@ -52,6 +52,7 @@ namespace
         int threadCount;
         int quality;
         int cpuUsed;
+        int usage;
 
         AvifEncoderOptions(int encoderThreadCount, const EncoderOptions* options)
         {
@@ -59,11 +60,13 @@ namespace
             // Map the quality value to the range used by AOM
             double value = (static_cast<double>(options->quality) * 63.0) / 100.0;
             quality = 63 - static_cast<int>(value + 0.5);
+            usage = AOM_USAGE_GOOD_QUALITY;
 
             switch (options->compressionMode)
             {
             case CompressionMode::Fast:
                 cpuUsed = 8;
+                usage = AOM_USAGE_REALTIME;
                 break;
             case CompressionMode::Slow:
                 cpuUsed = 0;
@@ -245,7 +248,7 @@ namespace
         aom_cfg.rc_end_usage = AOM_Q;
         aom_cfg.rc_min_quantizer = aom_cfg.rc_max_quantizer = encodeOptions.quality;
         aom_cfg.g_threads = encodeOptions.threadCount;
-        aom_cfg.g_usage = AOM_USAGE_GOOD_QUALITY;
+        aom_cfg.g_usage = encodeOptions.usage;
         aom_cfg.monochrome = frame->monochrome;
 
         // Set the profile to use based on the frame format.

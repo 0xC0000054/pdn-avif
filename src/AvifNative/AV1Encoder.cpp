@@ -109,7 +109,8 @@ namespace
         aom_codec_ctx* codec,
         aom_codec_iface_t* iface,
         const aom_codec_enc_cfg* cfg,
-        const AvifEncoderOptions& encodeOptions)
+        const AvifEncoderOptions& encodeOptions,
+        const aom_image_t* frame)
     {
         const aom_codec_err_t error = aom_codec_enc_init(codec, iface, cfg, 0);
         if (error != AOM_CODEC_OK)
@@ -131,6 +132,9 @@ namespace
         {
             aom_codec_control(codec, AV1E_SET_LOSSLESS, 1);
         }
+        aom_codec_control(codec, AV1E_SET_COLOR_PRIMARIES, frame->cp);
+        aom_codec_control(codec, AV1E_SET_TRANSFER_CHARACTERISTICS, frame->tc);
+        aom_codec_control(codec, AV1E_SET_MATRIX_COEFFICIENTS, frame->mc);
         aom_codec_control(codec, AV1E_SET_COLOR_RANGE, AOM_CR_FULL_RANGE);
         aom_codec_control(codec, AV1E_SET_FRAME_PARALLEL_DECODING, 0);
         aom_codec_control(codec, AV1E_SET_TILE_COLUMNS, 0);
@@ -153,7 +157,7 @@ namespace
     {
         aom_codec_ctx codec;
 
-        EncoderStatus status = InitializeEncoder(&codec, iface, cfg, encodeOptions);
+        EncoderStatus status = InitializeEncoder(&codec, iface, cfg, encodeOptions, frame);
 
         if (status == EncoderStatus::Ok)
         {

@@ -268,9 +268,6 @@ namespace
         const uint32_t maxUVI = ((image->d_w + image->x_chroma_shift) >> image->x_chroma_shift) - 1;
         const uint32_t maxUVJ = ((image->d_h + image->y_chroma_shift) >> image->y_chroma_shift) - 1;
 
-        float yuvMaxChannel = (float)((1 << image->bit_depth) - 1);
-        constexpr float rgbMaxChannel = 255.0f;
-
         uint32_t uPlaneIndex = AOM_PLANE_U;
         uint32_t vPlaneIndex = AOM_PLANE_V;
 
@@ -326,9 +323,6 @@ namespace
         const DecodeInfo* decodeInfo,
         BitmapData* bgraImage)
     {
-        float yuvMaxChannel = (float)((1 << image->bit_depth) - 1);
-        constexpr float rgbMaxChannel = 255.0f;
-
         uint32_t copyWidth;
         uint32_t copyHeight;
         GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);

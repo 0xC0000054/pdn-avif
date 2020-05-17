@@ -343,7 +343,7 @@ namespace AvifFileType
                 case DecoderStatus.OutOfMemory:
                     throw new OutOfMemoryException();
                 case DecoderStatus.CodecInitFailed:
-                    throw new FormatException("Unable to initialize AV1 encoder.");
+                    throw new FormatException("Unable to initialize AV1 decoder.");
                 case DecoderStatus.DecodeFailed:
                     throw new FormatException("The AV1 decode failed.");
                 case DecoderStatus.AlphaSizeMismatch:

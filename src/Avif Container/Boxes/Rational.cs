@@ -16,6 +16,7 @@ using System.Diagnostics;
 namespace AvifFileType.AvifContainer
 {
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
+    [DebuggerTypeProxy(typeof(RationalDebugView))]
     internal readonly struct Rational
         : IEquatable<Rational>
     {
@@ -89,6 +90,24 @@ namespace AvifFileType.AvifContainer
         public static bool operator !=(Rational left, Rational right)
         {
             return !(left == right);
+        }
+
+        private sealed class RationalDebugView
+        {
+            private readonly Rational rational;
+
+            public RationalDebugView(Rational rational)
+            {
+                this.rational = rational;
+            }
+
+            public int Numerator => this.rational.Numerator;
+
+            public uint Denominator => this.rational.Denominator;
+
+            public double DoubleValue => this.rational.ToDouble();
+
+            public int Int32Value => this.rational.ToInt32();
         }
     }
 }

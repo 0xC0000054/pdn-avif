@@ -199,14 +199,14 @@ namespace AvifFileType
             };
             UIntPtr colorImageSize = new UIntPtr(colorImage.ByteLength);
 
-            if (IntPtr.Size == 8)
+            DecoderStatus status;
+
+            if (colorConversionInfo.HasValue)
             {
-                DecoderStatus status;
+                CICPColorData colorData = colorConversionInfo.Value;
 
-                if (colorConversionInfo.HasValue)
+                if (IntPtr.Size == 8)
                 {
-                    CICPColorData colorData = colorConversionInfo.Value;
-
                     status = AvifNative_64.DecompressColorImage(colorImage,
                                                                 colorImageSize,
                                                                 ref colorData,
@@ -215,33 +215,16 @@ namespace AvifFileType
                 }
                 else
                 {
-                    status = AvifNative_64.DecompressColorImage(colorImage,
-                                                                colorImageSize,
-                                                                IntPtr.Zero,
-                                                                decodeInfo,
-                                                                ref bitmapData);
-                }
-
-                if (status != DecoderStatus.Ok)
-                {
-                    HandleError(status);
-                }
-            }
-            else
-            {
-                DecoderStatus status;
-
-                if (colorConversionInfo.HasValue)
-                {
-                    CICPColorData colorData = colorConversionInfo.Value;
-
                     status = AvifNative_86.DecompressColorImage(colorImage,
                                                                 colorImageSize,
                                                                 ref colorData,
                                                                 decodeInfo,
                                                                 ref bitmapData);
                 }
-                else
+            }
+            else
+            {
+                if (IntPtr.Size == 8)
                 {
                     status = AvifNative_64.DecompressColorImage(colorImage,
                                                                 colorImageSize,
@@ -249,11 +232,19 @@ namespace AvifFileType
                                                                 decodeInfo,
                                                                 ref bitmapData);
                 }
-
-                if (status != DecoderStatus.Ok)
+                else
                 {
-                    HandleError(status);
+                    status = AvifNative_86.DecompressColorImage(colorImage,
+                                                                colorImageSize,
+                                                                IntPtr.Zero,
+                                                                decodeInfo,
+                                                                ref bitmapData);
                 }
+            }
+
+            if (status != DecoderStatus.Ok)
+            {
+                HandleError(status);
             }
         }
 

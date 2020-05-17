@@ -284,28 +284,26 @@ namespace AvifFileType
                 stride = (uint)fullSurface.Stride
             };
             UIntPtr alphaImageSize = new UIntPtr(alphaImage.ByteLength);
+            DecoderStatus status;
 
             if (IntPtr.Size == 8)
             {
-                DecoderStatus status = AvifNative_64.DecompressAlphaImage(alphaImage,
-                                                                          alphaImageSize,
-                                                                          decodeInfo,
-                                                                          ref bitmapData);
-                if (status != DecoderStatus.Ok)
-                {
-                    HandleError(status);
-                }
+                status = AvifNative_64.DecompressAlphaImage(alphaImage,
+                                                            alphaImageSize,
+                                                            decodeInfo,
+                                                            ref bitmapData);
             }
             else
             {
-                DecoderStatus status = AvifNative_86.DecompressAlphaImage(alphaImage,
-                                                                          alphaImageSize,
-                                                                          decodeInfo,
-                                                                          ref bitmapData);
-                if (status != DecoderStatus.Ok)
-                {
-                    HandleError(status);
-                }
+                status = AvifNative_86.DecompressAlphaImage(alphaImage,
+                                                            alphaImageSize,
+                                                            decodeInfo,
+                                                            ref bitmapData);
+            }
+
+            if (status != DecoderStatus.Ok)
+            {
+                HandleError(status);
             }
         }
 

@@ -320,18 +320,22 @@ namespace AvifFileType
 
             Rectangle cropRect = new Rectangle(cropRectX, cropRectY, cropWidth, cropHeight);
 
-            Surface temp = new Surface(cropWidth, cropHeight);
-            try
+            // Check that the crop rectangle is within the surface bounds.
+            if (cropRect.IntersectsWith(surface.Bounds))
             {
-                temp.CopySurface(surface, cropRect);
+                Surface temp = new Surface(cropWidth, cropHeight);
+                try
+                {
+                    temp.CopySurface(surface, cropRect);
 
-                surface.Dispose();
-                surface = temp;
-                temp = null;
-            }
-            finally
-            {
-                temp?.Dispose();
+                    surface.Dispose();
+                    surface = temp;
+                    temp = null;
+                }
+                finally
+                {
+                    temp?.Dispose();
+                }
             }
         }
 

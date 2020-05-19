@@ -309,14 +309,14 @@ namespace AvifFileType
             int cropWidth = this.cleanApertureBox.Width.ToInt32();
             int cropHeight = this.cleanApertureBox.Height.ToInt32();
 
-            int offsetX = this.cleanApertureBox.HorizontalOffset.ToInt32();
-            int offsetY = this.cleanApertureBox.VerticalOffset.ToInt32();
+            double offsetX = this.cleanApertureBox.HorizontalOffset.ToDouble();
+            double offsetY = this.cleanApertureBox.VerticalOffset.ToDouble();
 
-            int centerX = offsetX + ((surface.Width - 1) / 2);
-            int centerY = offsetY + ((surface.Height - 1) / 2);
+            double pictureCenterX = offsetX + ((surface.Width - 1) / 2.0);
+            double pictureCenterY = offsetY + ((surface.Height - 1) / 2.0);
 
-            int cropRectX = centerX - ((cropWidth - 1) / 2);
-            int cropRectY = centerY - ((cropHeight - 1) / 2);
+            int cropRectX = (int)Math.Round(pictureCenterX - ((cropWidth - 1) / 2.0));
+            int cropRectY = (int)Math.Round(pictureCenterY - ((cropHeight - 1) / 2.0));
 
             Rectangle cropRect = new Rectangle(cropRectX, cropRectY, cropWidth, cropHeight);
 

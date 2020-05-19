@@ -41,7 +41,7 @@ extern "C" {
  * fields to structures
  */
 #define AOM_ENCODER_ABI_VERSION \
-  (7 + AOM_CODEC_ABI_VERSION) /**<\hideinitializer*/
+  (8 + AOM_CODEC_ABI_VERSION) /**<\hideinitializer*/
 
 /*! \brief Encoder capabilities bitfield
  *
@@ -865,6 +865,42 @@ typedef struct aom_codec_enc_cfg {
    */
   int tile_heights[MAX_TILE_HEIGHTS];
 
+  /*!\brief Whether encoder should use fixed QP offsets.
+   *
+   * If a value of 1 is provided, encoder will use fixed QP offsets for frames
+   * at different levels of the pyramid.
+   * - If 'fixed_qp_offsets' is also provided, encoder will use the given
+   * offsets
+   * - If not, encoder will select the fixed offsets based on the cq-level
+   *   provided.
+   * If a value of 0 is provided and fixed_qp_offset are not provided, encoder
+   * will NOT use fixed QP offsets.
+   * Note: This option is only relevant for --end-usage=q.
+   */
+  unsigned int use_fixed_qp_offsets;
+
+/*!\brief Number of fixed QP offsets
+ *
+ * This defines the number of elements in the fixed_qp_offsets array.
+ */
+#define FIXED_QP_OFFSET_COUNT 5
+
+  /*!\brief Array of fixed QP offsets
+   *
+   * This array specifies fixed QP offsets (range: 0 to 63) for frames at
+   * different levels of the pyramid. It is a comma-separated list of 5 values:
+   * - QP offset for keyframe
+   * - QP offset for ALTREF frame
+   * - QP offset for 1st level internal ARF
+   * - QP offset for 2nd level internal ARF
+   * - QP offset for 3rd level internal ARF
+   * Notes:
+   * - QP offset for leaf level frames is not explicitly specified. These frames
+   *   use the worst quality allowed (--cq-level).
+   * - This option is only relevant for --end-usage=q.
+   */
+  int fixed_qp_offsets[FIXED_QP_OFFSET_COUNT];
+
   /*!\brief Options defined per config file
    *
    */
@@ -905,41 +941,9 @@ aom_codec_err_t aom_codec_enc_init_ver(aom_codec_ctx_t *ctx,
 #define aom_codec_enc_init(ctx, iface, cfg, flags) \
   aom_codec_enc_init_ver(ctx, iface, cfg, flags, AOM_ENCODER_ABI_VERSION)
 
-/*!\brief Initialize multi-encoder instance
+/*!\brief Get the default configuration for a usage.
  *
- * Initializes multi-encoder context using the given interface.
- * Applications should call the aom_codec_enc_init_multi convenience macro
- * instead of this function directly, to ensure that the ABI version number
- * parameter is properly initialized.
- *
- * \param[in]    ctx     Pointer to this instance's context.
- * \param[in]    iface   Pointer to the algorithm interface to use.
- * \param[in]    cfg     Configuration to use, if known.
- * \param[in]    num_enc Total number of encoders.
- * \param[in]    flags   Bitfield of AOM_CODEC_USE_* flags
- * \param[in]    dsf     Pointer to down-sampling factors.
- * \param[in]    ver     ABI version number. Must be set to
- *                       AOM_ENCODER_ABI_VERSION
- * \retval #AOM_CODEC_OK
- *     The decoder algorithm initialized.
- * \retval #AOM_CODEC_MEM_ERROR
- *     Memory allocation failed.
- */
-aom_codec_err_t aom_codec_enc_init_multi_ver(
-    aom_codec_ctx_t *ctx, aom_codec_iface_t *iface, aom_codec_enc_cfg_t *cfg,
-    int num_enc, aom_codec_flags_t flags, aom_rational_t *dsf, int ver);
-
-/*!\brief Convenience macro for aom_codec_enc_init_multi_ver()
- *
- * Ensures the ABI version parameter is properly set.
- */
-#define aom_codec_enc_init_multi(ctx, iface, cfg, num_enc, flags, dsf) \
-  aom_codec_enc_init_multi_ver(ctx, iface, cfg, num_enc, flags, dsf,   \
-                               AOM_ENCODER_ABI_VERSION)
-
-/*!\brief Get a default configuration
- *
- * Initializes a encoder configuration structure with default values. Supports
+ * Initializes an encoder configuration structure with default values. Supports
  * the notion of "usages" so that an algorithm may offer different default
  * settings depending on the user's intended goal. This function \ref SHOULD
  * be called by all applications to initialize the configuration structure
@@ -947,7 +951,9 @@ aom_codec_err_t aom_codec_enc_init_multi_ver(
  *
  * \param[in]    iface     Pointer to the algorithm interface to use.
  * \param[out]   cfg       Configuration buffer to populate.
- * \param[in]    reserved  Must set to 0.
+ * \param[in]    usage     Algorithm specific usage value. For AV1, must be
+ *                         set to AOM_USAGE_GOOD_QUALITY (0) or
+ *                         AOM_USAGE_REALTIME (1).
  *
  * \retval #AOM_CODEC_OK
  *     The configuration was populated.
@@ -958,7 +964,7 @@ aom_codec_err_t aom_codec_enc_init_multi_ver(
  */
 aom_codec_err_t aom_codec_enc_config_default(aom_codec_iface_t *iface,
                                              aom_codec_enc_cfg_t *cfg,
-                                             unsigned int reserved);
+                                             unsigned int usage);
 
 /*!\brief Set or change configuration
  *

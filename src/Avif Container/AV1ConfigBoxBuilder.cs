@@ -40,8 +40,8 @@ namespace AvifFileType.AvifContainer
                     chromaSubsamplingY = true;
                     break;
                 case YUVChromaSubsampling.Subsampling422:
-                    chromaSubsamplingX = false;
-                    chromaSubsamplingY = true;
+                    chromaSubsamplingX = true;
+                    chromaSubsamplingY = false;
                     break;
                 case YUVChromaSubsampling.Subsampling444:
                 // The AV1 Bitstream & Decoding Process specification requires chroma sub-sampling

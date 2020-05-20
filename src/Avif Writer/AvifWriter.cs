@@ -20,7 +20,6 @@ namespace AvifFileType
     internal sealed partial class AvifWriter
     {
         private readonly AvifWriterState state;
-        private readonly AvifMetadata metadata;
         private readonly FileTypeBox fileTypeBox;
         private readonly MetaBox metaBox;
         private readonly ColorInformationBox colorInformationBox;
@@ -40,7 +39,6 @@ namespace AvifFileType
         {
             this.state = new AvifWriterState(color, alpha, metadata);
             this.colorImageIsGrayscale = color.Format == YUVChromaSubsampling.Subsampling400;
-            this.metadata = metadata;
             this.colorInformationBox = colorInformationBox;
             this.progressCallback = progressEventHandler;
             this.progressDone = progressDone;

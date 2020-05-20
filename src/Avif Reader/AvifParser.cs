@@ -104,6 +104,40 @@ namespace AvifFileType
             }
         }
 
+        public bool HasUnsupportedEssentialProperties(uint itemId)
+        {
+            IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);
+
+            if (items != null)
+            {
+                IReadOnlyList<IItemProperty> properties = this.metaBox.ItemProperties.Properties;
+
+                for (int i = 0; i < items.Count; i++)
+                {
+                    ItemPropertyAssociationEntry entry = items[i];
+
+                    if (entry.Essential)
+                    {
+                        uint propertyIndex = entry.PropertyIndex;
+
+                        if (propertyIndex > 0 && propertyIndex <= (uint)properties.Count)
+                        {
+                            int itemIndex = (int)(propertyIndex - 1);
+
+                            IItemProperty property = properties[itemIndex];
+
+                            if (property is null)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public ulong? TryCalculateItemOffset(ItemLocationEntry entry)
         {
             if (entry is null)

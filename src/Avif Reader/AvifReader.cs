@@ -91,6 +91,7 @@ namespace AvifFileType
             VerifyNotDisposed();
             EnsureCompressedImagesAreAV1();
             EnsurePrimaryItemIsNotHidden();
+            EnsureRequiredImagePropertiesAreSupported();
 
             Size colorSize = GetImageSize(this.primaryItemId, this.colorGridInfo, "color");
 
@@ -296,6 +297,49 @@ namespace AvifFileType
             }
         }
 
+        private void CheckRequiredImageProperties(uint itemId, ImageGridInfo gridInfo, string imageName)
+        {
+            bool hasUnsupportedProperties = false;
+
+            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+
+            if (entry == null)
+            {
+                ExceptionUtil.ThrowFormatException($"The { imageName } image does not exist.");
+            }
+            else if (entry.ItemType == ItemInfoEntryTypes.AV01)
+            {
+                hasUnsupportedProperties = this.parser.HasUnsupportedEssentialProperties(itemId);
+            }
+            else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
+            {
+                if (gridInfo == null)
+                {
+                    ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
+                }
+
+                IReadOnlyList<uint> childImageIds = gridInfo.ChildImageIds;
+
+                for (int i = 0; i < childImageIds.Count; i++)
+                {
+                    if (this.parser.HasUnsupportedEssentialProperties(childImageIds[i]))
+                    {
+                        hasUnsupportedProperties = true;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                ExceptionUtil.ThrowFormatException($"The { imageName } image is not a supported format.");
+            }
+
+            if (hasUnsupportedProperties)
+            {
+                throw new FormatException($"The { imageName } image has essential item properties that are not supported.");
+            }
+        }
+
         private void Crop(ref Surface surface)
         {
             if (this.cleanApertureBox.Width.Denominator == 0 ||
@@ -360,6 +404,16 @@ namespace AvifFileType
             else if (entry.IsHidden)
             {
                 ExceptionUtil.ThrowFormatException("The primary item cannot be marked as hidden.");
+            }
+        }
+
+        private void EnsureRequiredImagePropertiesAreSupported()
+        {
+            CheckRequiredImageProperties(this.primaryItemId, this.colorGridInfo, "color");
+
+            if (this.alphaItemId != 0)
+            {
+                CheckRequiredImageProperties(this.alphaItemId, this.alphaGridInfo, "alpha");
             }
         }
 

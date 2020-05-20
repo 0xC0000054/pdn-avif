@@ -41,15 +41,7 @@ namespace AvifFileType.AvifContainer
             {
                 Box header = new Box(reader);
 
-                IItemProperty property = ItemPropertyFactory.TryCreate(reader, header);
-                if (property != null)
-                {
-                    this.properties.Add(property);
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"Ignoring property type: { header.Type }");
-                }
+                this.properties.Add(ItemPropertyFactory.TryCreate(reader, header));
 
                 reader.Position = header.End;
             }

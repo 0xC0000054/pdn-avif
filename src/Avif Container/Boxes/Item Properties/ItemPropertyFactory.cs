@@ -10,6 +10,8 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
     internal static class ItemPropertyFactory
@@ -50,6 +52,7 @@ namespace AvifFileType.AvifContainer
                 else
                 {
                     // Ignore any unknown ColorInformationBox types.
+                    Debug.WriteLine($"Unsupported ColorInformationBox type: { colorInformation.ColorType }.");
                     property = null;
                 }
             }
@@ -71,6 +74,7 @@ namespace AvifFileType.AvifContainer
             }
             else
             {
+                Debug.WriteLine($"Unsupported property type: { header.Type }.");
                 property = null;
             }
 

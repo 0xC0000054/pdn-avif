@@ -42,7 +42,7 @@
 #include "ChromaSubsampling.h"
 #include "Memory.h"
 #include "YUVConversionHelpers.h"
-
+#include <array>
 
 namespace
 {
@@ -106,6 +106,18 @@ namespace
         }
     }
 
+    constexpr std::array<float, 256> BuildUint8ToFloatLookupTable()
+    {
+        std::array<float, 256> table = {};
+
+        for (size_t i = 0; i < table.size(); ++i)
+        {
+            table[i] = static_cast<float>(i) / 255.0f;
+        }
+
+        return table;
+    }
+
     void ColorToIdentity8(
         const BitmapData* bgraImage,
         uint8_t* yPlane,
@@ -160,6 +172,8 @@ namespace
         YUVBlock yuvBlock[2][2];
         float rgbPixel[3];
 
+        static constexpr std::array<float, 256> uint8ToFloatTable = BuildUint8ToFloatLookupTable();
+
         for (size_t imageY = 0; imageY < bgraImage->height; imageY += 2)
         {
             for (size_t imageX = 0; imageX < bgraImage->width; imageX += 2)
@@ -186,9 +200,9 @@ namespace
 
                         const ColorBgra* pixel = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (y * bgraImage->stride) + (x * sizeof(ColorBgra)));
 
-                        rgbPixel[0] = static_cast<float>(pixel->r) / 255.0f;
-                        rgbPixel[1] = static_cast<float>(pixel->g) / 255.0f;
-                        rgbPixel[2] = static_cast<float>(pixel->b) / 255.0f;
+                        rgbPixel[0] = uint8ToFloatTable[pixel->r];
+                        rgbPixel[1] = uint8ToFloatTable[pixel->g];
+                        rgbPixel[2] = uint8ToFloatTable[pixel->b];
 
                         // RGB -> YUV conversion
                         float Y = (kr * rgbPixel[0]) + (kg * rgbPixel[1]) + (kb * rgbPixel[2]);

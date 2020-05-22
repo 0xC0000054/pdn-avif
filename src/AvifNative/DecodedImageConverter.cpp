@@ -172,7 +172,7 @@ namespace
                 throw new unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
             }
 
-            const unsigned int count = 1 << image->bit_depth;
+            const int count = 1 << static_cast<int>(image->bit_depth);
             const bool isColorImage = !image->monochrome;
 
             unormFloatTableY = std::make_unique<float[]>(count);
@@ -183,10 +183,10 @@ namespace
 
             float yuvMaxChannel = static_cast<float>((1 << image->bit_depth) - 1);
 
-            for (unsigned int i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
-                uint32_t unormY = i;
-                uint32_t unormUV = i;
+                int unormY = i;
+                int unormUV = i;
 
                 if (image->range == AOM_CR_STUDIO_RANGE)
                 {

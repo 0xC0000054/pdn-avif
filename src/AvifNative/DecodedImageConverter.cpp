@@ -905,7 +905,7 @@ DecoderStatus ConvertColorImage(
     }
     catch (const unknown_bit_depth_error&)
     {
-        // The YUVLookupTables throws this for unsupported image bit depths.
+        // The YUVLookupTables constructor throws this for unsupported image bit depths.
         return DecoderStatus::UnsupportedBitDepth;
     }
 
@@ -956,7 +956,7 @@ DecoderStatus ConvertAlphaImage(
     }
     catch (const unknown_bit_depth_error&)
     {
-        // The YUVLookupTables throws this for unsupported image bit depths.
+        // The YUVLookupTables constructor throws this for unsupported image bit depths.
         return DecoderStatus::UnsupportedBitDepth;
     }
 

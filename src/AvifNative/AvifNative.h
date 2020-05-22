@@ -58,7 +58,8 @@ extern "C" {
         DecodeFailed,
         AlphaSizeMismatch,
         ColorSizeMismatch,
-        TileNclxProfileMismatch
+        TileNclxProfileMismatch,
+        UnsupportedBitDepth
     };
 
     // This must be kept in sync with EncoderOptions.cs

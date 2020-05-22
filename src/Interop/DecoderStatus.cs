@@ -21,6 +21,7 @@ namespace AvifFileType.Interop
         DecodeFailed,
         AlphaSizeMismatch,
         ColorSizeMismatch,
-        TileNclxProfileMismatch
+        TileNclxProfileMismatch,
+        UnsupportedBitDepth
     }
 }

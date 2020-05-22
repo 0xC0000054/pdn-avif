@@ -42,6 +42,7 @@
 #include "YUVConversionHelpers.h"
 #include "CICPEnums.h"
 #include <memory>
+#include <stdexcept>
 
 namespace
 {
@@ -86,6 +87,15 @@ namespace
         }
     }
 
+    class unknown_bit_depth_error : std::runtime_error
+    {
+    public:
+        unknown_bit_depth_error(const char* message) : std::runtime_error(message) {}
+
+    private:
+
+    };
+
     #define AVIF_CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
     // Limited -> Full
@@ -118,6 +128,8 @@ namespace
         case 16:
             LIMITED_TO_FULL(1024, 60160, 65535);
             break;
+        default:
+            throw new unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
         }
         return v;
     }
@@ -137,6 +149,8 @@ namespace
         case 16:
             LIMITED_TO_FULL(1024, 61440, 65535);
             break;
+        default:
+            throw new unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
         }
         return v;
     }
@@ -150,6 +164,14 @@ namespace
 
         YUVLookupTables(const aom_image_t* image, bool isIdentityMatrix)
         {
+            if (image->bit_depth != 8 &&
+                image->bit_depth != 10 &&
+                image->bit_depth != 12 &&
+                image->bit_depth != 16)
+            {
+                throw new unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
+            }
+
             const unsigned int count = 1 << image->bit_depth;
             const bool isColorImage = !image->monochrome;
 
@@ -191,18 +213,6 @@ namespace
             }
         }
     };
-
-    std::unique_ptr<YUVLookupTables> BuildLookupTables(const aom_image_t* image, bool isIdentityMatrix)
-    {
-        try
-        {
-            return std::make_unique<YUVLookupTables>(image, isIdentityMatrix);
-        }
-        catch (const std::bad_alloc&)
-        {
-            return nullptr;
-        }
-    }
 
     void Identity16ToRGB8Color(
         const aom_image_t* image,
@@ -801,98 +811,102 @@ DecoderStatus ConvertColorImage(
         }
     }
 
-    if (colorInfo.matrixCoefficients == CICPMatrixCoefficients::Identity)
+    try
     {
-        // The Identity matrix coefficient contains RGB color values.
-
-        if (frame->bit_depth > 8)
+        if (colorInfo.matrixCoefficients == CICPMatrixCoefficients::Identity)
         {
-            std::unique_ptr<YUVLookupTables> lookupTable = BuildLookupTables(frame, true);
-            if (!lookupTable)
-            {
-                return DecoderStatus::OutOfMemory;
-            }
+            // The Identity matrix coefficient contains RGB color values.
 
-            if (frame->monochrome)
+            if (frame->bit_depth > 8)
             {
-                Identity16ToRGB8Mono(frame,
-                    decodeInfo,
-                    *lookupTable,
-                    outputImage);
+                std::unique_ptr<YUVLookupTables> lookupTable = std::make_unique<YUVLookupTables>(frame, true);
+
+                if (frame->monochrome)
+                {
+                    Identity16ToRGB8Mono(frame,
+                        decodeInfo,
+                        *lookupTable,
+                        outputImage);
+                }
+                else
+                {
+                    Identity16ToRGB8Color(frame,
+                        decodeInfo,
+                        *lookupTable,
+                        outputImage);
+                }
             }
             else
             {
-                Identity16ToRGB8Color(frame,
-                    decodeInfo,
-                    *lookupTable,
-                    outputImage);
+                if (frame->monochrome)
+                {
+                    Identity8ToRGB8Mono(frame,
+                        decodeInfo,
+                        outputImage);
+                }
+                else
+                {
+                    Identity8ToRGB8Color(frame,
+                        decodeInfo,
+                        outputImage);
+                }
             }
         }
         else
         {
-            if (frame->monochrome)
+            std::unique_ptr<YUVLookupTables> lookupTable = std::make_unique<YUVLookupTables>(frame, false);
+
+            YUVCoefficiants yuvCoefficiants;
+            GetYUVCoefficiants(colorInfo, yuvCoefficiants);
+
+            if (frame->bit_depth > 8)
             {
-                Identity8ToRGB8Mono(frame,
-                    decodeInfo,
-                    outputImage);
+                if (frame->monochrome)
+                {
+                    YUV16ToRGB8Mono(frame,
+                        yuvCoefficiants,
+                        *lookupTable,
+                        decodeInfo,
+                        outputImage);
+                }
+                else
+                {
+                    YUV16ToRGB8Color(frame,
+                        yuvCoefficiants,
+                        *lookupTable,
+                        decodeInfo,
+                        outputImage);
+                }
             }
             else
             {
-                Identity8ToRGB8Color(frame,
-                    decodeInfo,
-                    outputImage);
+                if (frame->monochrome)
+                {
+                    YUV8ToRGB8Mono(frame,
+                        yuvCoefficiants,
+                        *lookupTable,
+                        decodeInfo,
+                        outputImage);
+                }
+                else
+                {
+                    YUV8ToRGB8Color(frame,
+                        yuvCoefficiants,
+                        *lookupTable,
+                        decodeInfo,
+                        outputImage);
+                }
             }
         }
     }
-    else
+    catch (const std::bad_alloc&)
     {
-        std::unique_ptr<YUVLookupTables> lookupTable = BuildLookupTables(frame, false);
-        if (!lookupTable)
-        {
-            return DecoderStatus::OutOfMemory;
-        }
-
-        YUVCoefficiants yuvCoefficiants;
-        GetYUVCoefficiants(colorInfo, yuvCoefficiants);
-
-        if (frame->bit_depth > 8)
-        {
-            if (frame->monochrome)
-            {
-                YUV16ToRGB8Mono(frame,
-                    yuvCoefficiants,
-                    *lookupTable,
-                    decodeInfo,
-                    outputImage);
-            }
-            else
-            {
-                YUV16ToRGB8Color(frame,
-                    yuvCoefficiants,
-                    *lookupTable,
-                    decodeInfo,
-                    outputImage);
-            }
-        }
-        else
-        {
-            if (frame->monochrome)
-            {
-                YUV8ToRGB8Mono(frame,
-                    yuvCoefficiants,
-                    *lookupTable,
-                    decodeInfo,
-                    outputImage);
-            }
-            else
-            {
-                YUV8ToRGB8Color(frame,
-                    yuvCoefficiants,
-                    *lookupTable,
-                    decodeInfo,
-                    outputImage);
-            }
-        }
+        return DecoderStatus::OutOfMemory;
+    }
+    catch (const unknown_bit_depth_error&)
+    {
+        // The YUVLookupTables throws this for unsupported image bit depths.
+        return DecoderStatus::UnsupportedBitDepth;
     }
 
     return DecoderStatus::Ok;
@@ -916,26 +930,34 @@ DecoderStatus ConvertAlphaImage(
         decodeInfo->expectedHeight = frame->d_h;
     }
 
-    std::unique_ptr<YUVLookupTables> lookupTable = BuildLookupTables(frame, false);
-    if (!lookupTable)
+    try
+    {
+        std::unique_ptr<YUVLookupTables> lookupTable = std::make_unique<YUVLookupTables>(frame, false);
+
+        if (frame->bit_depth > 8)
+        {
+            YUV16ToAlpha8(frame,
+                decodeInfo,
+                *lookupTable,
+                outputBGRAImageData);
+        }
+        else
+        {
+            YUV8ToAlpha8(frame,
+                decodeInfo,
+                *lookupTable,
+                outputBGRAImageData);
+
+        }
+    }
+    catch (const std::bad_alloc&)
     {
         return DecoderStatus::OutOfMemory;
     }
-
-    if (frame->bit_depth > 8)
+    catch (const unknown_bit_depth_error&)
     {
-        YUV16ToAlpha8(frame,
-                      decodeInfo,
-                      *lookupTable,
-                      outputBGRAImageData);
-    }
-    else
-    {
-        YUV8ToAlpha8(frame,
-                     decodeInfo,
-                     *lookupTable,
-                     outputBGRAImageData);
-
+        // The YUVLookupTables throws this for unsupported image bit depths.
+        return DecoderStatus::UnsupportedBitDepth;
     }
 
     return DecoderStatus::Ok;

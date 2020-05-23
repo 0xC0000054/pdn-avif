@@ -87,7 +87,7 @@ namespace
         }
     }
 
-    class unknown_bit_depth_error : std::runtime_error
+    class unknown_bit_depth_error : public std::runtime_error
     {
     public:
         unknown_bit_depth_error(const char* message) : std::runtime_error(message) {}

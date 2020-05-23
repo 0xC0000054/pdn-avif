@@ -35,6 +35,6 @@ namespace AvifFileType
 
         public Version Version => typeof(PluginSupportInfo).Assembly.GetName().Version;
 
-        public Uri WebsiteUri => new Uri(@"https://forums.getpaint.net");
+        public Uri WebsiteUri => new Uri(@"https://forums.getpaint.net/topic/116233-avif-filetype");
     }
 }

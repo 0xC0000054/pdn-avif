@@ -2,9 +2,6 @@
 
 A [Paint.NET](http://www.getpaint.net) filetype plugin that allows AVIF images to be loaded and saved with transparency.
 
-Please note that this plugin is a beta version.
-You should save your work in another format first, as it is possible that the plugin could hang or crash Paint.NET.
-
 ## Installation
 
 1. Close Paint.NET.

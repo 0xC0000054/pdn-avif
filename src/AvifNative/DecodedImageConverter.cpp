@@ -156,6 +156,7 @@ namespace
     }
 
     #undef AVIF_CLAMP
+    #undef LIMITED_TO_FULL
 
     struct YUVLookupTables
     {

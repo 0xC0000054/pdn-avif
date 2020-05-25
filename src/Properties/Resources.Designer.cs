@@ -61,26 +61,6 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This plugin is an expired beta version.
-        ///You should look for an updated version on the Paint.NET forum. .
-        /// </summary>
-        internal static string BetaVersionExpired {
-            get {
-                return ResourceManager.GetString("BetaVersionExpired", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 2020-04-10T02:22:26
-        ///.
-        /// </summary>
-        internal static string BuildDate {
-            get {
-                return ResourceManager.GetString("BuildDate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 4:2:0 (Best Compression).
         /// </summary>
         internal static string ChromaSubsampling_420_DisplayName {

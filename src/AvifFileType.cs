@@ -44,7 +44,6 @@ namespace AvifFileType
                     SupportsLayers = false
                 })
         {
-            VersionUtil.CheckForBetaExpiration();
         }
 
         /// <summary>

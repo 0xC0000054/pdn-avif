@@ -35,7 +35,7 @@ namespace AvifFileType
         /// </summary>
         internal AvifFileTypePlugin()
             : base(
-                "AVIF",
+                "AV1 (AVIF)",
                 new FileTypeOptions
                 {
                     LoadExtensions = new string[] { ".avif" },

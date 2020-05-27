@@ -56,7 +56,7 @@ namespace
 
         AvifEncoderOptions(const EncoderOptions* options)
         {
-            threadCount = options->maxThreads <= 0 ? 1 : options->maxThreads;
+            threadCount = ClampThreadCount(options->maxThreads);
             // Map the quality value to the range used by AOM
             double value = (static_cast<double>(options->quality) * 63.0) / 100.0;
             quality = 63 - static_cast<int>(value + 0.5);
@@ -76,6 +76,25 @@ namespace
                 cpuUsed = 4;
                 break;
             }
+        }
+
+    private:
+        static int ClampThreadCount(int32_t maxThreads)
+        {
+            // AOM limits encoders to this many threads
+            // See MAX_NUM_THREADS in aom_util/aom_thread.h
+            constexpr int aomMaxThreadCount = 64;
+
+            if (maxThreads < 1)
+            {
+                return 1;
+            }
+            else if (maxThreads > aomMaxThreadCount)
+            {
+                return aomMaxThreadCount;
+            }
+
+            return maxThreads;
         }
     };
 

@@ -20,7 +20,7 @@ using System.IO;
 namespace AvifFileType
 {
     [PluginSupportInfo(typeof(PluginSupportInfo))]
-    internal sealed class AvifFileTypePlugin : PropertyBasedFileType
+    public sealed class AvifFileTypePlugin : PropertyBasedFileType
     {
         // Names of the properties
         private enum PropertyNames
@@ -33,7 +33,7 @@ namespace AvifFileType
         /// <summary>
         /// Constructs a ExamplePropertyBasedFileType instance
         /// </summary>
-        internal AvifFileTypePlugin()
+        public AvifFileTypePlugin()
             : base(
                 "AV1 (AVIF)",
                 new FileTypeOptions

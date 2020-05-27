@@ -20,5 +20,6 @@ namespace AvifFileType.Interop
         public int quality;
         public CompressionMode compressionMode;
         public YUVChromaSubsampling yuvFormat;
+        public int maxThreads;
     }
 }

@@ -68,6 +68,7 @@ extern "C" {
         int32_t quality;
         CompressionMode compressionMode;
         YUVChromaSubsampling yuvFormat;
+        int32_t maxThreads;
     };
 
     enum class ColorInformationFormat

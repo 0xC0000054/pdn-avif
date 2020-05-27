@@ -82,7 +82,8 @@ namespace AvifFileType
                 compressionMode = compressionMode,
                 // YUV 4:0:0 is always used for gray-scale images because it
                 // produces the smallest file size with no quality loss.
-                yuvFormat = grayscale ? YUVChromaSubsampling.Subsampling400 : chromaSubsampling
+                yuvFormat = grayscale ? YUVChromaSubsampling.Subsampling400 : chromaSubsampling,
+                maxThreads = Environment.ProcessorCount
             };
 
             // Use BT.709 with sRGB transfer characteristics as the default.

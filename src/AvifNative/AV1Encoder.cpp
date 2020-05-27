@@ -54,9 +54,9 @@ namespace
         int cpuUsed;
         int usage;
 
-        AvifEncoderOptions(int encoderThreadCount, const EncoderOptions* options)
+        AvifEncoderOptions(const EncoderOptions* options)
         {
-            threadCount = encoderThreadCount;
+            threadCount = options->maxThreads <= 0 ? 1 : options->maxThreads;
             // Map the quality value to the range used by AOM
             double value = (static_cast<double>(options->quality) * 63.0) / 100.0;
             quality = 63 - static_cast<int>(value + 0.5);
@@ -84,29 +84,6 @@ namespace
         void* buf;
         size_t sz;
     };
-
-    int GetEncoderThreadCount()
-    {
-        // AOM limits encoders to this many threads
-        // See MAX_NUM_THREADS in aom_util/aom_thread.h
-        constexpr int aomMaxThreadCount = 64;
-
-        int encoderThreadCount = 1;
-
-        SYSTEM_INFO si = {};
-        GetSystemInfo(&si);
-
-        if (si.dwNumberOfProcessors < aomMaxThreadCount)
-        {
-            encoderThreadCount = static_cast<int>(si.dwNumberOfProcessors);
-        }
-        else
-        {
-            encoderThreadCount = aomMaxThreadCount;
-        }
-
-        return encoderThreadCount;
-    }
 
     EncoderStatus InitializeEncoder(
         aom_codec_ctx* codec,
@@ -318,7 +295,7 @@ EncoderStatus CompressAOMImages(
         }
     }
 
-    AvifEncoderOptions options(GetEncoderThreadCount(), encodeOptions);
+    AvifEncoderOptions options(encodeOptions);
 
     aom_codec_iface_t* iface = aom_codec_av1_cx();
 

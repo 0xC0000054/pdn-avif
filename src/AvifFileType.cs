@@ -22,6 +22,8 @@ namespace AvifFileType
     [PluginSupportInfo(typeof(PluginSupportInfo))]
     public sealed class AvifFileTypePlugin : PropertyBasedFileType
     {
+        private readonly int? maxEncoderThreadsOverride;
+
         // Names of the properties
         private enum PropertyNames
         {
@@ -31,9 +33,19 @@ namespace AvifFileType
         }
 
         /// <summary>
-        /// Constructs a ExamplePropertyBasedFileType instance
+        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
         /// </summary>
         public AvifFileTypePlugin()
+            : this(null)
+        {
+        }
+
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
+        /// </summary>
+        /// <param name="maxEncoderThreads">The maximum number of encoder threads.</param>
+        public AvifFileTypePlugin(int? maxEncoderThreads)
             : base(
                 "AV1 (AVIF)",
                 new FileTypeOptions
@@ -44,6 +56,7 @@ namespace AvifFileType
                     SupportsLayers = false
                 })
         {
+            this.maxEncoderThreadsOverride = maxEncoderThreads;
         }
 
         /// <summary>
@@ -129,7 +142,7 @@ namespace AvifFileType
             CompressionMode compressionMode = (CompressionMode)token.GetProperty(PropertyNames.CompressionMode).Value;
             YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling).Value;
 
-            AvifFile.Save(input, output, quality, compressionMode, chromaSubsampling, scratchSurface, progressCallback);
+            AvifFile.Save(input, output, quality, compressionMode, chromaSubsampling, maxEncoderThreadsOverride, scratchSurface, progressCallback);
         }
 
         /// <summary>

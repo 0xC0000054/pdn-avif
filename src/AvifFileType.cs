@@ -20,7 +20,8 @@ using System.IO;
 namespace AvifFileType
 {
     [PluginSupportInfo(typeof(PluginSupportInfo))]
-    public sealed class AvifFileTypePlugin : PropertyBasedFileType
+    public sealed class AvifFileTypePlugin
+        : PropertyBasedFileType
     {
         private readonly int? maxEncoderThreadsOverride;
 

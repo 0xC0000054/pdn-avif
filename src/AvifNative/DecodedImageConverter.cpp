@@ -221,9 +221,6 @@ namespace
         const YUVLookupTables& tables,
         BitmapData* bgraImage)
     {
-        const uint32_t maxUVI = ((image->d_w + image->x_chroma_shift) >> image->x_chroma_shift) - 1;
-        const uint32_t maxUVJ = ((image->d_h + image->y_chroma_shift) >> image->y_chroma_shift) - 1;
-
         uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
         constexpr float rgbMaxChannel = 255.0f;
 
@@ -242,7 +239,7 @@ namespace
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
-            const uint32_t uvJ = Min(y >> image->y_chroma_shift, maxUVJ);
+            const uint32_t uvJ = y >> image->y_chroma_shift;
             uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
             uint16_t* ptrU = reinterpret_cast<uint16_t*>(&image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])]);
             uint16_t* ptrV = reinterpret_cast<uint16_t*>(&image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])]);
@@ -255,7 +252,7 @@ namespace
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
                 // Unpack Identity into unorm
-                uint32_t uvI = Min(x >> image->x_chroma_shift, maxUVI);
+                uint32_t uvI = x >> image->x_chroma_shift;
 
                 // Clamp the values to the lookup table range
                 uint32_t unormY = Min(ptrY[x], yuvMaxChannel);
@@ -327,9 +324,6 @@ namespace
         const DecodeInfo* decodeInfo,
         BitmapData* bgraImage)
     {
-        const uint32_t maxUVI = ((image->d_w + image->x_chroma_shift) >> image->x_chroma_shift) - 1;
-        const uint32_t maxUVJ = ((image->d_h + image->y_chroma_shift) >> image->y_chroma_shift) - 1;
-
         uint32_t uPlaneIndex = AOM_PLANE_U;
         uint32_t vPlaneIndex = AOM_PLANE_V;
 
@@ -355,7 +349,7 @@ namespace
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
-            const uint32_t uvJ = Min(y >> image->y_chroma_shift, maxUVJ);
+            const uint32_t uvJ = y >> image->y_chroma_shift;
             uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
             uint8_t* ptrU = &image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])];
             uint8_t* ptrV = &image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])];
@@ -368,7 +362,7 @@ namespace
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
                 // Unpack Identity into unorm
-                uint32_t uvI = Min(x >> image->x_chroma_shift, maxUVI);
+                uint32_t uvI = x >> image->x_chroma_shift;
                 uint8_t unormY = ptrY[x];
                 uint8_t unormU = ptrU[uvI];
                 uint8_t unormV = ptrV[uvI];
@@ -449,8 +443,6 @@ namespace
         const float kr = yuvCoefficiants.kr;
         const float kg = yuvCoefficiants.kg;
         const float kb = yuvCoefficiants.kb;
-        const uint32_t maxUVI = ((image->d_w + image->x_chroma_shift) >> image->x_chroma_shift) - 1;
-        const uint32_t maxUVJ = ((image->d_h + image->y_chroma_shift) >> image->y_chroma_shift) - 1;
 
         uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
         constexpr float rgbMaxChannel = 255.0f;
@@ -470,7 +462,7 @@ namespace
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
-            const uint32_t uvJ = Min(y >> image->y_chroma_shift, maxUVJ);
+            const uint32_t uvJ = y >> image->y_chroma_shift;
             uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
             uint16_t* ptrU = reinterpret_cast<uint16_t*>(&image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])]);
             uint16_t* ptrV = reinterpret_cast<uint16_t*>(&image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])]);
@@ -483,7 +475,7 @@ namespace
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
                 // Unpack YUV into unorm
-                uint32_t uvI = Min(x >> image->x_chroma_shift, maxUVI);
+                uint32_t uvI = x >> image->x_chroma_shift;
 
                 // Clamp the values to the lookup table range
                 uint32_t unormY = Min(ptrY[x], yuvMaxChannel);
@@ -572,8 +564,6 @@ namespace
         const float kr = yuvCoefficiants.kr;
         const float kg = yuvCoefficiants.kg;
         const float kb = yuvCoefficiants.kb;
-        const uint32_t maxUVI = ((image->d_w + image->x_chroma_shift) >> image->x_chroma_shift) - 1;
-        const uint32_t maxUVJ = ((image->d_h + image->y_chroma_shift) >> image->y_chroma_shift) - 1;
 
         constexpr float rgbMaxChannel = 255.0f;
 
@@ -592,7 +582,7 @@ namespace
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
-            const uint32_t uvJ = Min(y >> image->y_chroma_shift, maxUVJ);
+            const uint32_t uvJ = y >> image->y_chroma_shift;
             uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
             uint8_t* ptrU = &image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])];
             uint8_t* ptrV = &image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])];
@@ -605,7 +595,7 @@ namespace
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
                 // Unpack YUV into unorm
-                uint32_t uvI = Min(x >> image->x_chroma_shift, maxUVI);
+                uint32_t uvI = x >> image->x_chroma_shift;
                 uint8_t unormY = ptrY[x];
                 uint8_t unormU = ptrU[uvI];
                 uint8_t unormV = ptrV[uvI];

@@ -41,6 +41,7 @@
 #include "Memory.h"
 #include "YUVConversionHelpers.h"
 #include "CICPEnums.h"
+#include <array>
 #include <memory>
 #include <stdexcept>
 
@@ -113,7 +114,7 @@ namespace
         v = AVIF_CLAMP(v, 0, FULLY)
 
 
-    int avifLimitedToFullY(int depth, int v)
+    constexpr int avifLimitedToFullY(int depth, int v)
     {
         switch (depth) {
         case 8:
@@ -214,6 +215,18 @@ namespace
             }
         }
     };
+
+    constexpr std::array<uint8_t, 256> BuildIdentity8LimitedToFullYLookupTable()
+    {
+        std::array<uint8_t, 256> table = {};
+
+        for (size_t i = 0; i < table.size(); ++i)
+        {
+            table[i] = static_cast<uint8_t>(avifLimitedToFullY(8, static_cast<int>(i)));
+        }
+
+        return table;
+    }
 
     void Identity16ToRGB8Color(
         const aom_image_t* image,
@@ -337,15 +350,7 @@ namespace
         uint32_t copyHeight;
         GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
 
-        uint8_t limitedToFullY[256] = {};
-
-        if (image->range == AOM_CR_STUDIO_RANGE)
-        {
-            for (unsigned int i = 0; i < 256; ++i)
-            {
-                limitedToFullY[i] = static_cast<uint8_t>(avifLimitedToFullY(8, i));
-            }
-        }
+        static constexpr std::array<uint8_t, 256> limitedToFullY = BuildIdentity8LimitedToFullYLookupTable();
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
@@ -393,15 +398,7 @@ namespace
         uint32_t copyHeight;
         GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
 
-        uint8_t limitedToFullY[256] = {};
-
-        if (image->range == AOM_CR_STUDIO_RANGE)
-        {
-            for (unsigned int i = 0; i < 256; ++i)
-            {
-                limitedToFullY[i] = static_cast<uint8_t>(avifLimitedToFullY(8, i));
-            }
-        }
+        static constexpr std::array<uint8_t, 256> limitedToFullY = BuildIdentity8LimitedToFullYLookupTable();
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {

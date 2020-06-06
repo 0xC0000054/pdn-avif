@@ -335,9 +335,9 @@ EncoderStatus CompressAOMImages(
         status = EncodeAOMImage(iface, options, progressContext, alpha,
                                 compressedAlphaImage, compressedAlphaImageSize);
 
-        if (status == EncoderStatus::UserCancelled)
+        if (status != EncoderStatus::Ok)
         {
-            // Cleanup the color image if the user canceled the operation
+            // Cleanup the color image
             AvifMemory::Free(*compressedColorImage);
             *compressedColorImage = nullptr;
             *compressedColorImageSize = 0;

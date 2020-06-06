@@ -142,6 +142,10 @@ namespace
         {
             aom_codec_control(codec, AV1E_SET_ROW_MT, 1);
         }
+        else
+        {
+            aom_codec_control(codec, AV1E_SET_ROW_MT, 0);
+        }
 
         return EncoderStatus::Ok;
     }

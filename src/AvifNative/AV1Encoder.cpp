@@ -235,7 +235,7 @@ namespace
     {
         aom_codec_enc_cfg_t aom_cfg;
 
-        if (aom_codec_enc_config_default(iface, &aom_cfg, 0) != AOM_CODEC_OK)
+        if (aom_codec_enc_config_default(iface, &aom_cfg, encodeOptions.usage) != AOM_CODEC_OK)
         {
             return EncoderStatus::CodecInitFailed;
         }

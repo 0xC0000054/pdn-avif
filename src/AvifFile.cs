@@ -105,23 +105,18 @@ namespace AvifFileType
 
             if (quality == 100 && !grayscale)
             {
-                options.yuvFormat = YUVChromaSubsampling.IdentityMatrix;
-
-                // These NCLX color values are from the AV1 Bitstream & Decoding Process Specification.
-                const CICPColorPrimaries colorPrimaries = CICPColorPrimaries.BT709;
-                const CICPTransferCharacteristics transferCharacteristics = CICPTransferCharacteristics.Srgb;
-                const CICPMatrixCoefficients matrixCoefficients = CICPMatrixCoefficients.Identity;
-                const bool fullRange = true;
-
                 // The Identity matrix coefficient places the RGB values into the YUV planes without any conversion.
                 // This reduces the compression efficiency, but allows for fully lossless encoding.
 
+                options.yuvFormat = YUVChromaSubsampling.IdentityMatrix;
+
+                // These CICP color values are from the AV1 Bitstream & Decoding Process Specification.
                 colorConversionInfo = new CICPColorData
                 {
-                    colorPrimaries = colorPrimaries,
-                    transferCharacteristics = transferCharacteristics,
-                    matrixCoefficients = matrixCoefficients,
-                    fullRange = fullRange
+                    colorPrimaries = CICPColorPrimaries.BT709,
+                    transferCharacteristics = CICPTransferCharacteristics.Srgb,
+                    matrixCoefficients = CICPMatrixCoefficients.Identity,
+                    fullRange = true
                 };
             }
             else

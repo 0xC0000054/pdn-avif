@@ -123,16 +123,6 @@ namespace AvifFileType
                     matrixCoefficients = matrixCoefficients,
                     fullRange = fullRange
                 };
-
-                // Only add a NCLX color information box if the image
-                // does not have an existing ICC color profile.
-                if (colorInformationBox == null)
-                {
-                    colorInformationBox = new NclxColorInformation(colorPrimaries,
-                                                                   transferCharacteristics,
-                                                                   matrixCoefficients,
-                                                                   fullRange);
-                }
             }
             else
             {
@@ -152,16 +142,16 @@ namespace AvifFileType
                         colorConversionInfo = colorData.Value;
                     }
                 }
+            }
 
-                // Only add a NCLX color information box if the image
-                // does not have an existing ICC color profile.
-                if (colorInformationBox == null)
-                {
-                    colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
-                                                                   colorConversionInfo.transferCharacteristics,
-                                                                   colorConversionInfo.matrixCoefficients,
-                                                                   colorConversionInfo.fullRange);
-                }
+            // Only add a NCLX color information box if the image
+            // does not have an existing ICC color profile.
+            if (colorInformationBox == null)
+            {
+                colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
+                                                               colorConversionInfo.transferCharacteristics,
+                                                               colorConversionInfo.matrixCoefficients,
+                                                               colorConversionInfo.fullRange);
             }
 
             CompressedAV1Image color = null;

@@ -63,7 +63,7 @@ namespace AvifFileType.Exif
             return exifBytes;
         }
 
-        private void WriteDirectory(BinaryWriter writer, Dictionary<ushort, MetadataEntry> tags,  List<IFDEntry> entries, long ifdOffset)
+        private void WriteDirectory(BinaryWriter writer, Dictionary<ushort, MetadataEntry> tags, List<IFDEntry> entries, long ifdOffset)
         {
             writer.BaseStream.Position = ifdOffset;
 

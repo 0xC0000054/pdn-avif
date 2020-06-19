@@ -45,10 +45,10 @@ namespace AvifFileType
 
             return new CICPColorData
             {
-                 colorPrimaries = (CICPColorPrimaries)colorPrimaries,
-                 transferCharacteristics = (CICPTransferCharacteristics)transferCharacteristics,
-                 matrixCoefficients = (CICPMatrixCoefficients)matrixCoefficients,
-                 fullRange = fullRange
+                colorPrimaries = (CICPColorPrimaries)colorPrimaries,
+                transferCharacteristics = (CICPTransferCharacteristics)transferCharacteristics,
+                matrixCoefficients = (CICPMatrixCoefficients)matrixCoefficients,
+                fullRange = fullRange
             };
         }
 

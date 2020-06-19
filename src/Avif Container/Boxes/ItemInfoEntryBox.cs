@@ -68,7 +68,7 @@ namespace AvifFileType.AvifContainer
             this.Name = new BoxString(name);
         }
 
-        public bool IsHidden => (this.Flags & 1) == 1; 
+        public bool IsHidden => (this.Flags & 1) == 1;
 
         public uint ItemId { get; }
 

@@ -344,7 +344,7 @@ namespace AvifFileType
         {
             if (this.cleanApertureBox.Width.Denominator == 0 ||
                 this.cleanApertureBox.Height.Denominator == 0 ||
-                this.cleanApertureBox.HorizontalOffset.Denominator == 0||
+                this.cleanApertureBox.HorizontalOffset.Denominator == 0 ||
                 this.cleanApertureBox.VerticalOffset.Denominator == 0)
             {
                 return;

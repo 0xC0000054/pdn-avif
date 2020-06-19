@@ -15,6 +15,6 @@ namespace AvifFileType.Exif
     internal enum ExifColorSpace : ushort
     {
         Srgb = 1,
-        Uncalibrated  = 65535
+        Uncalibrated = 65535
     }
 }

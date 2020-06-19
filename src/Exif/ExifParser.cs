@@ -340,14 +340,15 @@ namespace AvifFileType.Exif
         {
 #pragma warning disable IDE0032 // Use auto property
             private readonly IFDEntry entry;
+            private readonly MetadataSection section;
             private readonly bool offsetIsBigEndian;
 #pragma warning restore IDE0032 // Use auto property
 
             public ParserIFDEntry(EndianBinaryReader reader, MetadataSection section)
             {
                 this.entry = new IFDEntry(reader);
+                this.section = section;
                 this.offsetIsBigEndian = reader.Endianess == Endianess.Big;
-                this.Section = section;
             }
 
             public ushort Tag => this.entry.Tag;
@@ -366,7 +367,9 @@ namespace AvifFileType.Exif
                 }
             }
 
-            public MetadataSection Section { get; }
+#pragma warning disable IDE0032 // Use auto property
+            public MetadataSection Section => this.section;
+#pragma warning restore IDE0032 // Use auto property
 
             public unsafe byte[] GetValueBytesFromOffset()
             {

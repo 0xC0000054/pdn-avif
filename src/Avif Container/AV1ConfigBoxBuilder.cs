@@ -64,7 +64,7 @@ namespace AvifFileType.AvifContainer
                 Monochrome = image.Format == YUVChromaSubsampling.Subsampling400,
                 ChromaSubsamplingX = chromaSubsamplingX,
                 ChromaSubsamplingY = chromaSubsamplingY,
-                ChromaSamplePosition = 0
+                ChromaSamplePosition = ChromaSamplePosition.Unknown
             };
         }
 

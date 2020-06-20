@@ -70,7 +70,7 @@ namespace AvifFileType.AvifContainer
             this.Monochrome = GetConfigurationOption(configurationParameters, 5);
             this.ChromaSubsamplingX = GetConfigurationOption(configurationParameters, 4);
             this.ChromaSubsamplingY = GetConfigurationOption(configurationParameters, 3);
-            this.ChromaSamplePosition = (byte)(configurationParameters & 0x03);
+            this.ChromaSamplePosition = (ChromaSamplePosition)(configurationParameters & 0x03);
         }
 
         public AV1ConfigBox()
@@ -94,7 +94,7 @@ namespace AvifFileType.AvifContainer
 
         public bool ChromaSubsamplingY { get; set; }
 
-        public byte ChromaSamplePosition { get; set; }
+        public ChromaSamplePosition ChromaSamplePosition { get; set; }
 
         public override void Write(BigEndianBinaryWriter writer)
         {
@@ -108,7 +108,7 @@ namespace AvifFileType.AvifContainer
                                                 | SetConfigurationOption(5, this.Monochrome)
                                                 | SetConfigurationOption(4, this.ChromaSubsamplingX)
                                                 | SetConfigurationOption(3, this.ChromaSubsamplingY)
-                                                | (this.ChromaSamplePosition & 0x03));
+                                                | ((int)this.ChromaSamplePosition & 0x03));
 
             // The presentation parameters defined in byte 4 are not
             // relevant when reading or writing a still image.

@@ -62,8 +62,8 @@ namespace AvifFileType.AvifContainer
             byte seqProfileAndSeqLevelIdx0 = reader.ReadByte();
             byte configurationParameters = reader.ReadByte();
 
-            this.SeqProfile = (byte)((seqProfileAndSeqLevelIdx0 >> 5) & 0x07);
-            this.SeqLevelIdx0 = (byte)(seqProfileAndSeqLevelIdx0 & 0x1f);
+            this.SeqProfile = SequenceProfile.FromPackedByte(seqProfileAndSeqLevelIdx0);
+            this.SeqLevelIdx0 = SequenceLevel.FromPackedByte(seqProfileAndSeqLevelIdx0);
             this.SeqTier0 = GetConfigurationOption(configurationParameters, 8);
             this.HighBitDepth = GetConfigurationOption(configurationParameters, 7);
             this.TwelveBit = GetConfigurationOption(configurationParameters, 6);
@@ -78,9 +78,9 @@ namespace AvifFileType.AvifContainer
         {
         }
 
-        public byte SeqProfile { get; set; }
+        public SequenceProfile SeqProfile { get; set; }
 
-        public byte SeqLevelIdx0 { get; set; }
+        public SequenceLevel SeqLevelIdx0 { get; set; }
 
         public bool SeqTier0 { get; set; }
 
@@ -100,7 +100,7 @@ namespace AvifFileType.AvifContainer
         {
             base.Write(writer);
 
-            byte seqProfileAndSeqLevelIdx0 = (byte)((this.SeqProfile << 5) | (this.SeqLevelIdx0 & 0x1f));
+            byte seqProfileAndSeqLevelIdx0 = (byte)((this.SeqProfile.Value << 5) | (this.SeqLevelIdx0.Value & 0x1f));
 
             byte configurationParameters = (byte)(SetConfigurationOption(8, this.SeqTier0)
                                                 | SetConfigurationOption(7, this.HighBitDepth)

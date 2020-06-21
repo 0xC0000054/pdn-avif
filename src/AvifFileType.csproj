@@ -59,6 +59,9 @@
     <Compile Include="Avif Container\Boxes\Enums\ConstructionMethod.cs" />
     <Compile Include="Avif Container\Boxes\Enums\ImageMirrorDirection.cs" />
     <Compile Include="Avif Container\Boxes\Enums\ImageRotation.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\SequenceLevel.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\SequenceProfile.cs" />
+    <Compile Include="Avif Container\Boxes\Enums\StronglyTypedEnumeration.cs" />
     <Compile Include="Avif Container\Boxes\IItemInfoEntry.cs" />
     <Compile Include="Avif Container\Boxes\IItemReferenceEntry.cs" />
     <Compile Include="Avif Container\Boxes\Item Info Entries\ItemInfoEntryFactory.cs" />

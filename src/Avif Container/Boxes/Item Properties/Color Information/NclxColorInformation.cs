@@ -10,8 +10,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System.Diagnostics;
+
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerTypeProxy(typeof(NclxColorInformationDebugView))]
     internal sealed class NclxColorInformation
         : ColorInformationBox
     {
@@ -63,6 +66,24 @@ namespace AvifFileType.AvifContainer
                    + sizeof(ushort) // Transfer characteristics
                    + sizeof(ushort) // Matrix coefficients
                    + sizeof(byte); // Full range
+        }
+
+        private sealed class NclxColorInformationDebugView
+        {
+            private readonly NclxColorInformation nclxColorInformation;
+
+            public NclxColorInformationDebugView(NclxColorInformation nclxColorInformation)
+            {
+                this.nclxColorInformation = nclxColorInformation;
+            }
+
+            public CICPColorPrimaries ColorPrimaries => this.nclxColorInformation.ColorPrimaries;
+
+            public CICPTransferCharacteristics TransferCharacteristics => this.nclxColorInformation.TransferCharacteristics;
+
+            public CICPMatrixCoefficients MatrixCoefficients => this.nclxColorInformation.MatrixCoefficients;
+
+            public bool FullRange => this.nclxColorInformation.FullRange;
         }
     }
 }

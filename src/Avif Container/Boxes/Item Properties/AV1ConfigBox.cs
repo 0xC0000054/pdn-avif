@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerTypeProxy(typeof(AV1ConfigBoxDebugView))]
     internal sealed class AV1ConfigBox
         : ItemProperty
     {
@@ -137,6 +139,34 @@ namespace AvifFileType.AvifContainer
         private static int SetConfigurationOption(int index, bool value)
         {
             return value ? (1 << (index - 1)) : 0;
+        }
+
+        private sealed class AV1ConfigBoxDebugView
+        {
+            private readonly AV1ConfigBox configBox;
+
+            public AV1ConfigBoxDebugView(AV1ConfigBox configBox)
+            {
+                this.configBox = configBox;
+            }
+
+            public SequenceProfile SeqProfile => this.configBox.SeqProfile;
+
+            public SequenceLevel SeqLevelIdx0 => this.configBox.SeqLevelIdx0;
+
+            public bool SeqTier0 => this.configBox.SeqTier0;
+
+            public bool HighBitDepth => this.configBox.HighBitDepth;
+
+            public bool TwelveBit => this.configBox.TwelveBit;
+
+            public bool Monochrome => this.configBox.Monochrome;
+
+            public bool ChromaSubsamplingX => this.configBox.ChromaSubsamplingX;
+
+            public bool ChromaSubsamplingY => this.configBox.ChromaSubsamplingY;
+
+            public ChromaSamplePosition ChromaSamplePosition => this.configBox.ChromaSamplePosition;
         }
     }
 }

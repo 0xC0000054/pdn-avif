@@ -39,7 +39,7 @@ namespace AvifFileType.AvifContainer
                     itemCount = reader.ReadUInt32();
                     if (itemCount > int.MaxValue)
                     {
-                        throw new FormatException($"Cannot read a container box with more than { int.MaxValue } items.");
+                        ExceptionUtil.ThrowFormatException($"Cannot read a container box with more than { int.MaxValue } items.");
                     }
                     break;
                 default:

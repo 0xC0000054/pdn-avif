@@ -10,7 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using System;
 using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
@@ -58,7 +57,7 @@ namespace AvifFileType.AvifContainer
 
             if (markerAndVersion != AV1CMarkerAndVersion)
             {
-                throw new FormatException("Invalid AV1C box marker.");
+                ExceptionUtil.ThrowFormatException("Invalid AV1C box marker.");
             }
 
             byte seqProfileAndSeqLevelIdx0 = reader.ReadByte();

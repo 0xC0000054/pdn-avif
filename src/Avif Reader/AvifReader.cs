@@ -336,7 +336,7 @@ namespace AvifFileType
 
             if (hasUnsupportedProperties)
             {
-                throw new FormatException($"The { imageName } image has essential item properties that are not supported.");
+                ExceptionUtil.ThrowFormatException($"The { imageName } image has essential item properties that are not supported.");
             }
         }
 

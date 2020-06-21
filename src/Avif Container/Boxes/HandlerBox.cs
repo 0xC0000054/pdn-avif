@@ -10,7 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using System;
 using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
@@ -32,7 +31,7 @@ namespace AvifFileType.AvifContainer
         {
             if (this.Version != 0)
             {
-                throw new FormatException($"HandlerBox version must be 0, actual value: { this.Version }");
+                ExceptionUtil.ThrowFormatException($"HandlerBox version must be 0, actual value: { this.Version }");
             }
 
             this.preDefined = reader.ReadUInt32();
@@ -40,7 +39,7 @@ namespace AvifFileType.AvifContainer
 
             if (this.handlerType != HandlerTypePICT)
             {
-                throw new FormatException($"The handler type must be 'pict', actual value: { this.handlerType }");
+                ExceptionUtil.ThrowFormatException($"The handler type must be 'pict', actual value: { this.handlerType }");
             }
 
             this.reserved1 = reader.ReadUInt32();

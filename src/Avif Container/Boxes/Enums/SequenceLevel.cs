@@ -21,6 +21,8 @@ namespace AvifFileType.AvifContainer
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class SequenceLevel : StronglyTypedEnumeration<byte>, IEquatable<SequenceLevel>
     {
+        // These values are from the Annex A.3 table: https://aomediacodec.github.io/av1-spec/av1-spec.pdf
+
         public static readonly SequenceLevel TwoPointZero = new SequenceLevel(0, "2.0");
         public static readonly SequenceLevel TwoPointOne = new SequenceLevel(1, "2.1");
         public static readonly SequenceLevel TwoPointTwo = new SequenceLevel(2, "2.2");
@@ -74,6 +76,8 @@ namespace AvifFileType.AvifContainer
             }
             else
             {
+                // From AV1 specification, https://aomediacodec.github.io/av1-spec/av1-spec.pdf:
+                // "The level uses a X.Y format. X is equal to 2 + (seq_level_idx >> 2). Y is given by (seq_level_idx & 3)."
                 int majorVersion = 2 + (value >> 2);
                 int minorVersion = value & 3;
 

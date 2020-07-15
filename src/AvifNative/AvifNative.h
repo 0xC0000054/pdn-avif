@@ -71,28 +71,12 @@ extern "C" {
         int32_t maxThreads;
     };
 
-    enum class ColorInformationFormat
-    {
-        IccProfile = 0,
-        Nclx
-    };
-
     struct CICPColorData
     {
         CICPColorPrimaries colorPrimaries;
         CICPTransferCharacteristics transferCharacteristics;
         CICPMatrixCoefficients matrixCoefficients;
         bool fullRange;
-    };
-
-    struct ColorConversionInfo
-    {
-        uint8_t* iccProfile;
-        size_t iccProfileSize;
-
-        CICPColorData cicpColorData;
-
-        ColorInformationFormat format;
     };
 
     struct DecodeInfo

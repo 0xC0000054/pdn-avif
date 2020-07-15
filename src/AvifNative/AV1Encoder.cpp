@@ -43,9 +43,6 @@
 #include "aom/aom_encoder.h"
 #include <array>
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 namespace
 {
     struct AvifEncoderOptions

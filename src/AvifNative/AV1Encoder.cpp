@@ -41,6 +41,7 @@
 #include "Memory.h"
 #include "aom/aomcx.h"
 #include "aom/aom_encoder.h"
+#include <array>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -57,9 +58,7 @@ namespace
         AvifEncoderOptions(const EncoderOptions* options)
         {
             threadCount = ClampThreadCount(options->maxThreads);
-            // Map the quality value to the range used by AOM
-            double value = (static_cast<double>(options->quality) * 63.0) / 100.0;
-            quality = 63 - static_cast<int>(value + 0.5);
+            quality = ConvertQualityToAOMRange(options->quality);
             usage = AOM_USAGE_GOOD_QUALITY;
 
             switch (options->compressionMode)
@@ -95,6 +94,41 @@ namespace
             }
 
             return maxThreads;
+        }
+
+        static constexpr std::array<int, 101> BuildAOMQualityLookupTable()
+        {
+            std::array<int, 101> table = {};
+
+            for (size_t i = 0; i < table.size(); ++i)
+            {
+                // Map our quality settings to the range used by AOM
+                //
+                // We use a quality value range where 0 is the lowest and 100 is the highest
+                // AOM uses a quality value range where 63 is the lowest and 0 is the highest
+                double value = (static_cast<double>(i) * 63.0) / 100.0;
+
+                table[i] = 63 - static_cast<int>(value + 0.5);
+            }
+
+            return table;
+        }
+
+        static int ConvertQualityToAOMRange(int32_t quality)
+        {
+            // Clamp the quality value to the lookup table range
+            if (quality < 0)
+            {
+                quality = 0;
+            }
+            else if (quality > 100)
+            {
+                quality = 100;
+            }
+
+            static constexpr std::array<int, 101> qualityTable = BuildAOMQualityLookupTable();
+
+            return qualityTable[quality];
         }
     };
 

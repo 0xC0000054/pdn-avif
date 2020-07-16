@@ -10,11 +10,16 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System;
+
 namespace AvifFileType.AvifContainer
 {
-    internal abstract class StronglyTypedEnumeration<T> where T : struct
+    internal abstract class StronglyTypedEnumeration<TEnum, TValue> :
+        IEquatable<StronglyTypedEnumeration<TEnum, TValue>>
+        where TEnum : StronglyTypedEnumeration<TEnum, TValue>
+        where TValue : struct, IEquatable<TValue>
     {
-        protected StronglyTypedEnumeration(T value, string name)
+        protected StronglyTypedEnumeration(TValue value, string name)
         {
             this.Value = value;
             this.Name = name;
@@ -22,15 +27,51 @@ namespace AvifFileType.AvifContainer
 
         public string Name { get; }
 
-        public T Value { get; }
+        public TValue Value { get; }
 
-        public abstract override bool Equals(object obj);
+        public override bool Equals(object obj)
+        {
+            return obj is StronglyTypedEnumeration<TEnum, TValue> other && Equals(other);
+        }
 
-        public abstract override int GetHashCode();
+        public bool Equals(StronglyTypedEnumeration<TEnum, TValue> other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            return this.Value.Equals(other.Value);
+        }
+
+        public override int GetHashCode()
+        {
+            return -244751520 + this.Value.GetHashCode();
+        }
 
         public override string ToString()
         {
             return this.Name;
+        }
+
+        public static bool operator ==(StronglyTypedEnumeration<TEnum, TValue> left, StronglyTypedEnumeration<TEnum, TValue> right)
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            if (left is null || right is null)
+            {
+                return false;
+            }
+
+            return left.Value.Equals(right.Value);
+        }
+
+        public static bool operator !=(StronglyTypedEnumeration<TEnum, TValue> left, StronglyTypedEnumeration<TEnum, TValue> right)
+        {
+            return !(left == right);
         }
     }
 }

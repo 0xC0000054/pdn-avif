@@ -19,7 +19,8 @@ using System.Reflection;
 namespace AvifFileType.AvifContainer
 {
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
-    internal sealed class SequenceLevel : StronglyTypedEnumeration<byte>, IEquatable<SequenceLevel>
+    internal sealed class SequenceLevel
+        : StronglyTypedEnumeration<SequenceLevel, byte>, IEquatable<SequenceLevel>
     {
         // These values are from the Annex A.3 table: https://aomediacodec.github.io/av1-spec/av1-spec.pdf
 

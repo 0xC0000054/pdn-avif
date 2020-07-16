@@ -17,7 +17,8 @@ using System.Diagnostics;
 namespace AvifFileType.AvifContainer
 {
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
-    internal sealed class SequenceProfile : StronglyTypedEnumeration<byte>, IEquatable<SequenceProfile>
+    internal sealed class SequenceProfile
+        : StronglyTypedEnumeration<SequenceProfile, byte>, IEquatable<SequenceProfile>
     {
         /// <summary>
         /// Main profile

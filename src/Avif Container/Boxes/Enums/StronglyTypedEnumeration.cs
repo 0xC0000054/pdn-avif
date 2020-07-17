@@ -51,7 +51,7 @@ namespace AvifFileType.AvifContainer
 
         public override int GetHashCode()
         {
-            return -244751520 + this.Value.GetHashCode();
+            return this.Value.GetHashCode();
         }
 
         public override string ToString()

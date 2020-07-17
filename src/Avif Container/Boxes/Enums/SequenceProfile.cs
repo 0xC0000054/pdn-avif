@@ -87,14 +87,7 @@ namespace AvifFileType.AvifContainer
 
         public override int GetHashCode()
         {
-            int hashCode = -159790080;
-
-            unchecked
-            {
-                hashCode = (hashCode * -1521134295) + this.Value.GetHashCode();
-            }
-
-            return hashCode;
+            return this.Value.GetHashCode();
         }
 
         public static bool operator ==(SequenceProfile left, SequenceProfile right)

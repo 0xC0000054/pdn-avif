@@ -21,6 +21,11 @@ namespace AvifFileType.AvifContainer
     {
         protected StronglyTypedEnumeration(TValue value, string name)
         {
+            if (name is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(name));
+            }
+
             this.Value = value;
             this.Name = name;
         }

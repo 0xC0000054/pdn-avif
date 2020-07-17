@@ -143,7 +143,7 @@ namespace AvifFileType
             CompressionMode compressionMode = (CompressionMode)token.GetProperty(PropertyNames.CompressionMode).Value;
             YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling).Value;
 
-            AvifFile.Save(input, output, quality, compressionMode, chromaSubsampling, maxEncoderThreadsOverride, scratchSurface, progressCallback);
+            AvifFile.Save(input, output, quality, compressionMode, chromaSubsampling, this.maxEncoderThreadsOverride, scratchSurface, progressCallback);
         }
 
         /// <summary>

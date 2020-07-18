@@ -13,7 +13,6 @@
 #pragma once
 
 #include "AvifNative.h"
-#include <stdint.h>
 
 struct YUVCoefficiants
 {

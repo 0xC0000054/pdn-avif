@@ -259,7 +259,7 @@ namespace
                             sumU += yuvBlock[blockX][blockY].u;
                             sumV += yuvBlock[blockX][blockY].v;
                         }
-                        float totalSamples = (float)blockWidth;
+                        float totalSamples = static_cast<float>(blockWidth);
                         float avgU = sumU / totalSamples;
                         float avgV = sumV / totalSamples;
 

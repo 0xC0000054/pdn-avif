@@ -95,13 +95,6 @@ namespace AvifFileType
                 matrixCoefficients = CICPMatrixCoefficients.BT709,
                 fullRange = true
             };
-            ColorInformationBox colorInformationBox = null;
-
-            byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
-            if (iccProfileBytes != null && iccProfileBytes.Length > 0)
-            {
-                colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
-            }
 
             if (quality == 100 && !grayscale)
             {
@@ -137,16 +130,6 @@ namespace AvifFileType
                         colorConversionInfo = colorData.Value;
                     }
                 }
-            }
-
-            // Only add a NCLX color information box if the image
-            // does not have an existing ICC color profile.
-            if (colorInformationBox == null)
-            {
-                colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
-                                                               colorConversionInfo.transferCharacteristics,
-                                                               colorConversionInfo.matrixCoefficients,
-                                                               colorConversionInfo.fullRange);
             }
 
             CompressedAV1Image color = null;
@@ -187,6 +170,22 @@ namespace AvifFileType
                                                            progressTotal,
                                                            colorConversionInfo,
                                                            out color);
+                }
+
+
+                ColorInformationBox colorInformationBox;
+
+                byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
+                if (iccProfileBytes != null && iccProfileBytes.Length > 0)
+                {
+                    colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
+                }
+                else
+                {
+                    colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
+                                                                   colorConversionInfo.transferCharacteristics,
+                                                                   colorConversionInfo.matrixCoefficients,
+                                                                   colorConversionInfo.fullRange);
                 }
 
                 AvifWriter writer = new AvifWriter(color,

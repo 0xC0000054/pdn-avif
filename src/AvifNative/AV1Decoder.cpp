@@ -53,6 +53,26 @@ namespace
             return DecoderStatus::Ok;
         }
     }
+
+    DecoderStatus InitializeDecoder(aom_codec_ctx_t* codec)
+    {
+        aom_codec_iface_t* iface = aom_codec_av1_dx();
+
+        const aom_codec_err_t error = aom_codec_dec_init(codec, iface, nullptr, 0);
+        if (error != AOM_CODEC_OK)
+        {
+            if (error == AOM_CODEC_MEM_ERROR)
+            {
+                return DecoderStatus::OutOfMemory;
+            }
+            else
+            {
+                return DecoderStatus::CodecInitFailed;
+            }
+        }
+
+        return DecoderStatus::Ok;
+    }
 }
 
 DecoderStatus DecodeColorImage(
@@ -69,44 +89,35 @@ DecoderStatus DecodeColorImage(
 
     aom_codec_ctx_t codec;
 
-    aom_codec_iface_t* iface = aom_codec_av1_dx();
-
-    const aom_codec_err_t error = aom_codec_dec_init(&codec, iface, nullptr, 0);
-    if (error != AOM_CODEC_OK)
-    {
-        if (error == AOM_CODEC_MEM_ERROR)
-        {
-            return DecoderStatus::OutOfMemory;
-        }
-        else
-        {
-            return DecoderStatus::CodecInitFailed;
-        }
-    }
-    // The image is owned by the decoder.
-
-    aom_image_t* aomImage = nullptr;
-
-    DecoderStatus status = DecodeAV1Image(&codec,
-                                          compressedColorImage,
-                                          compressedColorImageSize,
-                                          &aomImage);
+    DecoderStatus status = InitializeDecoder(&codec);
 
     if (status == DecoderStatus::Ok)
     {
-        // The expected width/height will be zero for the first tile in an image grid.
-        if (decodeInfo->expectedWidth != 0 && aomImage->d_w != decodeInfo->expectedWidth ||
-            decodeInfo->expectedHeight != 0 && aomImage->d_h != decodeInfo->expectedHeight)
-        {
-            status = DecoderStatus::ColorSizeMismatch;
-        }
-        else
-        {
-            status = ConvertColorImage(aomImage, colorInfo, decodeInfo, decodedImage);
-        }
-    }
+        // The image is owned by the decoder.
 
-    aom_codec_destroy(&codec);
+        aom_image_t* aomImage = nullptr;
+
+        status = DecodeAV1Image(&codec,
+                                compressedColorImage,
+                                compressedColorImageSize,
+                                &aomImage);
+
+        if (status == DecoderStatus::Ok)
+        {
+            // The expected width/height will be zero for the first tile in an image grid.
+            if (decodeInfo->expectedWidth != 0 && aomImage->d_w != decodeInfo->expectedWidth ||
+                decodeInfo->expectedHeight != 0 && aomImage->d_h != decodeInfo->expectedHeight)
+            {
+                status = DecoderStatus::ColorSizeMismatch;
+            }
+            else
+            {
+                status = ConvertColorImage(aomImage, colorInfo, decodeInfo, decodedImage);
+            }
+        }
+
+        aom_codec_destroy(&codec);
+    }
 
     return status;
 }
@@ -124,44 +135,35 @@ DecoderStatus DecodeAlphaImage(
 
     aom_codec_ctx_t codec;
 
-    aom_codec_iface_t* iface = aom_codec_av1_dx();
-
-    const aom_codec_err_t error = aom_codec_dec_init(&codec, iface, nullptr, 0);
-    if (error != AOM_CODEC_OK)
-    {
-        if (error == AOM_CODEC_MEM_ERROR)
-        {
-            return DecoderStatus::OutOfMemory;
-        }
-        else
-        {
-            return DecoderStatus::CodecInitFailed;
-        }
-    }
-    // The image is owned by the decoder.
-
-    aom_image_t* aomImage = nullptr;
-
-    DecoderStatus status = DecodeAV1Image(&codec,
-        compressedAlphaImage,
-        compressedAlphaImageSize,
-        &aomImage);
+    DecoderStatus status = InitializeDecoder(&codec);
 
     if (status == DecoderStatus::Ok)
     {
-        // The expected width/height will be zero for the first tile in an image grid.
-        if (decodeInfo->expectedWidth != 0 && aomImage->d_w != decodeInfo->expectedWidth ||
-            decodeInfo->expectedHeight != 0 && aomImage->d_h != decodeInfo->expectedHeight)
-        {
-            status = DecoderStatus::AlphaSizeMismatch;
-        }
-        else
-        {
-            status = ConvertAlphaImage(aomImage, decodeInfo, outputImage);
-        }
-    }
+        // The image is owned by the decoder.
 
-    aom_codec_destroy(&codec);
+        aom_image_t* aomImage = nullptr;
+
+        status = DecodeAV1Image(&codec,
+                                compressedAlphaImage,
+                                compressedAlphaImageSize,
+                                &aomImage);
+
+        if (status == DecoderStatus::Ok)
+        {
+            // The expected width/height will be zero for the first tile in an image grid.
+            if (decodeInfo->expectedWidth != 0 && aomImage->d_w != decodeInfo->expectedWidth ||
+                decodeInfo->expectedHeight != 0 && aomImage->d_h != decodeInfo->expectedHeight)
+            {
+                status = DecoderStatus::AlphaSizeMismatch;
+            }
+            else
+            {
+                status = ConvertAlphaImage(aomImage, decodeInfo, outputImage);
+            }
+        }
+
+        aom_codec_destroy(&codec);
+    }
 
     return status;
 }

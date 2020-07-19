@@ -42,10 +42,10 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowFormatException($"The compatible brand size must be a multiple of 4, actual value: { compatibleBrandSize }");
             }
 
-            int compatableBrandCount = (int)(compatibleBrandSize / 4);
-            List<FourCC> brands = new List<FourCC>(compatableBrandCount);
+            long compatableBrandCount = compatibleBrandSize / 4;
+            List<FourCC> brands = new List<FourCC>(checked((int)compatableBrandCount));
 
-            for (int i = 0; i < compatableBrandCount; i++)
+            for (int i = 0; i < brands.Capacity; i++)
             {
                 brands.Add(reader.ReadFourCC());
             }

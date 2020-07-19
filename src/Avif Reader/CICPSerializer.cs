@@ -31,7 +31,7 @@ namespace AvifFileType
             }
 
             // "Nclx" was the old item signature.
-            if (!value.StartsWith("<CICP", StringComparison.Ordinal) ||
+            if (!value.StartsWith("<CICP", StringComparison.Ordinal) &&
                 !value.StartsWith("<Nclx", StringComparison.Ordinal))
             {
                 return null;

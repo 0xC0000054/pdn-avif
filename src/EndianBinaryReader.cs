@@ -462,7 +462,7 @@ namespace AvifFileType
 
             VerifyNotDisposed();
 
-            int length = GetStringLength(endOffset);
+            int length = GetStringLength(endOffset, out bool hasNullTerminator);
 
             if (length == 0)
             {
@@ -474,7 +474,7 @@ namespace AvifFileType
             string value = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
 
             this.readOffset += length;
-            if (this.Position < this.Length)
+            if (hasNullTerminator)
             {
                 this.Position++; // Skip the null-terminator if one was found at the end of the string.
             }
@@ -495,28 +495,40 @@ namespace AvifFileType
         /// Gets the length of the string.
         /// </summary>
         /// <param name="endOffset">The offset that marks the end of the null-terminator search area.</param>
+        /// <param name="hasNullTerminator"><c>true</c> if the string has a null terminator; otherwise, <c>false</c>.</param>
         /// <returns>The string.</returns>
         /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
         /// <exception cref="IOException">The string is longer than <see cref="int.MaxValue"/>.</exception>
-        private int GetStringLength(long endOffset)
+        private int GetStringLength(long endOffset, out bool hasNullTerminator)
         {
-            int maxLength = int.MaxValue;
+            hasNullTerminator = false;
 
             long oldPosition = this.Position;
 
-            while (this.Position < endOffset && ReadByteInternal() != 0 && maxLength > 0)
+            while (this.Position < endOffset)
             {
-                maxLength--;
+                if (ReadByteInternal() == 0)
+                {
+                    hasNullTerminator = true;
+                    break;
+                }
+            }
+
+            long length = this.Position - oldPosition;
+            if (hasNullTerminator)
+            {
+                // Subtract the null terminator from the string length.
+                length--;
             }
 
             this.Position = oldPosition;
 
-            if (maxLength == 0)
+            if (length > int.MaxValue)
             {
                 throw new IOException($"The string is longer than { int.MaxValue }.");
             }
 
-            return int.MaxValue - maxLength;
+            return (int)length;
         }
 
         /// <summary>

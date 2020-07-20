@@ -99,12 +99,7 @@ namespace AvifFileType.Exif
 
         public override bool Equals(object obj)
         {
-            if (obj is MetadataEntry entry)
-            {
-                return Equals(entry);
-            }
-
-            return false;
+            return obj is MetadataEntry entry && Equals(entry);
         }
 
         public bool Equals(MetadataEntry other)

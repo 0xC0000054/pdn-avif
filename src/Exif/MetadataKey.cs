@@ -40,12 +40,7 @@ namespace AvifFileType.Exif
 
         public override bool Equals(object obj)
         {
-            if (obj is MetadataKey other)
-            {
-                return Equals(other);
-            }
-
-            return false;
+            return obj is MetadataKey other && Equals(other);
         }
 
         public bool Equals(MetadataKey other)

@@ -288,25 +288,6 @@ namespace AvifFileType
             return null;
         }
 
-        public IItemProperty TryGetItemProperty(uint itemId)
-        {
-            if (itemId == 0)
-            {
-                return null;
-            }
-
-            IReadOnlyList<IItemProperty> properties = this.metaBox.ItemProperties.Properties;
-
-            uint propertyIndex = itemId - 1;
-
-            if (propertyIndex >= (uint)properties.Count)
-            {
-                return null;
-            }
-
-            return properties[(int)propertyIndex];
-        }
-
         public ItemLocationEntry TryGetXmpLocation(uint itemId)
         {
             foreach (IItemReferenceEntry item in GetMatchingReferences(itemId, ReferenceTypes.ContentDescription))
@@ -483,6 +464,25 @@ namespace AvifFileType
             }
 
             return null;
+        }
+
+        private IItemProperty TryGetItemProperty(uint itemId)
+        {
+            if (itemId == 0)
+            {
+                return null;
+            }
+
+            IReadOnlyList<IItemProperty> properties = this.metaBox.ItemProperties.Properties;
+
+            uint propertyIndex = itemId - 1;
+
+            if (propertyIndex >= (uint)properties.Count)
+            {
+                return null;
+            }
+
+            return properties[(int)propertyIndex];
         }
 
         private sealed class AvifParserDebugView

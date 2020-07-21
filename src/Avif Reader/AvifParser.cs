@@ -466,23 +466,16 @@ namespace AvifFileType
             return null;
         }
 
-        private IItemProperty TryGetItemProperty(uint itemId)
+        private IItemProperty TryGetItemProperty(uint propertyIndex)
         {
-            if (itemId == 0)
-            {
-                return null;
-            }
-
             IReadOnlyList<IItemProperty> properties = this.metaBox.ItemProperties.Properties;
 
-            uint propertyIndex = itemId - 1;
-
-            if (propertyIndex >= (uint)properties.Count)
+            if (propertyIndex == 0 || propertyIndex > (uint)properties.Count)
             {
                 return null;
             }
 
-            return properties[(int)propertyIndex];
+            return properties[(int)(propertyIndex - 1)];
         }
 
         private sealed class AvifParserDebugView

@@ -155,7 +155,7 @@ namespace AvifFileType.AvifContainer
 
         private void VerifyNotDisposed()
         {
-            if (this.stream == null)
+            if (this.stream is null)
             {
                 ExceptionUtil.ThrowObjectDisposedException(nameof(BigEndianBinaryWriter));
             }

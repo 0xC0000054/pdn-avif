@@ -30,7 +30,7 @@ namespace AvifFileType.Exif
         /// <exception cref="ArgumentNullException"><paramref name="exifBytes"/> is null.</exception>
         internal static ExifValueCollection Parse(byte[] exifBytes)
         {
-            if (exifBytes == null)
+            if (exifBytes is null)
             {
                 throw new ArgumentNullException(nameof(exifBytes));
             }
@@ -117,7 +117,7 @@ namespace AvifFileType.Exif
                 if (entry.OffsetFieldContainsValue)
                 {
                     propertyData = entry.GetValueBytesFromOffset();
-                    if (propertyData == null)
+                    if (propertyData is null)
                     {
                         continue;
                     }

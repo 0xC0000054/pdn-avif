@@ -156,7 +156,7 @@ namespace AvifFileType
         /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
         public int Read(byte[] bytes, int offset, int count)
         {
-            if (bytes == null)
+            if (bytes is null)
             {
                 throw new ArgumentNullException(nameof(bytes));
             }
@@ -584,7 +584,7 @@ namespace AvifFileType
         /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
         private void VerifyNotDisposed()
         {
-            if (this.stream == null)
+            if (this.stream is null)
             {
                 throw new ObjectDisposedException(nameof(EndianBinaryReader));
             }

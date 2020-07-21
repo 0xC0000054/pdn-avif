@@ -303,7 +303,7 @@ namespace AvifFileType
 
             IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
 
-            if (entry == null)
+            if (entry is null)
             {
                 ExceptionUtil.ThrowFormatException($"The { imageName } image does not exist.");
             }
@@ -313,7 +313,7 @@ namespace AvifFileType
             }
             else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
             {
-                if (gridInfo == null)
+                if (gridInfo is null)
                 {
                     ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
                 }
@@ -397,7 +397,7 @@ namespace AvifFileType
         {
             IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(this.primaryItemId);
 
-            if (entry == null)
+            if (entry is null)
             {
                 ExceptionUtil.ThrowFormatException("The primary item does not exist.");
             }
@@ -428,7 +428,7 @@ namespace AvifFileType
             {
                 IItemProperty property = this.parser.TryGetAssociatedItemProperty(itemId, BoxTypes.ImageSpatialExtents);
 
-                if (property == null)
+                if (property is null)
                 {
                     ExceptionUtil.ThrowFormatException($"The { imageName } image size property was not found.");
                 }
@@ -460,7 +460,7 @@ namespace AvifFileType
         {
             IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
 
-            if (entry == null)
+            if (entry is null)
             {
                 ExceptionUtil.ThrowFormatException($"The { imageName } image does not exist.");
             }
@@ -473,7 +473,7 @@ namespace AvifFileType
                         ExceptionUtil.ThrowFormatException("Nested image grids are not supported.");
                     }
 
-                    if (gridInfo == null)
+                    if (gridInfo is null)
                     {
                         ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
                     }

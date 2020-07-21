@@ -123,7 +123,7 @@ namespace AvifFileType.AvifContainer
         /// <param name="parent">The parent.</param>
         public void SetParent(ItemReferenceBox parent)
         {
-            if (parent == null)
+            if (parent is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(parent));
             }

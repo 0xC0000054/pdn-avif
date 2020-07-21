@@ -160,7 +160,7 @@ namespace AvifFileType
             {
                 ItemDataBox dataBox = this.metaBox.ItemData;
 
-                if (dataBox == null)
+                if (dataBox is null)
                 {
                     return null;
                 }
@@ -430,27 +430,27 @@ namespace AvifFileType
 
         private void CheckForRequiredBoxes()
         {
-            if (this.fileTypeBox == null)
+            if (this.fileTypeBox is null)
             {
                 ExceptionUtil.ThrowFormatException("The file does not contain a FileType box.");
             }
 
-            if (this.metaBox == null)
+            if (this.metaBox is null)
             {
                 ExceptionUtil.ThrowFormatException("The file does not contain a Meta box.");
             }
 
-            if (this.metaBox.ItemInfo == null)
+            if (this.metaBox.ItemInfo is null)
             {
                 ExceptionUtil.ThrowFormatException("The file does not have an ItemInfo box.");
             }
 
-            if (this.metaBox.ItemLocations == null)
+            if (this.metaBox.ItemLocations is null)
             {
                 ExceptionUtil.ThrowFormatException("The file does not have an ItemLocations box.");
             }
 
-            if (this.metaBox.ItemProperties == null)
+            if (this.metaBox.ItemProperties is null)
             {
                 ExceptionUtil.ThrowFormatException("The file does not have an ItemProperties box.");
             }

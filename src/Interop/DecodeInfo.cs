@@ -23,6 +23,6 @@ namespace AvifFileType.Interop
         public uint tileRowIndex;
         public CICPColorData firstTileColorData;
         [MarshalAs(UnmanagedType.U1)]
-        public bool usingTileColorData;
+        public bool usingFirstTileColorData;
     }
 }

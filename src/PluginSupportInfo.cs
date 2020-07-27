@@ -23,15 +23,7 @@ namespace AvifFileType
 
         public string Author => "null54";
 
-        public string Copyright
-        {
-            get
-            {
-                object[] attributes = typeof(PluginSupportInfo).Assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
-
-                return ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
-            }
-        }
+        public string Copyright => typeof(PluginSupportInfo).Assembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
 
         public Version Version => typeof(PluginSupportInfo).Assembly.GetName().Version;
 

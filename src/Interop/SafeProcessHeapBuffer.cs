@@ -53,13 +53,13 @@ namespace AvifFileType.Interop
         [System.Security.SuppressUnmanagedCodeSecurity]
         private static class UnsafeNativeMethods
         {
-            [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+            [DllImport("kernel32.dll", ExactSpelling = true)]
             internal static extern IntPtr GetProcessHeap();
 
             [DllImport("kernel32.dll", ExactSpelling = true)]
             internal static extern SafeProcessHeapBuffer HeapAlloc(IntPtr hHeap, uint dwFlags, UIntPtr dwSize);
 
-            [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+            [DllImport("kernel32.dll", ExactSpelling = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
             internal static extern bool HeapFree(IntPtr hHeap, uint dwFlags, IntPtr lpMem);
         }

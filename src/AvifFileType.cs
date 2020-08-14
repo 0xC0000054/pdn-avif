@@ -12,6 +12,7 @@
 
 using AvifFileType.Properties;
 using PaintDotNet;
+using PaintDotNet.Avif;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
@@ -24,6 +25,7 @@ namespace AvifFileType
         : PropertyBasedFileType
     {
         private readonly int? maxEncoderThreadsOverride;
+        private readonly IAvifStringResourceManager strings;
 
         // Names of the properties
         private enum PropertyNames
@@ -37,16 +39,34 @@ namespace AvifFileType
         /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
         /// </summary>
         public AvifFileTypePlugin()
-            : this(null)
+            : this(null, null)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
+        /// </summary>
+        /// <param name="host">The host.</param>
+        public AvifFileTypePlugin(IFileTypeHost host)
+            : this(host, null)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
         /// </summary>
         /// <param name="maxEncoderThreads">The maximum number of encoder threads.</param>
         public AvifFileTypePlugin(int? maxEncoderThreads)
+            : this(null, maxEncoderThreads)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
+        /// </summary>
+        /// <param name="host">The host.</param>
+        /// <param name="maxEncoderThreads">The maximum number of encoder threads.</param>
+        public AvifFileTypePlugin(IFileTypeHost host, int? maxEncoderThreads)
             : base(
                 "AV1 (AVIF)",
                 new FileTypeOptions
@@ -57,6 +77,16 @@ namespace AvifFileType
                     SupportsLayers = false
                 })
         {
+            IAvifFileTypeStrings avifFileTypeStrings = host?.Services.GetService<IAvifFileTypeStrings>();
+
+            if (avifFileTypeStrings != null)
+            {
+                this.strings = new PdnLocalizedStringResourceManager(avifFileTypeStrings);
+            }
+            else
+            {
+                this.strings = new BuiltinStringResourceManager();
+            }
             this.maxEncoderThreadsOverride = maxEncoderThreads;
         }
 
@@ -117,19 +147,19 @@ namespace AvifFileType
 
             PropertyControlInfo qualityPCI = configUI.FindControlForPropertyName(PropertyNames.Quality);
             qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            qualityPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = Resources.Quality_DisplayName;
+            qualityPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("Quality_DisplayName");
 
             PropertyControlInfo compressionModePCI = configUI.FindControlForPropertyName(PropertyNames.CompressionMode);
-            compressionModePCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = Resources.CompressionMode_DisplayName;
-            compressionModePCI.SetValueDisplayName(CompressionMode.Fast, Resources.CompressionMode_Fast_DisplayName);
-            compressionModePCI.SetValueDisplayName(CompressionMode.Normal, Resources.CompressionMode_Normal_DisplayName);
-            compressionModePCI.SetValueDisplayName(CompressionMode.Slow, Resources.CompressionMode_Slow_DisplayName);
+            compressionModePCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("CompressionMode_DisplayName");
+            compressionModePCI.SetValueDisplayName(CompressionMode.Fast, this.strings.GetString("CompressionMode_Fast_DisplayName"));
+            compressionModePCI.SetValueDisplayName(CompressionMode.Normal, this.strings.GetString("CompressionMode_Normal_DisplayName"));
+            compressionModePCI.SetValueDisplayName(CompressionMode.Slow, this.strings.GetString("CompressionMode_Slow_DisplayName"));
 
             PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling);
-            subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = Resources.ChromaSubsampling_DisplayName;
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling420, Resources.ChromaSubsampling_420_DisplayName);
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling422, Resources.ChromaSubsampling_422_DisplayName);
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling444, Resources.ChromaSubsampling_444_DisplayName);
+            subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ChromaSubsampling_DisplayName");
+            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling420, this.strings.GetString("ChromaSubsampling_420_DisplayName"));
+            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling422, this.strings.GetString("ChromaSubsampling_422_DisplayName"));
+            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling444, this.strings.GetString("ChromaSubsampling_444_DisplayName"));
 
             return configUI;
         }

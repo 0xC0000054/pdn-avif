@@ -496,7 +496,7 @@ namespace AvifFileType
         /// </summary>
         /// <param name="endOffset">The offset that marks the end of the null-terminator search area.</param>
         /// <param name="hasNullTerminator"><c>true</c> if the string has a null terminator; otherwise, <c>false</c>.</param>
-        /// <returns>The string.</returns>
+        /// <returns>The string length.</returns>
         /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
         /// <exception cref="IOException">The string is longer than <see cref="int.MaxValue"/>.</exception>
         private int GetStringLength(long endOffset, out bool hasNullTerminator)

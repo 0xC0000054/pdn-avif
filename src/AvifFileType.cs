@@ -58,7 +58,7 @@ namespace AvifFileType
         /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
         /// </summary>
         /// <param name="maxEncoderThreads">The maximum number of encoder threads.</param>
-        public AvifFileTypePlugin(int? maxEncoderThreads)
+        public AvifFileTypePlugin(int maxEncoderThreads)
             : this(null, maxEncoderThreads)
         {
         }

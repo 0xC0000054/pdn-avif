@@ -660,14 +660,7 @@ namespace AvifFileType
                 ExceptionUtil.ThrowFormatException("The alpha image item location was not found.");
             }
 
-            SafeProcessHeapBuffer alphaImage = ReadImageData(entry);
-
-            if (alphaImage is null)
-            {
-                ExceptionUtil.ThrowInvalidOperationException("The alpha image buffer is null.");
-            }
-
-            return alphaImage;
+            return ReadImageData(entry);
         }
 
         private SafeProcessHeapBuffer ReadColorImage(uint itemId)
@@ -679,14 +672,7 @@ namespace AvifFileType
                 ExceptionUtil.ThrowFormatException("The color image item location was not found.");
             }
 
-            SafeProcessHeapBuffer colorImage = ReadImageData(entry);
-
-            if (colorImage is null)
-            {
-                ExceptionUtil.ThrowInvalidOperationException("The color image buffer is null.");
-            }
-
-            return colorImage;
+            return ReadImageData(entry);
         }
 
         private SafeProcessHeapBuffer ReadImageData(ItemLocationEntry entry)

@@ -141,6 +141,12 @@
   <data name="CompressionMode_Slow_DisplayName" xml:space="preserve">
     <value>Slow</value>
   </data>
+  <data name="ForumLink_Description" xml:space="preserve">
+    <value>Forum Discussion</value>
+  </data>
+  <data name="ForumLink_DisplayName" xml:space="preserve">
+    <value>More Info</value>
+  </data>
   <data name="Quality_DisplayName" xml:space="preserve">
     <value>Quality</value>
   </data>

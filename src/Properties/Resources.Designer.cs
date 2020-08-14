@@ -133,6 +133,24 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Forum Discussion.
+        /// </summary>
+        internal static string ForumLink_Description {
+            get {
+                return ResourceManager.GetString("ForumLink_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to More Info.
+        /// </summary>
+        internal static string ForumLink_DisplayName {
+            get {
+                return ResourceManager.GetString("ForumLink_DisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Quality.
         /// </summary>
         internal static string Quality_DisplayName {

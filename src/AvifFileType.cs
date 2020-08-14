@@ -32,7 +32,9 @@ namespace AvifFileType
         {
             Quality,
             CompressionMode,
-            YUVChromaSubsampling
+            YUVChromaSubsampling,
+            ForumLink,
+            GitHubLink
         }
 
         /// <summary>
@@ -115,7 +117,9 @@ namespace AvifFileType
             {
                 new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
                 StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionMode, CompressionMode.Normal),
-                CreateChromaSubsampling()
+                CreateChromaSubsampling(),
+                new UriProperty(PropertyNames.ForumLink, new Uri("https://forums.getpaint.net/topic/116233-avif-filetype")),
+                new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif"))
             };
 
             return new PropertyCollection(props);
@@ -160,6 +164,14 @@ namespace AvifFileType
             subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling420, this.strings.GetString("ChromaSubsampling_420_DisplayName"));
             subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling422, this.strings.GetString("ChromaSubsampling_422_DisplayName"));
             subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling444, this.strings.GetString("ChromaSubsampling_444_DisplayName"));
+
+            PropertyControlInfo forumLinkPCI = configUI.FindControlForPropertyName(PropertyNames.ForumLink);
+            forumLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ForumLink_DisplayName");
+            forumLinkPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("ForumLink_Description");
+
+            PropertyControlInfo githubLinkPCI = configUI.FindControlForPropertyName(PropertyNames.GitHubLink);
+            githubLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
+            githubLinkPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = "GitHub"; // GitHub is a brand name that should not be localized.
 
             return configUI;
         }

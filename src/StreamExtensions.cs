@@ -50,12 +50,14 @@ namespace AvifFileType
             return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
         }
 
-        public static unsafe ulong ProperRead(this Stream stream, SafeBuffer buffer, ulong length)
+        public static unsafe ulong ProperRead(this Stream stream, SafeBuffer buffer)
         {
             if (buffer is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
             }
+
+            ulong length = buffer.ByteLength;
 
             if (length == 0)
             {
@@ -101,12 +103,14 @@ namespace AvifFileType
             return totalBytesRead;
         }
 
-        public static unsafe void Write(this Stream stream, SafeBuffer buffer, ulong length)
+        public static unsafe void Write(this Stream stream, SafeBuffer buffer)
         {
             if (buffer is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
             }
+
+            ulong length = buffer.ByteLength;
 
             if (length == 0)
             {

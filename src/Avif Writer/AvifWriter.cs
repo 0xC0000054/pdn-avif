@@ -67,9 +67,7 @@ namespace AvifFileType
 
                     if (item.Image != null)
                     {
-                        Interop.SafeAV1Image imageBuffer = item.Image.Data;
-
-                        writer.BaseStream.Write(imageBuffer, imageBuffer.ByteLength);
+                        writer.BaseStream.Write(item.Image.Data);
 
                         this.progressDone++;
                         this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));

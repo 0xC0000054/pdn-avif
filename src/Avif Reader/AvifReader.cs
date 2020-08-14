@@ -708,7 +708,7 @@ namespace AvifFileType
             SafeProcessHeapBuffer buffer = SafeProcessHeapBuffer.Create(length);
 
             this.stream.Position = (long)offset;
-            this.stream.ProperRead(buffer, length);
+            this.stream.ProperRead(buffer);
 
             return buffer;
         }

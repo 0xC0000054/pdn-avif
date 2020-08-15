@@ -12,7 +12,6 @@
 
 using AvifFileType.Properties;
 using PaintDotNet;
-using PaintDotNet.Avif;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
@@ -79,13 +78,15 @@ namespace AvifFileType
                     SupportsLayers = false
                 })
         {
-            IAvifFileTypeStrings avifFileTypeStrings = host?.Services.GetService<IAvifFileTypeStrings>();
+#if PDN_BUNDLED
+            PaintDotNet.Avif.IAvifFileTypeStrings avifFileTypeStrings = host?.Services.GetService<PaintDotNet.Avif.IAvifFileTypeStrings>();
 
             if (avifFileTypeStrings != null)
             {
                 this.strings = new PdnLocalizedStringResourceManager(avifFileTypeStrings);
             }
             else
+#endif
             {
                 this.strings = new BuiltinStringResourceManager();
             }

@@ -10,6 +10,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+#if PDN_BUNDLED
 using PaintDotNet.Avif;
 using System;
 using System.Linq;
@@ -52,3 +53,4 @@ namespace AvifFileType
         }
     }
 }
+#endif

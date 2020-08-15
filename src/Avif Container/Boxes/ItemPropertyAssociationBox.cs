@@ -183,7 +183,7 @@ namespace AvifFileType.AvifContainer
                 size += (ulong)this.entries.Count * sizeof(ushort);
             }
 
-            size += sizeof(byte); // Association count
+            size += (ulong)this.entries.Count * sizeof(byte); // Association count
 
             foreach (List<ItemPropertyAssociationEntry> value in this.entries.Values)
             {

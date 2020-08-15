@@ -52,6 +52,8 @@ namespace AvifFileType.AvifContainer
 
                 byte associationCount = reader.ReadByte();
 
+                this.entries.Add(itemID, new List<ItemPropertyAssociationEntry>(associationCount));
+
                 for (int j = 0; j < associationCount; j++)
                 {
                     bool essential;

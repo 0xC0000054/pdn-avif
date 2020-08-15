@@ -174,26 +174,26 @@ namespace AvifFileType.AvifContainer
         {
             ulong size = base.GetTotalBoxSize() + sizeof(uint);
 
-            if (this.LargeItemId)
+            foreach (KeyValuePair<uint, List<ItemPropertyAssociationEntry>> entry in this.entries)
             {
-                size += (ulong)this.entries.Count * sizeof(uint);
-            }
-            else
-            {
-                size += (ulong)this.entries.Count * sizeof(ushort);
-            }
-
-            size += (ulong)this.entries.Count * sizeof(byte); // Association count
-
-            foreach (List<ItemPropertyAssociationEntry> value in this.entries.Values)
-            {
-                if (this.LargePropertyIndex)
+                if (this.LargeItemId)
                 {
-                    size += (ulong)value.Count * sizeof(ushort);
+                    size += sizeof(uint);
                 }
                 else
                 {
-                    size += (ulong)value.Count * sizeof(byte);
+                    size += sizeof(ushort);
+                }
+
+                size += sizeof(byte); // Association count
+
+                if (this.LargePropertyIndex)
+                {
+                    size += (ulong)entry.Value.Count * sizeof(ushort);
+                }
+                else
+                {
+                    size += (ulong)entry.Value.Count * sizeof(byte);
                 }
             }
 

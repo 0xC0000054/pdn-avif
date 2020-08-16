@@ -131,8 +131,6 @@
     <Compile Include="AvifFileTypeFactory.cs" />
     <Compile Include="AvifFileType.cs" />
     <Compile Include="CompressionMode.cs" />
-    <Compile Include="EndianBinaryReader.cs" />
-    <Compile Include="Endianess.cs" />
     <Compile Include="ExceptionUtil.cs" />
     <Compile Include="Exif\EndianUtil.cs" />
     <Compile Include="Exif\ExifColorSpace.cs" />
@@ -159,6 +157,8 @@
     <Compile Include="Interop\EncoderStatus.cs" />
     <Compile Include="Interop\ProgressContext.cs" />
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
+    <Compile Include="IO\EndianBinaryReader.cs" />
+    <Compile Include="IO\Endianess.cs" />
     <Compile Include="Localization\BuiltinStringResourceManager.cs" />
     <Compile Include="Localization\IAvifStringResourceManager.cs" />
     <Compile Include="Localization\PdnLocalizedStringResourceManager.cs" />

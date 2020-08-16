@@ -10,7 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using AvifFileType.Properties;
 using PaintDotNet;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;

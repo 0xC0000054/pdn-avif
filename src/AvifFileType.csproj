@@ -158,6 +158,7 @@
     <Compile Include="Interop\ProgressContext.cs" />
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
     <Compile Include="IO\EndianBinaryReader.cs" />
+    <Compile Include="IO\EndianBinaryReaderSegment.cs" />
     <Compile Include="IO\Endianess.cs" />
     <Compile Include="Localization\BuiltinStringResourceManager.cs" />
     <Compile Include="Localization\IAvifStringResourceManager.cs" />

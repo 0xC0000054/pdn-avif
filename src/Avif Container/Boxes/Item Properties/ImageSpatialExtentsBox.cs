@@ -18,7 +18,7 @@ namespace AvifFileType.AvifContainer
     internal sealed class ImageSpatialExtentsBox
         : ItemPropertyFull
     {
-        public ImageSpatialExtentsBox(EndianBinaryReader reader, Box header)
+        public ImageSpatialExtentsBox(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
             if (this.Version != 0)

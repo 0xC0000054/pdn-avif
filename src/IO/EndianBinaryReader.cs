@@ -132,6 +132,43 @@ namespace AvifFileType
         }
 
         /// <summary>
+        /// Creates the segment.
+        /// </summary>
+        /// <param name="startOffset">The start offset.</param>
+        /// <param name="length">The length.</param>
+        /// <returns>The created segment.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="startOffset"/> is greater than the <see cref="EndianBinaryReader"/> length.
+        /// -or-
+        /// <paramref name="startOffset"/> plus <paramref name="length"/> is greater than the <see cref="EndianBinaryReader"/> length.
+        /// </exception>
+        public EndianBinaryReaderSegment CreateSegment(long startOffset, long length)
+        {
+            VerifyNotDisposed();
+
+            long streamLength = this.stream.Length;
+
+            if ((ulong)startOffset > (ulong)streamLength)
+            {
+                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(startOffset));
+            }
+
+            try
+            {
+                if (checked(startOffset + length) > streamLength)
+                {
+                    ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            catch (OverflowException ex)
+            {
+                throw new ArgumentOutOfRangeException(nameof(length), ex);
+            }
+
+            return new EndianBinaryReaderSegment(this, startOffset, length);
+        }
+
+        /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         public void Dispose()

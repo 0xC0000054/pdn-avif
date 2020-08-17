@@ -20,7 +20,7 @@ namespace AvifFileType.AvifContainer
     {
         private const byte ReservedBitsMask = 0xfe;
 
-        public ImageMirrorBox(EndianBinaryReader reader, Box header)
+        public ImageMirrorBox(in EndianBinaryReaderSegment reader, Box header)
             : base(header)
         {
             byte value = reader.ReadByte();

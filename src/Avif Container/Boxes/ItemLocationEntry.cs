@@ -19,7 +19,7 @@ namespace AvifFileType.AvifContainer
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ItemLocationEntry
     {
-        public ItemLocationEntry(EndianBinaryReader reader, ItemLocationBox parent)
+        public ItemLocationEntry(in EndianBinaryReaderSegment reader, ItemLocationBox parent)
         {
             switch (parent.Version)
             {

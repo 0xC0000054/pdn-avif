@@ -59,6 +59,48 @@ namespace AvifFileType.AvifContainer
             }
         }
 
+        public Box(in EndianBinaryReaderSegment reader)
+        {
+            long startOffset = reader.Position;
+            uint size32 = reader.ReadUInt32();
+            this.Type = reader.ReadFourCC();
+
+            int boxHeaderSize = sizeof(uint) + FourCC.SizeOf;
+
+            switch (size32)
+            {
+                case 0:
+                    // The box extends to the end of the file.
+                    this.Size = reader.EndOffset - startOffset;
+                    break;
+                case 1:
+                    // The box size is 64-bit.
+                    ulong size64 = reader.ReadUInt64();
+                    if (size64 > long.MaxValue)
+                    {
+                        throw new IOException($"The box is larger than { long.MaxValue } bytes.");
+                    }
+
+                    this.Size = (long)size64;
+                    boxHeaderSize += sizeof(ulong);
+                    break;
+                default:
+                    this.Size = size32;
+                    break;
+            }
+
+            this.BoxDataStartOffset = reader.Position;
+            this.BoxDataSize = this.Size - boxHeaderSize;
+            try
+            {
+                this.End = checked(startOffset + this.Size);
+            }
+            catch (OverflowException ex)
+            {
+                throw new IOException($"The box is larger than { long.MaxValue } bytes.", ex);
+            }
+        }
+
         protected Box(Box header)
         {
             if (header is null)
@@ -88,9 +130,9 @@ namespace AvifFileType.AvifContainer
 
         public FourCC Type { get; }
 
-        protected virtual long BoxDataStartOffset { get; }
+        public long BoxDataStartOffset { get; }
 
-        protected virtual long BoxDataSize { get; }
+        public long BoxDataSize { get; }
 
         public ulong GetSize()
         {

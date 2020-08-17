@@ -27,8 +27,8 @@ namespace AvifFileType.AvifContainer
             this.properties = new List<IItemProperty>();
         }
 
-        public ItemPropertyContainerBox(EndianBinaryReader reader)
-            : base(reader)
+        public ItemPropertyContainerBox(in EndianBinaryReaderSegment reader, Box header)
+            : base(header)
         {
             if (this.Type != BoxTypes.ItemPropertyContainer)
             {
@@ -37,13 +37,15 @@ namespace AvifFileType.AvifContainer
 
             this.properties = new List<IItemProperty>();
 
-            while (reader.Position < this.End)
+            while (reader.Position < reader.EndOffset)
             {
-                Box header = new Box(reader);
+                Box entry = new Box(reader);
 
-                this.properties.Add(ItemPropertyFactory.TryCreate(reader, header));
+                EndianBinaryReaderSegment childSegment = reader.CreateChildSegment(entry);
 
-                reader.Position = header.End;
+                this.properties.Add(ItemPropertyFactory.TryCreate(childSegment, entry));
+
+                reader.Position = childSegment.EndOffset;
             }
         }
 

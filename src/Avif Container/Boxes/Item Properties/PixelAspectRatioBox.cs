@@ -18,7 +18,7 @@ namespace AvifFileType.AvifContainer
     internal sealed class PixelAspectRatioBox
         : ItemProperty
     {
-        public PixelAspectRatioBox(EndianBinaryReader reader, Box header)
+        public PixelAspectRatioBox(in EndianBinaryReaderSegment reader, Box header)
             : base(header)
         {
             this.HorizontalSpacing = reader.ReadUInt32();

@@ -26,7 +26,7 @@ namespace AvifFileType.AvifContainer
             this.itemInfoEntries = new List<ItemInfoEntryBox>();
         }
 
-        public ItemInfoBox(EndianBinaryReader reader, Box header)
+        public ItemInfoBox(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
             uint itemCount;
@@ -57,8 +57,10 @@ namespace AvifFileType.AvifContainer
                     ExceptionUtil.ThrowFormatException($"Expected an 'infe' box, actual value: '{ entryHeader.Type }'");
                 }
 
-                this.itemInfoEntries.Add(ItemInfoEntryFactory.Create(reader, entryHeader));
-                reader.Position = entryHeader.End;
+                EndianBinaryReaderSegment entrySegment = reader.CreateChildSegment(entryHeader);
+
+                this.itemInfoEntries.Add(ItemInfoEntryFactory.Create(entrySegment, entryHeader));
+                reader.Position = entrySegment.EndOffset;
             }
         }
 

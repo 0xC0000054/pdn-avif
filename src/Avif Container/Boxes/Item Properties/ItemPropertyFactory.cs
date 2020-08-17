@@ -16,7 +16,7 @@ namespace AvifFileType.AvifContainer
 {
     internal static class ItemPropertyFactory
     {
-        internal static IItemProperty TryCreate(EndianBinaryReader reader, Box header)
+        internal static IItemProperty TryCreate(in EndianBinaryReaderSegment reader, Box header)
         {
             IItemProperty property;
 

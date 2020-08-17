@@ -31,7 +31,7 @@ namespace AvifFileType.AvifContainer
             this.Rotation = rotation;
         }
 
-        public ImageRotateBox(EndianBinaryReader reader, Box header)
+        public ImageRotateBox(in EndianBinaryReaderSegment reader, Box header)
             : base(header)
         {
             byte value = reader.ReadByte();

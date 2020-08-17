@@ -50,7 +50,7 @@ namespace AvifFileType.AvifContainer
 
         private const byte AV1CMarkerAndVersion = AV1CMarker | AV1CVersion;
 
-        public AV1ConfigBox(EndianBinaryReader reader, Box header)
+        public AV1ConfigBox(in EndianBinaryReaderSegment reader, Box header)
             : base(header)
         {
             byte markerAndVersion = reader.ReadByte();

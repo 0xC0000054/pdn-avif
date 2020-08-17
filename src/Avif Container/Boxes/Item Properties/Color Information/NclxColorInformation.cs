@@ -20,7 +20,7 @@ namespace AvifFileType.AvifContainer
     {
         private const byte FullRangeMask = 1 << 7;
 
-        public NclxColorInformation(EndianBinaryReader reader, ColorInformationBox header)
+        public NclxColorInformation(in EndianBinaryReaderSegment reader, ColorInformationBox header)
             : base(header)
         {
             this.ColorPrimaries = (CICPColorPrimaries)reader.ReadUInt16();

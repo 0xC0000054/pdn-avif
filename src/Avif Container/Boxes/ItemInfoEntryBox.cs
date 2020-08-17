@@ -25,7 +25,7 @@ namespace AvifFileType.AvifContainer
         /// <param name="reader">The reader.</param>
         /// <param name="header">The header.</param>
         /// <exception cref="FormatException">ItemInfoEntryBox version must be 2 or 3.</exception>
-        public ItemInfoEntryBox(EndianBinaryReader reader, Box header)
+        public ItemInfoEntryBox(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
             if (this.Version == 2)
@@ -42,7 +42,7 @@ namespace AvifFileType.AvifContainer
             }
             this.ItemProtectionIndex = reader.ReadUInt16();
             this.ItemType = reader.ReadFourCC();
-            this.Name = reader.ReadBoxString(header.End);
+            this.Name = reader.ReadBoxString();
         }
 
         protected ItemInfoEntryBox(ItemInfoEntryBox header)

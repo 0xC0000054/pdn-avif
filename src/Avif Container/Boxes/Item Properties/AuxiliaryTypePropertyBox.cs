@@ -22,11 +22,11 @@ namespace AvifFileType.AvifContainer
     {
         private readonly byte[] auxSubType;
 
-        public AuxiliaryTypePropertyBox(EndianBinaryReader reader, Box header)
+        public AuxiliaryTypePropertyBox(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
-            this.AuxType = reader.ReadBoxString(header.End);
-            long remaining = header.End - reader.Position;
+            this.AuxType = reader.ReadBoxString();
+            long remaining = reader.EndOffset - reader.Position;
 
             if (remaining > 0 && remaining < int.MaxValue)
             {

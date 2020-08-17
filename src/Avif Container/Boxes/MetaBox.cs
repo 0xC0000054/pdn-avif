@@ -15,7 +15,7 @@ namespace AvifFileType.AvifContainer
     internal sealed class MetaBox
         : FullBox
     {
-        public MetaBox(EndianBinaryReader reader, Box header)
+        public MetaBox(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
             if (this.Version != 0)
@@ -23,13 +23,15 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowFormatException($"MetaBox version must be 0, actual value: { this.Version }");
             }
 
-            while (reader.Position < this.End)
+            while (reader.Position < reader.EndOffset)
             {
                 Box itemHeader = new Box(reader);
 
+                EndianBinaryReaderSegment childSegment = reader.CreateChildSegment(itemHeader);
+
                 if (itemHeader.Type == BoxTypes.Handler)
                 {
-                    this.Handler = new HandlerBox(reader, itemHeader);
+                    this.Handler = new HandlerBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.PrimaryItem)
                 {
@@ -38,30 +40,30 @@ namespace AvifFileType.AvifContainer
                         ExceptionUtil.ThrowFormatException("The file has multiple primary item boxes.");
                     }
 
-                    this.PrimaryItem = new PrimaryItemBox(reader, itemHeader);
+                    this.PrimaryItem = new PrimaryItemBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemLocation)
                 {
-                    this.ItemLocations = new ItemLocationBox(reader, itemHeader);
+                    this.ItemLocations = new ItemLocationBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemInfo)
                 {
-                    this.ItemInfo = new ItemInfoBox(reader, itemHeader);
+                    this.ItemInfo = new ItemInfoBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemProperties)
                 {
-                    this.ItemProperties = new ItemPropertiesBox(reader, itemHeader);
+                    this.ItemProperties = new ItemPropertiesBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemReference)
                 {
-                    this.ItemReferences = new ItemReferenceBox(reader, itemHeader);
+                    this.ItemReferences = new ItemReferenceBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemData)
                 {
                     this.ItemData = new ItemDataBox(itemHeader);
                 }
 
-                reader.Position = itemHeader.End;
+                reader.Position = childSegment.EndOffset;
             }
         }
 

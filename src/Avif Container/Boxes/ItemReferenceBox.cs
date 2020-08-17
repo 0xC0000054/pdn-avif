@@ -21,7 +21,7 @@ namespace AvifFileType.AvifContainer
     {
         private readonly List<ItemReferenceEntryBox> itemReferences;
 
-        public ItemReferenceBox(EndianBinaryReader reader, Box header)
+        public ItemReferenceBox(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
             if (this.Version != 0 && this.Version != 1)
@@ -31,9 +31,11 @@ namespace AvifFileType.AvifContainer
 
             this.itemReferences = new List<ItemReferenceEntryBox>();
 
-            while (reader.Position < this.End)
+            while (reader.Position < reader.EndOffset)
             {
-                this.itemReferences.Add(new ItemReferenceEntryBox(reader, this));
+                Box entry = new Box(reader);
+
+                this.itemReferences.Add(new ItemReferenceEntryBox(reader.CreateChildSegment(entry), entry, this));
             }
         }
 

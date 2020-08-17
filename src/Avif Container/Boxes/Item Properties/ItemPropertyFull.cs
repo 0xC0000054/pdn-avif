@@ -15,7 +15,7 @@ namespace AvifFileType.AvifContainer
     internal abstract class ItemPropertyFull
         : FullBox, IItemProperty
     {
-        protected ItemPropertyFull(EndianBinaryReader reader, Box header)
+        protected ItemPropertyFull(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
         }

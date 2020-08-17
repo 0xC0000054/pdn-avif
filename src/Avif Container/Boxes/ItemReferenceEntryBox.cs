@@ -23,10 +23,9 @@ namespace AvifFileType.AvifContainer
         private readonly List<uint> toItemIds;
         private ItemReferenceBox parent;
 
-        public ItemReferenceEntryBox(EndianBinaryReader reader, ItemReferenceBox parent)
-            : base(reader)
+        public ItemReferenceEntryBox(in EndianBinaryReaderSegment reader, Box header, ItemReferenceBox parent)
+            : base(header)
         {
-
             switch (parent.Version)
             {
                 case 0:

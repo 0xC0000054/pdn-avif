@@ -14,7 +14,7 @@ namespace AvifFileType.AvifContainer
 {
     internal static class ItemInfoEntryFactory
     {
-        public static ItemInfoEntryBox Create(EndianBinaryReader reader, Box header)
+        public static ItemInfoEntryBox Create(in EndianBinaryReaderSegment reader, Box header)
         {
             ItemInfoEntryBox itemInfo = new ItemInfoEntryBox(reader, header);
 

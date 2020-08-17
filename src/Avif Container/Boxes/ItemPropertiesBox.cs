@@ -20,11 +20,14 @@ namespace AvifFileType.AvifContainer
         private readonly ItemPropertyContainerBox itemPropertyContainer;
         private readonly ItemPropertyAssociationBox itemPropertyAssociation;
 
-        public ItemPropertiesBox(EndianBinaryReader reader, Box header)
+        public ItemPropertiesBox(in EndianBinaryReaderSegment reader, Box header)
             : base(header)
         {
-            this.itemPropertyContainer = new ItemPropertyContainerBox(reader);
-            this.itemPropertyAssociation = new ItemPropertyAssociationBox(reader);
+            Box propertyContainerHeader = new Box(reader);
+            this.itemPropertyContainer = new ItemPropertyContainerBox(reader.CreateChildSegment(propertyContainerHeader),  propertyContainerHeader);
+
+            Box propertyAssociationHeader = new Box(reader);
+            this.itemPropertyAssociation = new ItemPropertyAssociationBox(reader.CreateChildSegment(propertyAssociationHeader), propertyAssociationHeader);
         }
 
         public ItemPropertiesBox()

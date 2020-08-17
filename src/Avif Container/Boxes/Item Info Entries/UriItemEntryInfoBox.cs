@@ -20,10 +20,10 @@ namespace AvifFileType.AvifContainer
     {
         private readonly BoxString uri;
 
-        public UriItemEntryInfoBox(EndianBinaryReader reader, ItemInfoEntryBox header)
+        public UriItemEntryInfoBox(in EndianBinaryReaderSegment reader, ItemInfoEntryBox header)
             : base(header)
         {
-            this.uri = reader.ReadBoxString(header.End);
+            this.uri = reader.ReadBoxString();
         }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]

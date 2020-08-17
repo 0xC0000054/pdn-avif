@@ -20,7 +20,7 @@ namespace AvifFileType.AvifContainer
     internal readonly struct Rational
         : IEquatable<Rational>
     {
-        public Rational(EndianBinaryReader reader)
+        public Rational(in EndianBinaryReaderSegment reader)
         {
             this.Numerator = reader.ReadInt32();
             this.Denominator = reader.ReadUInt32();

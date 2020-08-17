@@ -20,7 +20,7 @@ namespace AvifFileType.AvifContainer
     {
         private readonly List<ItemLocationEntry> items;
 
-        public ItemLocationBox(EndianBinaryReader reader, Box header)
+        public ItemLocationBox(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
             if (this.Version < 0 || this.Version > 2)

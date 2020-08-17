@@ -27,7 +27,7 @@ namespace AvifFileType.AvifContainer
 
         private static readonly FourCC HandlerTypePICT = new FourCC('p', 'i', 'c', 't');
 
-        public HandlerBox(EndianBinaryReader reader, Box header) : base(reader, header)
+        public HandlerBox(in EndianBinaryReaderSegment reader, Box header) : base(reader, header)
         {
             if (this.Version != 0)
             {
@@ -45,7 +45,7 @@ namespace AvifFileType.AvifContainer
             this.reserved1 = reader.ReadUInt32();
             this.reserved2 = reader.ReadUInt32();
             this.reserved3 = reader.ReadUInt32();
-            this.name = reader.ReadBoxString(header.End);
+            this.name = reader.ReadBoxString();
         }
 
         public HandlerBox()

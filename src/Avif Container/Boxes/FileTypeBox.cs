@@ -30,13 +30,13 @@ namespace AvifFileType.AvifContainer
         /// <exception cref="FormatException">
         /// The compatible brand size must be a multiple of 4.
         /// </exception>
-        public FileTypeBox(EndianBinaryReader reader, Box header)
+        public FileTypeBox(in EndianBinaryReaderSegment reader, Box header)
             : base(header)
         {
             this.majorBrand = reader.ReadFourCC();
             this.minorVersion = reader.ReadUInt32();
 
-            long compatibleBrandSize = header.End - reader.Position;
+            long compatibleBrandSize = reader.EndOffset - reader.Position;
             if ((compatibleBrandSize & 3) != 0)
             {
                 ExceptionUtil.ThrowFormatException($"The compatible brand size must be a multiple of 4, actual value: { compatibleBrandSize }");

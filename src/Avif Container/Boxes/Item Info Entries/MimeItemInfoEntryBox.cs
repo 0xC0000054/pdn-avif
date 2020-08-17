@@ -18,13 +18,13 @@ namespace AvifFileType.AvifContainer
     internal class MimeItemInfoEntryBox
         : ItemInfoEntryBox
     {
-        public MimeItemInfoEntryBox(EndianBinaryReader reader, ItemInfoEntryBox header)
+        public MimeItemInfoEntryBox(in EndianBinaryReaderSegment reader, ItemInfoEntryBox header)
             : base(header)
         {
-            this.ContentType = reader.ReadBoxString(header.End);
-            if (reader.Position < header.End)
+            this.ContentType = reader.ReadBoxString();
+            if (reader.Position < reader.EndOffset)
             {
-                this.ContentEncoding = reader.ReadBoxString(header.End);
+                this.ContentEncoding = reader.ReadBoxString();
             }
         }
 

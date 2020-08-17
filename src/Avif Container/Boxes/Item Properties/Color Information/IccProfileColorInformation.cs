@@ -19,10 +19,10 @@ namespace AvifFileType.AvifContainer
     {
         private readonly byte[] iccProfile;
 
-        public IccProfileColorInformation(EndianBinaryReader reader, ColorInformationBox header)
+        public IccProfileColorInformation(in EndianBinaryReaderSegment reader, ColorInformationBox header)
             : base(header)
         {
-            long profileLength = header.End - reader.Position;
+            long profileLength = reader.EndOffset - reader.Position;
 
             if (profileLength > int.MaxValue)
             {

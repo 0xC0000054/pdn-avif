@@ -18,7 +18,7 @@ namespace AvifFileType.AvifContainer
     internal sealed class CleanApertureBox
         : ItemProperty
     {
-        public CleanApertureBox(EndianBinaryReader reader, Box header)
+        public CleanApertureBox(in EndianBinaryReaderSegment reader, Box header)
             : base(header)
         {
             this.Width = new Rational(reader);

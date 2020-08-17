@@ -20,7 +20,7 @@ namespace AvifFileType.AvifContainer
         private long offsetWritePosition;
         private byte offsetSize;
 
-        public ItemLocationExtent(EndianBinaryReader reader, ItemLocationBox parent, ushort extentCount)
+        public ItemLocationExtent(in EndianBinaryReaderSegment reader, ItemLocationBox parent, ushort extentCount)
         {
             if (extentCount > 1 && (parent.Version == 1 || parent.Version == 2))
             {

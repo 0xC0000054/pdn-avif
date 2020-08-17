@@ -15,7 +15,7 @@ namespace AvifFileType.AvifContainer
     internal class ColorInformationBox
         : ItemProperty
     {
-        public ColorInformationBox(EndianBinaryReader reader, Box header)
+        public ColorInformationBox(in EndianBinaryReaderSegment reader, Box header)
             : base(header)
         {
             this.ColorType = reader.ReadFourCC();

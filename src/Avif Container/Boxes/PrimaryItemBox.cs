@@ -18,7 +18,7 @@ namespace AvifFileType.AvifContainer
     internal sealed class PrimaryItemBox
         : FullBox
     {
-        public PrimaryItemBox(EndianBinaryReader reader, Box header)
+        public PrimaryItemBox(in EndianBinaryReaderSegment reader, Box header)
             : base(reader, header)
         {
             if (this.Version == 0)

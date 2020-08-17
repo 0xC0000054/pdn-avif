@@ -158,7 +158,7 @@ namespace AvifFileType
 
             if (entry != null)
             {
-                ulong? offset = this.parser.TryCalculateItemOffset(entry);
+                long? offset = this.parser.TryCalculateItemOffset(entry);
 
                 if (!offset.HasValue)
                 {
@@ -171,7 +171,7 @@ namespace AvifFileType
                 // Ignore any EXIF blocks that are larger than 2GB.
                 if (length < int.MaxValue)
                 {
-                    this.stream.Position = (long)offset;
+                    this.stream.Position = offset.Value;
 
                     // The EXIF data block has a header that indicates the number of bytes
                     // that come before the start of the TIFF header.
@@ -223,7 +223,7 @@ namespace AvifFileType
 
             if (entry != null)
             {
-                ulong? offset = this.parser.TryCalculateItemOffset(entry);
+                long? offset = this.parser.TryCalculateItemOffset(entry);
 
                 if (!offset.HasValue)
                 {
@@ -236,7 +236,7 @@ namespace AvifFileType
                 // Ignore any XMP packets that are larger than 2GB.
                 if (length < int.MaxValue)
                 {
-                    this.stream.Position = (long)offset;
+                    this.stream.Position = offset.Value;
 
                     byte[] bytes = new byte[(int)length];
 
@@ -682,7 +682,7 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(entry));
             }
 
-            ulong? offset = this.parser.TryCalculateItemOffset(entry);
+            long? offset = this.parser.TryCalculateItemOffset(entry);
 
             if (!offset.HasValue)
             {
@@ -693,7 +693,7 @@ namespace AvifFileType
 
             SafeProcessHeapBuffer buffer = SafeProcessHeapBuffer.Create(length);
 
-            this.stream.Position = (long)offset;
+            this.stream.Position = offset.Value;
             this.stream.ProperRead(buffer);
 
             return buffer;

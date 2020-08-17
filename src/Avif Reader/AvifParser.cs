@@ -138,7 +138,7 @@ namespace AvifFileType
             return false;
         }
 
-        public ulong? TryCalculateItemOffset(ItemLocationEntry entry)
+        public long? TryCalculateItemOffset(ItemLocationEntry entry)
         {
             if (entry is null)
             {
@@ -182,7 +182,12 @@ namespace AvifFileType
                 throw new FormatException($"ItemLocationEntry construction method { entry.ConstructionMethod } is not supported.");
             }
 
-            return offset;
+            if (offset > long.MaxValue)
+            {
+                return null;
+            }
+
+            return (long)offset;
         }
 
         public IItemProperty TryGetAssociatedItemProperty(uint itemId, FourCC propertyType)
@@ -456,13 +461,13 @@ namespace AvifFileType
                         ExceptionUtil.ThrowFormatException("Invalid image grid descriptor length.");
                     }
 
-                    ulong? offset = TryCalculateItemOffset(locationEntry);
+                    long? offset = TryCalculateItemOffset(locationEntry);
                     if (!offset.HasValue)
                     {
                         ExceptionUtil.ThrowFormatException("The image grid descriptor has an invalid file offset.");
                     }
 
-                    this.reader.Position = (long)offset.Value;
+                    this.reader.Position = offset.Value;
                     return new ImageGridDescriptor(this.reader, locationEntry.Extent.Length);
                 }
             }

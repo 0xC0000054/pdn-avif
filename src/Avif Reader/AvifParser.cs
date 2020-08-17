@@ -147,39 +147,52 @@ namespace AvifFileType
 
             ulong offset;
 
-            if (entry.ConstructionMethod == ConstructionMethod.FileOffset)
+            try
             {
-                offset = entry.BaseOffset + entry.Extent.Offset;
-
-                if ((offset + entry.Extent.Length) > this.fileLength)
+                if (entry.ConstructionMethod == ConstructionMethod.FileOffset)
                 {
-                    return null;
+                    checked
+                    {
+                        offset = entry.BaseOffset + entry.Extent.Offset;
+
+                        if ((offset + entry.Extent.Length) > this.fileLength)
+                        {
+                            return null;
+                        }
+                    }
+                }
+                else if (entry.ConstructionMethod == ConstructionMethod.IDatBoxOffset)
+                {
+                    ItemDataBox dataBox = this.metaBox.ItemData;
+
+                    if (dataBox is null)
+                    {
+                        return null;
+                    }
+
+                    checked
+                    {
+                        if ((entry.Extent.Offset + entry.Extent.Length) > (ulong)dataBox.Length)
+                        {
+                            return null;
+                        }
+
+                        offset = (ulong)dataBox.Offset + entry.Extent.Offset;
+
+                        if ((offset + entry.Extent.Length) > this.fileLength)
+                        {
+                            return null;
+                        }
+                    }
+                }
+                else
+                {
+                    throw new FormatException($"ItemLocationEntry construction method { entry.ConstructionMethod } is not supported.");
                 }
             }
-            else if (entry.ConstructionMethod == ConstructionMethod.IDatBoxOffset)
+            catch (OverflowException)
             {
-                ItemDataBox dataBox = this.metaBox.ItemData;
-
-                if (dataBox is null)
-                {
-                    return null;
-                }
-
-                if ((entry.Extent.Offset + entry.Extent.Length) > (ulong)dataBox.Length)
-                {
-                    return null;
-                }
-
-                offset = (ulong)dataBox.Offset + entry.Extent.Offset;
-
-                if ((offset + entry.Extent.Length) > this.fileLength)
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                throw new FormatException($"ItemLocationEntry construction method { entry.ConstructionMethod } is not supported.");
+                return null;
             }
 
             if (offset > long.MaxValue)

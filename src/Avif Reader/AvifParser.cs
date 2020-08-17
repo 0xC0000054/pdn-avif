@@ -387,7 +387,7 @@ namespace AvifFileType
                         ExceptionUtil.ThrowFormatException("The file contains multiple FileType boxes.");
                     }
 
-                    EndianBinaryReaderSegment segment = this.reader.CreateSegment(header.BoxDataStartOffset, header.BoxDataSize);
+                    EndianBinaryReaderSegment segment = this.reader.CreateSegment(header.DataStartOffset, header.DataLength);
 
                     this.fileTypeBox = new FileTypeBox(segment, header);
                     this.fileTypeBox.CheckForAvifCompatibility();
@@ -399,7 +399,7 @@ namespace AvifFileType
                         ExceptionUtil.ThrowFormatException("The file contains multiple Meta boxes.");
                     }
 
-                    EndianBinaryReaderSegment segment = this.reader.CreateSegment(header.BoxDataStartOffset, header.BoxDataSize);
+                    EndianBinaryReaderSegment segment = this.reader.CreateSegment(header.DataStartOffset, header.DataLength);
 
                     this.metaBox = new MetaBox(segment, header);
                 }

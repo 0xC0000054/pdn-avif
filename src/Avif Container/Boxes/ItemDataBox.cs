@@ -18,8 +18,8 @@ namespace AvifFileType.AvifContainer
         {
         }
 
-        public long Offset => this.BoxDataStartOffset;
+        public long Offset => this.DataStartOffset;
 
-        public long Length => this.BoxDataSize;
+        public long Length => this.DataLength;
     }
 }

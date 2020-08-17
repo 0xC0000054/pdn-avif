@@ -99,8 +99,8 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(header));
             }
 
-            long startOffset = header.BoxDataStartOffset;
-            long length = header.BoxDataSize;
+            long startOffset = header.DataStartOffset;
+            long length = header.DataLength;
 
             try
             {

@@ -47,8 +47,8 @@ namespace AvifFileType.AvifContainer
                     break;
             }
 
-            this.BoxDataStartOffset = reader.Position;
-            this.BoxDataSize = this.Size - boxHeaderSize;
+            this.DataStartOffset = reader.Position;
+            this.DataLength = this.Size - boxHeaderSize;
             try
             {
                 this.End = checked(startOffset + this.Size);
@@ -89,8 +89,8 @@ namespace AvifFileType.AvifContainer
                     break;
             }
 
-            this.BoxDataStartOffset = reader.Position;
-            this.BoxDataSize = this.Size - boxHeaderSize;
+            this.DataStartOffset = reader.Position;
+            this.DataLength = this.Size - boxHeaderSize;
             try
             {
                 this.End = checked(startOffset + this.Size);
@@ -110,8 +110,8 @@ namespace AvifFileType.AvifContainer
 
             this.Size = header.Size;
             this.Type = header.Type;
-            this.BoxDataStartOffset = header.BoxDataStartOffset;
-            this.BoxDataSize = header.BoxDataSize;
+            this.DataStartOffset = header.DataStartOffset;
+            this.DataLength = header.DataLength;
             this.End = header.End;
         }
 
@@ -119,8 +119,8 @@ namespace AvifFileType.AvifContainer
         {
             this.Size = -1;
             this.Type = type;
-            this.BoxDataStartOffset = -1;
-            this.BoxDataSize = -1;
+            this.DataStartOffset = -1;
+            this.DataLength = -1;
             this.End = -1;
         }
 
@@ -130,9 +130,9 @@ namespace AvifFileType.AvifContainer
 
         public FourCC Type { get; }
 
-        public long BoxDataStartOffset { get; }
+        public long DataStartOffset { get; }
 
-        public long BoxDataSize { get; }
+        public long DataLength { get; }
 
         public ulong GetSize()
         {

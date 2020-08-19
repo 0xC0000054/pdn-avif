@@ -57,15 +57,6 @@ namespace AvifFileType.Exif
             }
         }
 
-        public byte[] GetData()
-        {
-            return (byte[])this.data.Clone();
-        }
-
-        public byte[] GetDataReadOnly()
-        {
-            return this.data;
-        }
 
         public PaintDotNet.Imaging.ExifPropertyItem CreateExifPropertyItem()
         {
@@ -110,6 +101,16 @@ namespace AvifFileType.Exif
             }
 
             return this.Section == other.Section && this.TagId == other.TagId;
+        }
+
+        public byte[] GetData()
+        {
+            return (byte[])this.data.Clone();
+        }
+
+        public byte[] GetDataReadOnly()
+        {
+            return this.data;
         }
 
         public override int GetHashCode()

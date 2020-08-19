@@ -74,36 +74,6 @@ namespace AvifFileType.Exif
             return new ExifValueCollection(metadataEntries);
         }
 
-        private static Endianess? TryDetectTiffByteOrder(Stream stream)
-        {
-            int byte1 = stream.ReadByte();
-            if (byte1 == -1)
-            {
-                return null;
-            }
-
-            int byte2 = stream.ReadByte();
-            if (byte2 == -1)
-            {
-                return null;
-            }
-
-            ushort byteOrderMarker = (ushort)(byte1 | (byte2 << 8));
-
-            if (byteOrderMarker == TiffConstants.BigEndianByteOrderMarker)
-            {
-                return Endianess.Big;
-            }
-            else if (byteOrderMarker == TiffConstants.LittleEndianByteOrderMarker)
-            {
-                return Endianess.Little;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         private static ICollection<MetadataEntry> ConvertIFDEntriesToMetadataEntries(EndianBinaryReader reader, List<ParserIFDEntry> entries)
         {
             List<MetadataEntry> metadataEntries = new List<MetadataEntry>(entries.Count);
@@ -265,12 +235,12 @@ namespace AvifFileType.Exif
             return items;
         }
 
-        private static unsafe byte[] SwapShortArrayToLittleEndian(byte[] values, uint count)
+        private static unsafe byte[] SwapDoubleArrayToLittleEndian(byte[] values, uint count)
         {
             fixed (byte* pBytes = values)
             {
-                ushort* ptr = (ushort*)pBytes;
-                ushort* ptrEnd = ptr + count;
+                ulong* ptr = (ulong*)pBytes;
+                ulong* ptrEnd = ptr + count;
 
                 while (ptr < ptrEnd)
                 {
@@ -319,12 +289,12 @@ namespace AvifFileType.Exif
             return values;
         }
 
-        private static unsafe byte[] SwapDoubleArrayToLittleEndian(byte[] values, uint count)
+        private static unsafe byte[] SwapShortArrayToLittleEndian(byte[] values, uint count)
         {
             fixed (byte* pBytes = values)
             {
-                ulong* ptr = (ulong*)pBytes;
-                ulong* ptrEnd = ptr + count;
+                ushort* ptr = (ushort*)pBytes;
+                ushort* ptrEnd = ptr + count;
 
                 while (ptr < ptrEnd)
                 {
@@ -334,6 +304,36 @@ namespace AvifFileType.Exif
             }
 
             return values;
+        }
+
+        private static Endianess? TryDetectTiffByteOrder(Stream stream)
+        {
+            int byte1 = stream.ReadByte();
+            if (byte1 == -1)
+            {
+                return null;
+            }
+
+            int byte2 = stream.ReadByte();
+            if (byte2 == -1)
+            {
+                return null;
+            }
+
+            ushort byteOrderMarker = (ushort)(byte1 | (byte2 << 8));
+
+            if (byteOrderMarker == TiffConstants.BigEndianByteOrderMarker)
+            {
+                return Endianess.Big;
+            }
+            else if (byteOrderMarker == TiffConstants.LittleEndianByteOrderMarker)
+            {
+                return Endianess.Little;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private readonly struct ParserIFDEntry

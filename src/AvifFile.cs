@@ -227,6 +227,11 @@ namespace AvifFileType
 
                 if (exifValues != null)
                 {
+                    // The HEIF specification states that the EXIF orientation tag is only
+                    // informational and should not be used to rotate the image.
+                    // See https://github.com/strukturag/libheif/issues/227#issuecomment-642165942
+                    exifValues.Remove(MetadataKeys.Image.Orientation);
+
                     foreach (MetadataEntry entry in exifValues)
                     {
                         doc.Metadata.AddExifPropertyItem(entry.CreateExifPropertyItem());

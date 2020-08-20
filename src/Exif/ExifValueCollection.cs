@@ -31,16 +31,9 @@ namespace AvifFileType.Exif
 
         public int Count => this.exifMetadata.Count;
 
-        public MetadataEntry GetAndRemoveValue(MetadataKey key)
+        public void Remove(MetadataKey key)
         {
-            MetadataEntry value = this.exifMetadata.Find(p => p.Section == key.Section && p.TagId == key.TagId);
-
-            if (value != null)
-            {
-                this.exifMetadata.RemoveAll(p => p.Section == key.Section && p.TagId == key.TagId);
-            }
-
-            return value;
+            this.exifMetadata.RemoveAll(p => p.Section == key.Section && p.TagId == key.TagId);
         }
 
         public IEnumerator<MetadataEntry> GetEnumerator()

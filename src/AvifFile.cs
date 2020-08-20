@@ -225,9 +225,12 @@ namespace AvifFileType
             {
                 ExifValueCollection exifValues = ExifParser.Parse(exifBytes);
 
-                foreach (MetadataEntry entry in exifValues)
+                if (exifValues != null)
                 {
-                    doc.Metadata.AddExifPropertyItem(entry.CreateExifPropertyItem());
+                    foreach (MetadataEntry entry in exifValues)
+                    {
+                        doc.Metadata.AddExifPropertyItem(entry.CreateExifPropertyItem());
+                    }
                 }
             }
 

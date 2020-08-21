@@ -499,24 +499,29 @@ namespace AvifFileType
 
             VerifyNotDisposed();
 
+            AvifContainer.BoxString result;
+
             int length = GetStringLength(endOffset, out bool hasNullTerminator);
 
             if (length == 0)
             {
-                return AvifContainer.BoxString.Empty;
+                result = AvifContainer.BoxString.Empty;
+            }
+            else
+            {
+                EnsureBuffer(length);
+
+                result = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
+
+                this.readOffset += length;
             }
 
-            EnsureBuffer(length);
-
-            string value = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
-
-            this.readOffset += length;
             if (hasNullTerminator)
             {
                 this.Position++; // Skip the null-terminator if one was found at the end of the string.
             }
 
-            return new AvifContainer.BoxString(value);
+            return result;
         }
 
         /// <summary>

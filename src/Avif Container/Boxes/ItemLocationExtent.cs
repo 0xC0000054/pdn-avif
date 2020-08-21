@@ -102,7 +102,7 @@ namespace AvifFileType.AvifContainer
 
             if (this.offsetSize != 0)
             {
-                long current = writer.Position;
+                long oldPosition = writer.Position;
                 writer.Position = this.offsetWritePosition;
 
                 switch (this.offsetSize)
@@ -117,7 +117,7 @@ namespace AvifFileType.AvifContainer
                         throw new InvalidOperationException($"{ nameof(this.offsetSize) } must be 4 or 8, actual value: { this.offsetSize.ToString(CultureInfo.InvariantCulture) }");
                 }
 
-                writer.Position = current;
+                writer.Position = oldPosition;
             }
         }
 

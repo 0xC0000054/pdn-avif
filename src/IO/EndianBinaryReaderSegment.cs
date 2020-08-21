@@ -63,23 +63,28 @@ namespace AvifFileType
             get => this.reader.Position;
             set
             {
-                if (value < this.startOffset)
-                {
-                    ExceptionUtil.ThrowArgumentOutOfRangeException(string.Format(CultureInfo.InvariantCulture,
-                                                                                 "The value is less than the segment start offset, value: 0x{0:X} startOffset: 0x{1:X}",
-                                                                                 value,
-                                                                                 this.startOffset));
-                }
+                long current = this.Position;
 
-                if (value > this.endOffset)
+                if (value != current)
                 {
-                    ExceptionUtil.ThrowArgumentOutOfRangeException(string.Format(CultureInfo.InvariantCulture,
-                                                                                 "The value is greater than the segment end offset, value: 0x{0:X} endOffset: 0x{1:X}",
-                                                                                 value,
-                                                                                 this.endOffset));
-                }
+                    if (value < this.startOffset)
+                    {
+                        ExceptionUtil.ThrowArgumentOutOfRangeException(string.Format(CultureInfo.InvariantCulture,
+                                                                                     "The value is less than the segment start offset, value: 0x{0:X} startOffset: 0x{1:X}",
+                                                                                     value,
+                                                                                     this.startOffset));
+                    }
 
-                this.reader.Position = value;
+                    if (value > this.endOffset)
+                    {
+                        ExceptionUtil.ThrowArgumentOutOfRangeException(string.Format(CultureInfo.InvariantCulture,
+                                                                                     "The value is greater than the segment end offset, value: 0x{0:X} endOffset: 0x{1:X}",
+                                                                                     value,
+                                                                                     this.endOffset));
+                    }
+
+                    this.reader.Position = value;
+                }
             }
         }
 

@@ -440,6 +440,11 @@ namespace AvifFileType
             }
             else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
             {
+                if (gridInfo is null)
+                {
+                    ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
+                }
+
                 width = gridInfo.OutputWidth;
                 height = gridInfo.OutputHeight;
             }

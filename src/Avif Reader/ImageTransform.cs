@@ -10,12 +10,63 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using AvifFileType.AvifContainer;
 using PaintDotNet;
+using System;
+using System.Drawing;
 
 namespace AvifFileType
 {
     internal static class ImageTransform
     {
+        internal static void Crop(CleanApertureBox cleanApertureBox, ref Surface surface)
+        {
+            if (cleanApertureBox is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(cleanApertureBox));
+            }
+
+            if (cleanApertureBox.Width.Denominator == 0 ||
+                cleanApertureBox.Height.Denominator == 0 ||
+                cleanApertureBox.HorizontalOffset.Denominator == 0 ||
+                cleanApertureBox.VerticalOffset.Denominator == 0)
+            {
+                return;
+            }
+
+            int cropWidth = cleanApertureBox.Width.ToInt32();
+            int cropHeight = cleanApertureBox.Height.ToInt32();
+
+            double offsetX = cleanApertureBox.HorizontalOffset.ToDouble();
+            double offsetY = cleanApertureBox.VerticalOffset.ToDouble();
+
+            double pictureCenterX = offsetX + ((surface.Width - 1) / 2.0);
+            double pictureCenterY = offsetY + ((surface.Height - 1) / 2.0);
+
+            int cropRectX = (int)Math.Round(pictureCenterX - ((cropWidth - 1) / 2.0));
+            int cropRectY = (int)Math.Round(pictureCenterY - ((cropHeight - 1) / 2.0));
+
+            Rectangle cropRect = new Rectangle(cropRectX, cropRectY, cropWidth, cropHeight);
+
+            // Check that the crop rectangle is within the surface bounds.
+            if (cropRect.IntersectsWith(surface.Bounds))
+            {
+                Surface temp = new Surface(cropWidth, cropHeight);
+                try
+                {
+                    temp.CopySurface(surface, cropRect);
+
+                    surface.Dispose();
+                    surface = temp;
+                    temp = null;
+                }
+                finally
+                {
+                    temp?.Dispose();
+                }
+            }
+        }
+
         internal static unsafe void FlipHorizontal(Surface surface)
         {
             int lastColumn = surface.Width - 1;

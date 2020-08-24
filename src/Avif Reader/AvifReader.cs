@@ -258,7 +258,7 @@ namespace AvifFileType
 
             if (this.cleanApertureBox != null)
             {
-                Crop(ref surface);
+                ImageTransform.Crop(this.cleanApertureBox, ref surface);
             }
 
             if (this.imageRotateBox != null)
@@ -337,49 +337,6 @@ namespace AvifFileType
             if (hasUnsupportedProperties)
             {
                 ExceptionUtil.ThrowFormatException($"The { imageName } image has essential item properties that are not supported.");
-            }
-        }
-
-        private void Crop(ref Surface surface)
-        {
-            if (this.cleanApertureBox.Width.Denominator == 0 ||
-                this.cleanApertureBox.Height.Denominator == 0 ||
-                this.cleanApertureBox.HorizontalOffset.Denominator == 0 ||
-                this.cleanApertureBox.VerticalOffset.Denominator == 0)
-            {
-                return;
-            }
-
-            int cropWidth = this.cleanApertureBox.Width.ToInt32();
-            int cropHeight = this.cleanApertureBox.Height.ToInt32();
-
-            double offsetX = this.cleanApertureBox.HorizontalOffset.ToDouble();
-            double offsetY = this.cleanApertureBox.VerticalOffset.ToDouble();
-
-            double pictureCenterX = offsetX + ((surface.Width - 1) / 2.0);
-            double pictureCenterY = offsetY + ((surface.Height - 1) / 2.0);
-
-            int cropRectX = (int)Math.Round(pictureCenterX - ((cropWidth - 1) / 2.0));
-            int cropRectY = (int)Math.Round(pictureCenterY - ((cropHeight - 1) / 2.0));
-
-            Rectangle cropRect = new Rectangle(cropRectX, cropRectY, cropWidth, cropHeight);
-
-            // Check that the crop rectangle is within the surface bounds.
-            if (cropRect.IntersectsWith(surface.Bounds))
-            {
-                Surface temp = new Surface(cropWidth, cropHeight);
-                try
-                {
-                    temp.CopySurface(surface, cropRect);
-
-                    surface.Dispose();
-                    surface = temp;
-                    temp = null;
-                }
-                finally
-                {
-                    temp?.Dispose();
-                }
             }
         }
 

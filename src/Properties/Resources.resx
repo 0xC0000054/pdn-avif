@@ -135,8 +135,8 @@
   <data name="CompressionMode_Fast_DisplayName" xml:space="preserve">
     <value>Fast</value>
   </data>
-  <data name="CompressionMode_Normal_DisplayName" xml:space="preserve">
-    <value>Normal</value>
+  <data name="CompressionMode_Medium_DisplayName" xml:space="preserve">
+    <value>Medium</value>
   </data>
   <data name="CompressionMode_Slow_DisplayName" xml:space="preserve">
     <value>Slow</value>

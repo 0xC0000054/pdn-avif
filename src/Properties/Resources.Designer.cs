@@ -115,11 +115,11 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Normal.
+        ///   Looks up a localized string similar to Medium.
         /// </summary>
-        internal static string CompressionMode_Normal_DisplayName {
+        internal static string CompressionMode_Medium_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionMode_Normal_DisplayName", resourceCulture);
+                return ResourceManager.GetString("CompressionMode_Medium_DisplayName", resourceCulture);
             }
         }
         

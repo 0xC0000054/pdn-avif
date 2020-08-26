@@ -156,7 +156,7 @@ namespace AvifFileType
             PropertyControlInfo compressionModePCI = configUI.FindControlForPropertyName(PropertyNames.CompressionMode);
             compressionModePCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("CompressionMode_DisplayName");
             compressionModePCI.SetValueDisplayName(CompressionMode.Fast, this.strings.GetString("CompressionMode_Fast_DisplayName"));
-            compressionModePCI.SetValueDisplayName(CompressionMode.Normal, this.strings.GetString("CompressionMode_Normal_DisplayName"));
+            compressionModePCI.SetValueDisplayName(CompressionMode.Medium, this.strings.GetString("CompressionMode_Medium_DisplayName"));
             compressionModePCI.SetValueDisplayName(CompressionMode.Slow, this.strings.GetString("CompressionMode_Slow_DisplayName"));
 
             PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling);

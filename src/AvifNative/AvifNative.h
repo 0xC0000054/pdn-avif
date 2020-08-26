@@ -24,7 +24,7 @@ extern "C" {
     enum class CompressionMode
     {
         Fast,
-        Normal,
+        Medium,
         Slow
     };
 

@@ -67,7 +67,7 @@ namespace
             case CompressionMode::Slow:
                 cpuUsed = 0;
                 break;
-            case CompressionMode::Normal:
+            case CompressionMode::Medium:
             default:
                 cpuUsed = 4;
                 break;

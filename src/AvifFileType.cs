@@ -116,7 +116,7 @@ namespace AvifFileType
             Property[] props = new Property[]
             {
                 new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
-                StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionMode, CompressionMode.Normal),
+                StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionMode, CompressionMode.Fast),
                 CreateChromaSubsampling(),
                 new UriProperty(PropertyNames.ForumLink, new Uri("https://forums.getpaint.net/topic/116233-avif-filetype")),
                 new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif"))

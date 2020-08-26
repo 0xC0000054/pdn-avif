@@ -20,8 +20,8 @@
 extern "C" {
 #endif // __cplusplus
 
-    // This must be kept in sync with CompressionMode.cs
-    enum class CompressionMode
+    // This must be kept in sync with CompressionSpeed.cs
+    enum class CompressionSpeed
     {
         Fast,
         Medium,
@@ -66,7 +66,7 @@ extern "C" {
     struct EncoderOptions
     {
         int32_t quality;
-        CompressionMode compressionMode;
+        CompressionSpeed compressionSpeed;
         YUVChromaSubsampling yuvFormat;
         int32_t maxThreads;
     };

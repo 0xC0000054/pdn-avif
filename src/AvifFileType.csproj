@@ -130,7 +130,7 @@
     <Compile Include="AvifNative.cs" />
     <Compile Include="AvifFileTypeFactory.cs" />
     <Compile Include="AvifFileType.cs" />
-    <Compile Include="CompressionMode.cs" />
+    <Compile Include="CompressionSpeed.cs" />
     <Compile Include="ExceptionUtil.cs" />
     <Compile Include="Exif\EndianUtil.cs" />
     <Compile Include="Exif\ExifColorSpace.cs" />

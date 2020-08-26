@@ -29,7 +29,7 @@ namespace AvifFileType
         private enum PropertyNames
         {
             Quality,
-            CompressionMode,
+            CompressionSpeed,
             YUVChromaSubsampling,
             ForumLink,
             GitHubLink
@@ -116,7 +116,7 @@ namespace AvifFileType
             Property[] props = new Property[]
             {
                 new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
-                StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionMode, CompressionMode.Fast),
+                StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionSpeed, CompressionSpeed.Fast),
                 CreateChromaSubsampling(),
                 new UriProperty(PropertyNames.ForumLink, new Uri("https://forums.getpaint.net/topic/116233-avif-filetype")),
                 new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif"))
@@ -153,11 +153,11 @@ namespace AvifFileType
             qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
             qualityPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("Quality_DisplayName");
 
-            PropertyControlInfo compressionModePCI = configUI.FindControlForPropertyName(PropertyNames.CompressionMode);
-            compressionModePCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("CompressionMode_DisplayName");
-            compressionModePCI.SetValueDisplayName(CompressionMode.Fast, this.strings.GetString("CompressionMode_Fast_DisplayName"));
-            compressionModePCI.SetValueDisplayName(CompressionMode.Medium, this.strings.GetString("CompressionMode_Medium_DisplayName"));
-            compressionModePCI.SetValueDisplayName(CompressionMode.Slow, this.strings.GetString("CompressionMode_Slow_DisplayName"));
+            PropertyControlInfo compressionModePCI = configUI.FindControlForPropertyName(PropertyNames.CompressionSpeed);
+            compressionModePCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("CompressionSpeed_DisplayName");
+            compressionModePCI.SetValueDisplayName(CompressionSpeed.Fast, this.strings.GetString("CompressionSpeed_Fast_DisplayName"));
+            compressionModePCI.SetValueDisplayName(CompressionSpeed.Medium, this.strings.GetString("CompressionSpeed_Medium_DisplayName"));
+            compressionModePCI.SetValueDisplayName(CompressionSpeed.Slow, this.strings.GetString("CompressionSpeed_Slow_DisplayName"));
 
             PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling);
             subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ChromaSubsampling_DisplayName");
@@ -182,10 +182,10 @@ namespace AvifFileType
         protected override void OnSaveT(Document input, Stream output, PropertyBasedSaveConfigToken token, Surface scratchSurface, ProgressEventHandler progressCallback)
         {
             int quality = token.GetProperty<Int32Property>(PropertyNames.Quality).Value;
-            CompressionMode compressionMode = (CompressionMode)token.GetProperty(PropertyNames.CompressionMode).Value;
+            CompressionSpeed compressionSpeed = (CompressionSpeed)token.GetProperty(PropertyNames.CompressionSpeed).Value;
             YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling).Value;
 
-            AvifFile.Save(input, output, quality, compressionMode, chromaSubsampling, this.maxEncoderThreadsOverride, scratchSurface, progressCallback);
+            AvifFile.Save(input, output, quality, compressionSpeed, chromaSubsampling, this.maxEncoderThreadsOverride, scratchSurface, progressCallback);
         }
 
         /// <summary>

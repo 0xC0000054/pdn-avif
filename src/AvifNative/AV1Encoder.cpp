@@ -58,16 +58,16 @@ namespace
             quality = ConvertQualityToAOMRange(options->quality);
             usage = AOM_USAGE_GOOD_QUALITY;
 
-            switch (options->compressionMode)
+            switch (options->compressionSpeed)
             {
-            case CompressionMode::Fast:
+            case CompressionSpeed::Fast:
                 cpuUsed = 8;
                 usage = AOM_USAGE_REALTIME;
                 break;
-            case CompressionMode::Slow:
+            case CompressionSpeed::Slow:
                 cpuUsed = 0;
                 break;
-            case CompressionMode::Medium:
+            case CompressionSpeed::Medium:
             default:
                 cpuUsed = 4;
                 break;

@@ -97,38 +97,38 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Compression Mode.
+        ///   Looks up a localized string similar to Compression Speed.
         /// </summary>
-        internal static string CompressionMode_DisplayName {
+        internal static string CompressionSpeed_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionMode_DisplayName", resourceCulture);
+                return ResourceManager.GetString("CompressionSpeed_DisplayName", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Fast.
         /// </summary>
-        internal static string CompressionMode_Fast_DisplayName {
+        internal static string CompressionSpeed_Fast_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionMode_Fast_DisplayName", resourceCulture);
+                return ResourceManager.GetString("CompressionSpeed_Fast_DisplayName", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Medium.
         /// </summary>
-        internal static string CompressionMode_Medium_DisplayName {
+        internal static string CompressionSpeed_Medium_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionMode_Medium_DisplayName", resourceCulture);
+                return ResourceManager.GetString("CompressionSpeed_Medium_DisplayName", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Slow.
         /// </summary>
-        internal static string CompressionMode_Slow_DisplayName {
+        internal static string CompressionSpeed_Slow_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionMode_Slow_DisplayName", resourceCulture);
+                return ResourceManager.GetString("CompressionSpeed_Slow_DisplayName", resourceCulture);
             }
         }
         

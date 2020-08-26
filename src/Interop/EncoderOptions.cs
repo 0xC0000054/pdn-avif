@@ -18,7 +18,7 @@ namespace AvifFileType.Interop
     internal sealed class EncoderOptions
     {
         public int quality;
-        public CompressionMode compressionMode;
+        public CompressionSpeed compressionSpeed;
         public YUVChromaSubsampling yuvFormat;
         public int maxThreads;
     }

@@ -12,7 +12,7 @@
 
 namespace AvifFileType
 {
-    internal enum CompressionMode
+    internal enum CompressionSpeed
     {
         Fast,
         Medium,

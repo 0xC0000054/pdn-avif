@@ -63,7 +63,7 @@ namespace AvifFileType
         public static void Save(Document document,
                          Stream output,
                          int quality,
-                         CompressionMode compressionMode,
+                         CompressionSpeed compressionSpeed,
                          YUVChromaSubsampling chromaSubsampling,
                          int? maxEncoderThreadsOverride,
                          Surface scratchSurface,
@@ -80,7 +80,7 @@ namespace AvifFileType
             EncoderOptions options = new EncoderOptions
             {
                 quality = quality,
-                compressionMode = compressionMode,
+                compressionSpeed = compressionSpeed,
                 // YUV 4:0:0 is always used for gray-scale images because it
                 // produces the smallest file size with no quality loss.
                 yuvFormat = grayscale ? YUVChromaSubsampling.Subsampling400 : chromaSubsampling,

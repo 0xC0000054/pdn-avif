@@ -129,16 +129,16 @@
   <data name="ChromaSubsampling_DisplayName" xml:space="preserve">
     <value>Chroma Subsampling</value>
   </data>
-  <data name="CompressionMode_DisplayName" xml:space="preserve">
-    <value>Compression Mode</value>
+  <data name="CompressionSpeed_DisplayName" xml:space="preserve">
+    <value>Compression Speed</value>
   </data>
-  <data name="CompressionMode_Fast_DisplayName" xml:space="preserve">
+  <data name="CompressionSpeed_Fast_DisplayName" xml:space="preserve">
     <value>Fast</value>
   </data>
-  <data name="CompressionMode_Medium_DisplayName" xml:space="preserve">
+  <data name="CompressionSpeed_Medium_DisplayName" xml:space="preserve">
     <value>Medium</value>
   </data>
-  <data name="CompressionMode_Slow_DisplayName" xml:space="preserve">
+  <data name="CompressionSpeed_Slow_DisplayName" xml:space="preserve">
     <value>Slow</value>
   </data>
   <data name="ForumLink_Description" xml:space="preserve">

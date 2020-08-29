@@ -31,6 +31,11 @@ namespace AvifFileType.AvifContainer
 
                 if (itemHeader.Type == BoxTypes.Handler)
                 {
+                    if (this.Handler != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The file has multiple handler boxes.");
+                    }
+
                     this.Handler = new HandlerBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.PrimaryItem)
@@ -44,22 +49,47 @@ namespace AvifFileType.AvifContainer
                 }
                 else if (itemHeader.Type == BoxTypes.ItemLocation)
                 {
+                    if (this.ItemLocations != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The file has multiple item location boxes.");
+                    }
+
                     this.ItemLocations = new ItemLocationBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemInfo)
                 {
+                    if (this.ItemInfo != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The file has multiple item info boxes.");
+                    }
+
                     this.ItemInfo = new ItemInfoBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemProperties)
                 {
+                    if (this.ItemProperties != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The file has multiple item properties boxes.");
+                    }
+
                     this.ItemProperties = new ItemPropertiesBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemReference)
                 {
+                    if (this.ItemReferences != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The file has multiple item reference boxes.");
+                    }
+
                     this.ItemReferences = new ItemReferenceBox(childSegment, itemHeader);
                 }
                 else if (itemHeader.Type == BoxTypes.ItemData)
                 {
+                    if (this.ItemData != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The file has multiple item data boxes.");
+                    }
+
                     this.ItemData = new ItemDataBox(itemHeader);
                 }
 

@@ -327,6 +327,34 @@ namespace AvifFileType
             return null;
         }
 
+        private void CheckForRequiredBoxes()
+        {
+            if (this.fileTypeBox is null)
+            {
+                ExceptionUtil.ThrowFormatException("The file does not contain a FileType box.");
+            }
+
+            if (this.metaBox is null)
+            {
+                ExceptionUtil.ThrowFormatException("The file does not contain a Meta box.");
+            }
+
+            if (this.metaBox.ItemInfo is null)
+            {
+                ExceptionUtil.ThrowFormatException("The file does not have an ItemInfo box.");
+            }
+
+            if (this.metaBox.ItemLocations is null)
+            {
+                ExceptionUtil.ThrowFormatException("The file does not have an ItemLocations box.");
+            }
+
+            if (this.metaBox.ItemProperties is null)
+            {
+                ExceptionUtil.ThrowFormatException("The file does not have an ItemProperties box.");
+            }
+        }
+
         private IEnumerable<IItemReferenceEntry> GetMatchingReferences(uint itemId, FourCC requiredReferenceType)
         {
             ItemReferenceBox itemReferenceBox = this.metaBox.ItemReferences;
@@ -429,34 +457,6 @@ namespace AvifFileType
             }
 
             CheckForRequiredBoxes();
-        }
-
-        private void CheckForRequiredBoxes()
-        {
-            if (this.fileTypeBox is null)
-            {
-                ExceptionUtil.ThrowFormatException("The file does not contain a FileType box.");
-            }
-
-            if (this.metaBox is null)
-            {
-                ExceptionUtil.ThrowFormatException("The file does not contain a Meta box.");
-            }
-
-            if (this.metaBox.ItemInfo is null)
-            {
-                ExceptionUtil.ThrowFormatException("The file does not have an ItemInfo box.");
-            }
-
-            if (this.metaBox.ItemLocations is null)
-            {
-                ExceptionUtil.ThrowFormatException("The file does not have an ItemLocations box.");
-            }
-
-            if (this.metaBox.ItemProperties is null)
-            {
-                ExceptionUtil.ThrowFormatException("The file does not have an ItemProperties box.");
-            }
         }
 
         private ImageGridDescriptor TryGetImageGridDescriptor(uint itemId)

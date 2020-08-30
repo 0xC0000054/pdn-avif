@@ -340,84 +340,6 @@ namespace AvifFileType
             }
         }
 
-        private void EnsureCompressedImagesAreAV1()
-        {
-            CheckImageItemType(this.primaryItemId, this.colorGridInfo, "color");
-
-            if (this.alphaItemId != 0)
-            {
-                CheckImageItemType(this.alphaItemId, this.alphaGridInfo, "alpha");
-            }
-        }
-
-        private void EnsurePrimaryItemIsNotHidden()
-        {
-            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(this.primaryItemId);
-
-            if (entry is null)
-            {
-                ExceptionUtil.ThrowFormatException("The primary item does not exist.");
-            }
-            else if (entry.IsHidden)
-            {
-                ExceptionUtil.ThrowFormatException("The primary item cannot be marked as hidden.");
-            }
-        }
-
-        private void EnsureRequiredImagePropertiesAreSupported()
-        {
-            CheckRequiredImageProperties(this.primaryItemId, this.colorGridInfo, "color");
-
-            if (this.alphaItemId != 0)
-            {
-                CheckRequiredImageProperties(this.alphaItemId, this.alphaGridInfo, "alpha");
-            }
-        }
-
-        private Size GetImageSize(uint itemId, ImageGridInfo gridInfo, string imageName)
-        {
-            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
-
-            uint width;
-            uint height;
-
-            if (entry.ItemType == ItemInfoEntryTypes.AV01)
-            {
-                IItemProperty property = this.parser.TryGetAssociatedItemProperty(itemId, BoxTypes.ImageSpatialExtents);
-
-                if (property is null)
-                {
-                    ExceptionUtil.ThrowFormatException($"The { imageName } image size property was not found.");
-                }
-
-                ImageSpatialExtentsBox extents = (ImageSpatialExtentsBox)property;
-
-                width = extents.ImageWidth;
-                height = extents.ImageHeight;
-            }
-            else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
-            {
-                if (gridInfo is null)
-                {
-                    ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
-                }
-
-                width = gridInfo.OutputWidth;
-                height = gridInfo.OutputHeight;
-            }
-            else
-            {
-                throw new FormatException($"The { imageName } image is not a supported format.");
-            }
-
-            if (width > int.MaxValue || height > int.MaxValue)
-            {
-                throw new FormatException($"The { imageName } image dimensions are too large.");
-            }
-
-            return new Size((int)width, (int)height);
-        }
-
         private void CheckImageItemType(uint itemId, ImageGridInfo gridInfo, string imageName, bool checkingGridChildren = false)
         {
             IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
@@ -486,6 +408,40 @@ namespace AvifFileType
             }
         }
 
+        private void EnsureCompressedImagesAreAV1()
+        {
+            CheckImageItemType(this.primaryItemId, this.colorGridInfo, "color");
+
+            if (this.alphaItemId != 0)
+            {
+                CheckImageItemType(this.alphaItemId, this.alphaGridInfo, "alpha");
+            }
+        }
+
+        private void EnsurePrimaryItemIsNotHidden()
+        {
+            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(this.primaryItemId);
+
+            if (entry is null)
+            {
+                ExceptionUtil.ThrowFormatException("The primary item does not exist.");
+            }
+            else if (entry.IsHidden)
+            {
+                ExceptionUtil.ThrowFormatException("The primary item cannot be marked as hidden.");
+            }
+        }
+
+        private void EnsureRequiredImagePropertiesAreSupported()
+        {
+            CheckRequiredImageProperties(this.primaryItemId, this.colorGridInfo, "color");
+
+            if (this.alphaItemId != 0)
+            {
+                CheckRequiredImageProperties(this.alphaItemId, this.alphaGridInfo, "alpha");
+            }
+        }
+
         private void FillAlphaImageGrid(Surface fullSurface)
         {
             this.alphaGridInfo.CheckAvailableTileCount();
@@ -542,6 +498,50 @@ namespace AvifFileType
             }
 
             MaybeUseColorDataFromDecoder(decodeInfo);
+        }
+
+        private Size GetImageSize(uint itemId, ImageGridInfo gridInfo, string imageName)
+        {
+            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+
+            uint width;
+            uint height;
+
+            if (entry.ItemType == ItemInfoEntryTypes.AV01)
+            {
+                IItemProperty property = this.parser.TryGetAssociatedItemProperty(itemId, BoxTypes.ImageSpatialExtents);
+
+                if (property is null)
+                {
+                    ExceptionUtil.ThrowFormatException($"The { imageName } image size property was not found.");
+                }
+
+                ImageSpatialExtentsBox extents = (ImageSpatialExtentsBox)property;
+
+                width = extents.ImageWidth;
+                height = extents.ImageHeight;
+            }
+            else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
+            {
+                if (gridInfo is null)
+                {
+                    ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
+                }
+
+                width = gridInfo.OutputWidth;
+                height = gridInfo.OutputHeight;
+            }
+            else
+            {
+                throw new FormatException($"The { imageName } image is not a supported format.");
+            }
+
+            if (width > int.MaxValue || height > int.MaxValue)
+            {
+                throw new FormatException($"The { imageName } image dimensions are too large.");
+            }
+
+            return new Size((int)width, (int)height);
         }
 
         private void MaybeUseColorDataFromDecoder(DecodeInfo decodeInfo)

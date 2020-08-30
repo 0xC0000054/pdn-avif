@@ -150,8 +150,8 @@ namespace AvifFileType
             ControlInfo configUI = CreateDefaultSaveConfigUI(props);
 
             PropertyControlInfo qualityPCI = configUI.FindControlForPropertyName(PropertyNames.Quality);
-            qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            qualityPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("Quality_DisplayName");
+            qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("Quality_DisplayName");
+            qualityPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = string.Empty;
 
             PropertyControlInfo compressionSpeedPCI = configUI.FindControlForPropertyName(PropertyNames.CompressionSpeed);
             compressionSpeedPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("CompressionSpeed_DisplayName");

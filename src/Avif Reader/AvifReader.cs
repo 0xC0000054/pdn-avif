@@ -103,13 +103,6 @@ namespace AvifFileType
                 ProcessColorImage(surface);
                 if (this.alphaItemId != 0)
                 {
-                    Size alphaSize = GetImageSize(this.alphaItemId, this.alphaGridInfo, "alpha");
-
-                    if (alphaSize != colorSize)
-                    {
-                        ExceptionUtil.ThrowFormatException("The alpha image size does not match the color image.");
-                    }
-
                     ProcessAlphaImage(surface);
                 }
                 else

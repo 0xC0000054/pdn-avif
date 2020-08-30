@@ -238,6 +238,48 @@ namespace AvifFileType
         }
 
         /// <summary>
+        /// Reads a null-terminated ASCII string from the stream.
+        /// </summary>
+        /// <param name="endOffset">The offset that marks the end of the null-terminator search area.</param>
+        /// <returns>The string.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="IOException">The string is longer than <see cref="int.MaxValue"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public AvifContainer.BoxString ReadBoxString(long endOffset)
+        {
+            if (endOffset < 0)
+            {
+                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(endOffset));
+            }
+
+            VerifyNotDisposed();
+
+            AvifContainer.BoxString result;
+
+            int length = GetStringLength(endOffset, out bool hasNullTerminator);
+
+            if (length == 0)
+            {
+                result = AvifContainer.BoxString.Empty;
+            }
+            else
+            {
+                EnsureBuffer(length);
+
+                result = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
+
+                this.readOffset += length;
+            }
+
+            if (hasNullTerminator)
+            {
+                this.Position++; // Skip the null-terminator if one was found at the end of the string.
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Reads the next byte from the current stream.
         /// </summary>
         /// <returns>The next byte read from the current stream.</returns>
@@ -341,6 +383,15 @@ namespace AvifFileType
         }
 
         /// <summary>
+        /// Reads a four-character code from the stream.
+        /// </summary>
+        /// <returns>The four-character code.</returns>
+        public AvifContainer.FourCC ReadFourCC()
+        {
+            return new AvifContainer.FourCC(ReadUInt32());
+        }
+
+        /// <summary>
         /// Reads a 2-byte signed integer.
         /// </summary>
         /// <returns>The 2-byte signed integer.</returns>
@@ -349,6 +400,41 @@ namespace AvifFileType
         public short ReadInt16()
         {
             return (short)ReadUInt16();
+        }
+
+        /// <summary>
+        /// Reads a 4-byte signed integer.
+        /// </summary>
+        /// <returns>The 4-byte signed integer.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public int ReadInt32()
+        {
+            return (int)ReadUInt32();
+        }
+
+        /// <summary>
+        /// Reads a 8-byte signed integer.
+        /// </summary>
+        /// <returns>The 8-byte signed integer.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public long ReadInt64()
+        {
+            return (long)ReadUInt64();
+        }
+
+        /// <summary>
+        /// Reads a 4-byte floating point value.
+        /// </summary>
+        /// <returns>The 4-byte floating point value.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public unsafe float ReadSingle()
+        {
+            uint temp = ReadUInt32();
+
+            return *(float*)&temp;
         }
 
         /// <summary>
@@ -383,17 +469,6 @@ namespace AvifFileType
         }
 
         /// <summary>
-        /// Reads a 4-byte signed integer.
-        /// </summary>
-        /// <returns>The 4-byte signed integer.</returns>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
-        public int ReadInt32()
-        {
-            return (int)ReadUInt32();
-        }
-
-        /// <summary>
         /// Reads a 4-byte unsigned integer.
         /// </summary>
         /// <returns>The 4-byte unsigned integer.</returns>
@@ -422,30 +497,6 @@ namespace AvifFileType
             this.readOffset += sizeof(uint);
 
             return val;
-        }
-
-        /// <summary>
-        /// Reads a 4-byte floating point value.
-        /// </summary>
-        /// <returns>The 4-byte floating point value.</returns>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
-        public unsafe float ReadSingle()
-        {
-            uint temp = ReadUInt32();
-
-            return *(float*)&temp;
-        }
-
-        /// <summary>
-        /// Reads a 8-byte signed integer.
-        /// </summary>
-        /// <returns>The 8-byte signed integer.</returns>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
-        public long ReadInt64()
-        {
-            return (long)ReadUInt64();
         }
 
         /// <summary>
@@ -480,97 +531,6 @@ namespace AvifFileType
             this.readOffset += sizeof(ulong);
 
             return (((ulong)hi) << 32) | lo;
-        }
-
-        /// <summary>
-        /// Reads a null-terminated ASCII string from the stream.
-        /// </summary>
-        /// <param name="endOffset">The offset that marks the end of the null-terminator search area.</param>
-        /// <returns>The string.</returns>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        /// <exception cref="IOException">The string is longer than <see cref="int.MaxValue"/>.</exception>
-        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
-        public AvifContainer.BoxString ReadBoxString(long endOffset)
-        {
-            if (endOffset < 0)
-            {
-                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(endOffset));
-            }
-
-            VerifyNotDisposed();
-
-            AvifContainer.BoxString result;
-
-            int length = GetStringLength(endOffset, out bool hasNullTerminator);
-
-            if (length == 0)
-            {
-                result = AvifContainer.BoxString.Empty;
-            }
-            else
-            {
-                EnsureBuffer(length);
-
-                result = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
-
-                this.readOffset += length;
-            }
-
-            if (hasNullTerminator)
-            {
-                this.Position++; // Skip the null-terminator if one was found at the end of the string.
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Reads a four-character code from the stream.
-        /// </summary>
-        /// <returns>The four-character code.</returns>
-        public AvifContainer.FourCC ReadFourCC()
-        {
-            return new AvifContainer.FourCC(ReadUInt32());
-        }
-
-        /// <summary>
-        /// Gets the length of the string.
-        /// </summary>
-        /// <param name="endOffset">The offset that marks the end of the null-terminator search area.</param>
-        /// <param name="hasNullTerminator"><c>true</c> if the string has a null terminator; otherwise, <c>false</c>.</param>
-        /// <returns>The string length.</returns>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        /// <exception cref="IOException">The string is longer than <see cref="int.MaxValue"/>.</exception>
-        private int GetStringLength(long endOffset, out bool hasNullTerminator)
-        {
-            hasNullTerminator = false;
-
-            long oldPosition = this.Position;
-
-            while (this.Position < endOffset)
-            {
-                if (ReadByteInternal() == 0)
-                {
-                    hasNullTerminator = true;
-                    break;
-                }
-            }
-
-            long length = this.Position - oldPosition;
-            if (hasNullTerminator)
-            {
-                // Subtract the null terminator from the string length.
-                length--;
-            }
-
-            this.Position = oldPosition;
-
-            if (length > int.MaxValue)
-            {
-                throw new IOException($"The string is longer than { int.MaxValue }.");
-            }
-
-            return (int)length;
         }
 
         /// <summary>
@@ -618,6 +578,46 @@ namespace AvifFileType
 
             this.readOffset = 0;
             this.readLength = numBytesRead;
+        }
+
+        /// <summary>
+        /// Gets the length of the string.
+        /// </summary>
+        /// <param name="endOffset">The offset that marks the end of the null-terminator search area.</param>
+        /// <param name="hasNullTerminator"><c>true</c> if the string has a null terminator; otherwise, <c>false</c>.</param>
+        /// <returns>The string length.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="IOException">The string is longer than <see cref="int.MaxValue"/>.</exception>
+        private int GetStringLength(long endOffset, out bool hasNullTerminator)
+        {
+            hasNullTerminator = false;
+
+            long oldPosition = this.Position;
+
+            while (this.Position < endOffset)
+            {
+                if (ReadByteInternal() == 0)
+                {
+                    hasNullTerminator = true;
+                    break;
+                }
+            }
+
+            long length = this.Position - oldPosition;
+            if (hasNullTerminator)
+            {
+                // Subtract the null terminator from the string length.
+                length--;
+            }
+
+            this.Position = oldPosition;
+
+            if (length > int.MaxValue)
+            {
+                throw new IOException($"The string is longer than { int.MaxValue }.");
+            }
+
+            return (int)length;
         }
 
         /// <summary>

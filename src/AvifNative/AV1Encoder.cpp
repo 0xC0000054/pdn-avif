@@ -61,7 +61,10 @@ namespace
             switch (options->compressionSpeed)
             {
             case CompressionSpeed::Fast:
-                cpuUsed = 8;
+                // The AOM version 2.0.0 encoder will crash with an access violation on some images
+                // if the cpuUsed value is above 6.
+                // See https://github.com/0xC0000054/pdn-avif/issues/12
+                cpuUsed = 6;
                 usage = AOM_USAGE_REALTIME;
                 break;
             case CompressionSpeed::Slow:

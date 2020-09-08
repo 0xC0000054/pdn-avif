@@ -183,17 +183,11 @@ namespace
 
         for (size_t imageY = 0; imageY < bgraImage->height; imageY += 2)
         {
+            const size_t blockHeight = (imageY + 1) < bgraImage->height ? 2 : 1;
+
             for (size_t imageX = 0; imageX < bgraImage->width; imageX += 2)
             {
-                size_t blockWidth = 2, blockHeight = 2;
-                if ((imageX + 1) >= bgraImage->width)
-                {
-                    blockWidth = 1;
-                }
-                if ((imageY + 1) >= bgraImage->height)
-                {
-                    blockHeight = 1;
-                }
+                const size_t blockWidth = (imageX + 1) < bgraImage->width ? 2 : 1;
 
                 // Convert an entire 2x2 block to YUV, and populate any fully sampled channels as we go
                 for (size_t blockY = 0; blockY < blockHeight; ++blockY)

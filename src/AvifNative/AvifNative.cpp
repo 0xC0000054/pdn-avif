@@ -41,7 +41,6 @@ namespace
 {
     EncoderStatus CompressWithAOM(
         const BitmapData* image,
-        bool includeTransparency,
         const EncoderOptions* encodeOptions,
         ProgressContext* progressContext,
         const CICPColorData& colorInfo,
@@ -77,7 +76,7 @@ namespace
         }
 
         AvifNative::unique_aom_image alpha;
-        if (includeTransparency)
+        if (compressedAlphaImage && compressedAlphaImageSize)
         {
             alpha.reset(ConvertAlphaToAOMImage(image));
             if (!alpha)
@@ -146,11 +145,8 @@ EncoderStatus __stdcall CompressImage(
         return EncoderStatus::UserCancelled;
     }
 
-    const bool includeTransparency = compressedAlphaImage && compressedAlphaImageSize;
-
     return CompressWithAOM(
         image,
-        includeTransparency,
         encodeOptions,
         progressContext,
         colorInfo,

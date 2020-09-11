@@ -152,7 +152,7 @@ namespace AvifFileType
         }
 
         /// <summary>
-        /// Reads a null-terminated ASCII string from the stream.
+        /// Reads a null-terminated UTF-8 string from the stream.
         /// </summary>
         /// <param name="endOffset">The offset that marks the end of the null-terminator search area.</param>
         /// <returns>The string.</returns>

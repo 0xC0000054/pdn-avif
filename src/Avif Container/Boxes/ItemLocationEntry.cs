@@ -11,6 +11,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -19,6 +20,8 @@ namespace AvifFileType.AvifContainer
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
     internal sealed class ItemLocationEntry
     {
+        private readonly List<ItemLocationExtent> extents;
+
         public ItemLocationEntry(in EndianBinaryReaderSegment reader, ItemLocationBox parent)
         {
             switch (parent.Version)
@@ -62,12 +65,24 @@ namespace AvifFileType.AvifContainer
             }
 
             ushort extentCount = reader.ReadUInt16();
-            if (extentCount != 1)
+            if (extentCount == 0)
             {
-                throw new FormatException("ItemLocation entries with more than one extent are not supported.");
+                throw new FormatException("The ItemLocationEntry has zero extents.");
             }
 
-            this.Extent = new ItemLocationExtent(reader, parent, extentCount);
+            this.extents = new List<ItemLocationExtent>(extentCount);
+            ulong totalItemSize = 0;
+
+            for (int i = 0; i < this.extents.Capacity; i++)
+            {
+                ItemLocationExtent extent = new ItemLocationExtent(reader, parent, extentCount);
+
+                this.extents.Add(extent);
+
+                totalItemSize = checked(totalItemSize + extent.Length);
+            }
+
+            this.TotalItemSize = totalItemSize;
         }
 
         public ItemLocationEntry(ushort itemId, ulong itemLength)
@@ -76,7 +91,11 @@ namespace AvifFileType.AvifContainer
             this.DataReferenceIndex = 0;
             this.ConstructionMethod = ConstructionMethod.FileOffset;
             this.BaseOffset = 0;
-            this.Extent = new ItemLocationExtent(itemLength);
+            this.extents = new List<ItemLocationExtent>(1)
+            {
+                new ItemLocationExtent(itemLength)
+            };
+            this.TotalItemSize = itemLength;
         }
 
         public uint ItemId { get; }
@@ -87,17 +106,19 @@ namespace AvifFileType.AvifContainer
 
         public ulong BaseOffset { get; }
 
-        public ItemLocationExtent Extent { get; }
+        public IReadOnlyList<ItemLocationExtent> Extents => this.extents;
+
+        public ulong TotalItemSize { get; }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay
         {
             get
             {
-                ulong offset = this.BaseOffset + this.Extent.Offset;
-                ulong length = this.Extent.Length;
+                int extentCount = this.extents.Count;
+                ulong length = this.TotalItemSize;
 
-                return $"ItemId: { this.ItemId }, ConstructionMethod: { this.ConstructionMethod }, Offset: { offset }, Length: { length }";
+                return $"ItemId: { this.ItemId }, ConstructionMethod: { this.ConstructionMethod }, Extent count: { extentCount }, Length: { length }";
             }
         }
 
@@ -149,9 +170,9 @@ namespace AvifFileType.AvifContainer
                     throw new InvalidOperationException($"BaseOffsetSize must be 0, 4 or 8, actual value: { parent.BaseOffsetSize.ToString(CultureInfo.InvariantCulture) }");
             }
 
-            // The format specification allows an ItemLocationEntry to have multiple ItemLocationExtent values, but we only need one.
+            // The format specification allows an ItemLocationEntry to have multiple ItemLocationExtent values, but we only use one.
             writer.Write((ushort)1);
-            this.Extent.Write(writer, parent);
+            this.extents[0].Write(writer, parent);
         }
     }
 }

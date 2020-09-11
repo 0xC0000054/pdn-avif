@@ -75,6 +75,7 @@
     <Compile Include="Avif Container\Boxes\Rational.cs" />
     <Compile Include="Avif Container\ImageGridDescriptor.cs" />
     <Compile Include="Avif Container\ImageGridInfo.cs" />
+    <Compile Include="Avif Reader\AvifItemData.cs" />
     <Compile Include="Avif Reader\AvifReader.cs" />
     <Compile Include="Avif Reader\AvifParser.cs" />
     <Compile Include="Avif Reader\CICPSerializer.cs" />

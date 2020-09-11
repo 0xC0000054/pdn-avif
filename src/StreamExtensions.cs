@@ -50,59 +50,6 @@ namespace AvifFileType
             return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
         }
 
-        public static unsafe ulong ProperRead(this Stream stream, SafeBuffer buffer)
-        {
-            if (buffer is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
-            }
-
-            ulong length = buffer.ByteLength;
-
-            if (length == 0)
-            {
-                return 0;
-            }
-
-            int bufferSize = (int)Math.Min(length, MaxBufferSize);
-            byte[] readBuffer = new byte[bufferSize];
-
-            ulong totalBytesRead = 0;
-
-            byte* writePtr = null;
-            System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                buffer.AcquirePointer(ref writePtr);
-
-                fixed (byte* readPtr = readBuffer)
-                {
-                    while (totalBytesRead < length)
-                    {
-                        int bytesRead = stream.Read(readBuffer, 0, (int)Math.Min(length - totalBytesRead, MaxBufferSize));
-
-                        if (bytesRead == 0)
-                        {
-                            break;
-                        }
-
-                        Buffer.MemoryCopy(readPtr, writePtr + totalBytesRead, bytesRead, bytesRead);
-
-                        totalBytesRead += (ulong)bytesRead;
-                    }
-                }
-            }
-            finally
-            {
-                if (writePtr != null)
-                {
-                    buffer.ReleasePointer();
-                }
-            }
-
-            return totalBytesRead;
-        }
-
         public static unsafe void Write(this Stream stream, SafeBuffer buffer)
         {
             if (buffer is null)

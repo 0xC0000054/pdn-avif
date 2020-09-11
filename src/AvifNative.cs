@@ -170,7 +170,7 @@ namespace AvifFileType
             GC.KeepAlive(avifProgress);
         }
 
-        public static void DecompressColor(SafeProcessHeapBuffer colorImage,
+        public static void DecompressColor(AvifItemData colorImage,
                                            CICPColorData? colorConversionInfo,
                                            DecodeInfo decodeInfo,
                                            Surface fullSurface)
@@ -190,56 +190,63 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(fullSurface));
             }
 
-            BitmapData bitmapData = new BitmapData
-            {
-                scan0 = fullSurface.Scan0.Pointer,
-                width = (uint)fullSurface.Width,
-                height = (uint)fullSurface.Height,
-                stride = (uint)fullSurface.Stride
-            };
-            UIntPtr colorImageSize = new UIntPtr(colorImage.ByteLength);
 
-            DecoderStatus status;
+            DecoderStatus status = DecoderStatus.Ok;
 
-            if (colorConversionInfo.HasValue)
+            unsafe
             {
-                CICPColorData colorData = colorConversionInfo.Value;
+                colorImage.UseBufferPointer((ptr, length) =>
+                {
+                    BitmapData bitmapData = new BitmapData
+                    {
+                        scan0 = fullSurface.Scan0.Pointer,
+                        width = (uint)fullSurface.Width,
+                        height = (uint)fullSurface.Height,
+                        stride = (uint)fullSurface.Stride
+                    };
+                    UIntPtr colorImageSize = new UIntPtr(length);
 
-                if (IntPtr.Size == 8)
-                {
-                    status = AvifNative_64.DecompressColorImage(colorImage,
-                                                                colorImageSize,
-                                                                ref colorData,
-                                                                decodeInfo,
-                                                                ref bitmapData);
-                }
-                else
-                {
-                    status = AvifNative_86.DecompressColorImage(colorImage,
-                                                                colorImageSize,
-                                                                ref colorData,
-                                                                decodeInfo,
-                                                                ref bitmapData);
-                }
-            }
-            else
-            {
-                if (IntPtr.Size == 8)
-                {
-                    status = AvifNative_64.DecompressColorImage(colorImage,
-                                                                colorImageSize,
-                                                                IntPtr.Zero,
-                                                                decodeInfo,
-                                                                ref bitmapData);
-                }
-                else
-                {
-                    status = AvifNative_86.DecompressColorImage(colorImage,
-                                                                colorImageSize,
-                                                                IntPtr.Zero,
-                                                                decodeInfo,
-                                                                ref bitmapData);
-                }
+                    if (colorConversionInfo.HasValue)
+                    {
+                        CICPColorData colorData = colorConversionInfo.Value;
+
+                        if (IntPtr.Size == 8)
+                        {
+                            status = AvifNative_64.DecompressColorImage(ptr,
+                                                                        colorImageSize,
+                                                                        ref colorData,
+                                                                        decodeInfo,
+                                                                        ref bitmapData);
+                        }
+                        else
+                        {
+                            status = AvifNative_86.DecompressColorImage(ptr,
+                                                                        colorImageSize,
+                                                                        ref colorData,
+                                                                        decodeInfo,
+                                                                        ref bitmapData);
+                        }
+                    }
+                    else
+                    {
+                        if (IntPtr.Size == 8)
+                        {
+                            status = AvifNative_64.DecompressColorImage(ptr,
+                                                                        colorImageSize,
+                                                                        IntPtr.Zero,
+                                                                        decodeInfo,
+                                                                        ref bitmapData);
+                        }
+                        else
+                        {
+                            status = AvifNative_86.DecompressColorImage(ptr,
+                                                                        colorImageSize,
+                                                                        IntPtr.Zero,
+                                                                        decodeInfo,
+                                                                        ref bitmapData);
+                        }
+                    }
+                });
             }
 
             if (status != DecoderStatus.Ok)
@@ -248,7 +255,7 @@ namespace AvifFileType
             }
         }
 
-        public static void DecompressAlpha(SafeProcessHeapBuffer alphaImage,
+        public static void DecompressAlpha(AvifItemData alphaImage,
                                            DecodeInfo decodeInfo,
                                            Surface fullSurface)
         {
@@ -267,29 +274,37 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(fullSurface));
             }
 
-            BitmapData bitmapData = new BitmapData
-            {
-                scan0 = fullSurface.Scan0.Pointer,
-                width = (uint)fullSurface.Width,
-                height = (uint)fullSurface.Height,
-                stride = (uint)fullSurface.Stride
-            };
-            UIntPtr alphaImageSize = new UIntPtr(alphaImage.ByteLength);
-            DecoderStatus status;
+            DecoderStatus status = DecoderStatus.Ok;
 
-            if (IntPtr.Size == 8)
+            unsafe
             {
-                status = AvifNative_64.DecompressAlphaImage(alphaImage,
-                                                            alphaImageSize,
-                                                            decodeInfo,
-                                                            ref bitmapData);
-            }
-            else
-            {
-                status = AvifNative_86.DecompressAlphaImage(alphaImage,
-                                                            alphaImageSize,
-                                                            decodeInfo,
-                                                            ref bitmapData);
+                alphaImage.UseBufferPointer((ptr, length) =>
+                    {
+                        BitmapData bitmapData = new BitmapData
+                        {
+                            scan0 = fullSurface.Scan0.Pointer,
+                            width = (uint)fullSurface.Width,
+                            height = (uint)fullSurface.Height,
+                            stride = (uint)fullSurface.Stride
+                        };
+
+                        UIntPtr alphaImageSize = new UIntPtr(length);
+
+                        if (IntPtr.Size == 8)
+                        {
+                            status = AvifNative_64.DecompressAlphaImage(ptr,
+                                                                        alphaImageSize,
+                                                                        decodeInfo,
+                                                                        ref bitmapData);
+                        }
+                        else
+                        {
+                            status = AvifNative_86.DecompressAlphaImage(ptr,
+                                                                        alphaImageSize,
+                                                                        decodeInfo,
+                                                                        ref bitmapData);
+                        }
+                    });
             }
 
             if (status != DecoderStatus.Ok)

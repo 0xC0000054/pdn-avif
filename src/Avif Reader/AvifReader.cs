@@ -24,11 +24,9 @@ namespace AvifFileType
     internal sealed class AvifReader
         : IDisposable
     {
-        private Stream stream;
         private bool disposed;
         private ColorInformationBox colorInfoBox;
         private CICPColorData? imageColorData;
-        private readonly bool leaveOpen;
         private readonly AvifParser parser;
         private readonly uint primaryItemId;
         private readonly uint alphaItemId;
@@ -52,9 +50,7 @@ namespace AvifFileType
 
             // The parser is initialized first because it will throw an exception
             // if the AVIF file is invalid or not supported.
-            this.parser = new AvifParser(input, leaveOpen: true);
-            this.stream = input;
-            this.leaveOpen = leaveOpen;
+            this.parser = new AvifParser(input, leaveOpen);
             this.primaryItemId = this.parser.GetPrimaryItemId();
             this.alphaItemId = this.parser.GetAlphaItemId(this.primaryItemId);
             this.colorInfoBox = this.parser.TryGetColorInfoBox(this.primaryItemId);
@@ -134,12 +130,6 @@ namespace AvifFileType
                 this.disposed = true;
 
                 this.parser?.Dispose();
-                if (!this.leaveOpen)
-                {
-                    this.stream.Dispose();
-                }
-
-                this.stream = null;
             }
         }
 
@@ -151,43 +141,37 @@ namespace AvifFileType
 
             if (entry != null)
             {
-                long? offset = this.parser.TryCalculateItemOffset(entry);
-
-                if (!offset.HasValue)
-                {
-                    // The EXIF data has an invalid file offset, ignore it.
-                    return null;
-                }
-
-                ulong length = entry.Extent.Length;
+                ulong length = entry.TotalItemSize;
 
                 // Ignore any EXIF blocks that are larger than 2GB.
                 if (length < int.MaxValue)
                 {
-                    this.stream.Position = offset.Value;
-
-                    // The EXIF data block has a header that indicates the number of bytes
-                    // that come before the start of the TIFF header.
-                    // See ISO/IEC 23008-12:2017 section A.2.1.
-
-                    long tiffStartOffset = this.stream.TryReadUInt32BigEndian();
-
-                    if (tiffStartOffset != -1)
+                    using (AvifItemData itemData = this.parser.ReadItemData(entry))
+                    using (Stream stream = itemData.GetStream())
                     {
-                        long dataLength = (long)length - tiffStartOffset - sizeof(uint);
+                        // The EXIF data block has a header that indicates the number of bytes
+                        // that come before the start of the TIFF header.
+                        // See ISO/IEC 23008-12:2017 section A.2.1.
 
-                        if (dataLength > 0)
+                        long tiffStartOffset = stream.TryReadUInt32BigEndian();
+
+                        if (tiffStartOffset != -1)
                         {
-                            if (tiffStartOffset != 0)
+                            long dataLength = (long)length - tiffStartOffset - sizeof(uint);
+
+                            if (dataLength > 0)
                             {
-                                this.stream.Position += tiffStartOffset;
+                                if (tiffStartOffset != 0)
+                                {
+                                    stream.Position += tiffStartOffset;
+                                }
+
+                                byte[] bytes = new byte[dataLength];
+
+                                stream.ProperRead(bytes, 0, bytes.Length);
+
+                                return bytes;
                             }
-
-                            byte[] bytes = new byte[dataLength];
-
-                            this.stream.ProperRead(bytes, 0, bytes.Length);
-
-                            return bytes;
                         }
                     }
                 }
@@ -216,26 +200,15 @@ namespace AvifFileType
 
             if (entry != null)
             {
-                long? offset = this.parser.TryCalculateItemOffset(entry);
-
-                if (!offset.HasValue)
-                {
-                    // The XMP data has an invalid file offset, ignore it.
-                    return null;
-                }
-
-                ulong length = entry.Extent.Length;
+                ulong length = entry.TotalItemSize;
 
                 // Ignore any XMP packets that are larger than 2GB.
                 if (length < int.MaxValue)
                 {
-                    this.stream.Position = offset.Value;
-
-                    byte[] bytes = new byte[(int)length];
-
-                    this.stream.ProperRead(bytes, 0, bytes.Length);
-
-                    return bytes;
+                    using (AvifItemData itemData = this.parser.ReadItemData(entry))
+                    {
+                        return itemData.ToArray();
+                    }
                 }
             }
 
@@ -371,34 +344,18 @@ namespace AvifFileType
 
         private void DecodeColorImage(uint itemId, DecodeInfo decodeInfo, CICPColorData? colorConversionInfo, Surface fullSurface)
         {
-            SafeProcessHeapBuffer color = null;
-
-            try
+            using (AvifItemData color = ReadColorImage(itemId))
             {
-                color = ReadColorImage(itemId);
-
                 AvifNative.DecompressColor(color, colorConversionInfo, decodeInfo, fullSurface);
-            }
-            finally
-            {
-                color?.Dispose();
             }
         }
 
         private void DecodeAlphaImage(uint itemId, DecodeInfo decodeInfo, Surface fullSurface)
         {
-            SafeProcessHeapBuffer alpha = null;
-
-            try
+            using (AvifItemData alpha = ReadAlphaImage(itemId))
             {
-                alpha = ReadAlphaImage(itemId);
-
                 AvifNative.DecompressAlpha(alpha, decodeInfo, fullSurface);
-            }
-            finally
-            {
-                alpha?.Dispose();
-            }
+            }            
         }
 
         private void EnsureCompressedImagesAreAV1()
@@ -606,7 +563,7 @@ namespace AvifFileType
             }
         }
 
-        private SafeProcessHeapBuffer ReadAlphaImage(uint itemId)
+        private AvifItemData ReadAlphaImage(uint itemId)
         {
             ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
 
@@ -618,7 +575,7 @@ namespace AvifFileType
             return ReadImageData(entry);
         }
 
-        private SafeProcessHeapBuffer ReadColorImage(uint itemId)
+        private AvifItemData ReadColorImage(uint itemId)
         {
             ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
 
@@ -630,28 +587,14 @@ namespace AvifFileType
             return ReadImageData(entry);
         }
 
-        private SafeProcessHeapBuffer ReadImageData(ItemLocationEntry entry)
+        private AvifItemData ReadImageData(ItemLocationEntry entry)
         {
             if (entry is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(entry));
             }
 
-            long? offset = this.parser.TryCalculateItemOffset(entry);
-
-            if (!offset.HasValue)
-            {
-                ExceptionUtil.ThrowFormatException("The image data has an invalid file offset.");
-            }
-
-            ulong length = entry.Extent.Length;
-
-            SafeProcessHeapBuffer buffer = SafeProcessHeapBuffer.Create(length);
-
-            this.stream.Position = offset.Value;
-            this.stream.ProperRead(buffer);
-
-            return buffer;
+            return this.parser.ReadItemData(entry);
         }
 
         private void VerifyNotDisposed()

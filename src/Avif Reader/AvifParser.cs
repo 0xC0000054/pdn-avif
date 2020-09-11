@@ -23,6 +23,14 @@ namespace AvifFileType
     internal sealed class AvifParser
         : IDisposable
     {
+        // 81920 is the largest multiple of 4096 that is under the large object heap limit (around 85,000 bytes).
+        // It is used as the managed buffer size cutoff to avoid having to allocate both an unmanaged buffer and
+        // a temporary managed buffer for as many images as possible.
+        //
+        // When reading data into the unmanaged buffer the EndianBinaryReader will use a temporary managed
+        // buffer that is this size.
+        private const ulong UnmanagedAvifItemDataThreshold = 81920;
+
         private FileTypeBox fileTypeBox;
         private MetaBox metaBox;
         private EndianBinaryReader reader;
@@ -138,69 +146,57 @@ namespace AvifFileType
             return false;
         }
 
-        public long? TryCalculateItemOffset(ItemLocationEntry entry)
+        public AvifItemData ReadItemData(ItemLocationEntry entry)
         {
             if (entry is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(entry));
             }
 
-            ulong offset;
+            AvifItemData data;
 
-            try
+            if (entry.Extents.Count == 1)
             {
-                if (entry.ConstructionMethod == ConstructionMethod.FileOffset)
-                {
-                    checked
-                    {
-                        offset = entry.BaseOffset + entry.Extent.Offset;
+                long? offset = TryCalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, entry.Extents[0]);
 
-                        if ((offset + entry.Extent.Length) > this.fileLength)
-                        {
-                            return null;
-                        }
-                    }
+                if (!offset.HasValue)
+                {
+                    throw new FormatException("The item has an invalid file offset.");
                 }
-                else if (entry.ConstructionMethod == ConstructionMethod.IDatBoxOffset)
+
+                this.reader.Position = offset.Value;
+
+                ulong totalItemSize = entry.TotalItemSize;
+
+                if (totalItemSize >= UnmanagedAvifItemDataThreshold)
                 {
-                    ItemDataBox dataBox = this.metaBox.ItemData;
+                    UnmanagedAvifItemData unmanagedItemData = new UnmanagedAvifItemData(totalItemSize);
 
-                    if (dataBox is null)
+                    try
                     {
-                        return null;
+                        this.reader.ProperRead(unmanagedItemData.UnmanagedBuffer, 0, totalItemSize);
+
+                        data = unmanagedItemData;
+                        unmanagedItemData = null;
                     }
-
-                    checked
+                    finally
                     {
-                        if ((entry.Extent.Offset + entry.Extent.Length) > (ulong)dataBox.Length)
-                        {
-                            return null;
-                        }
-
-                        offset = (ulong)dataBox.Offset + entry.Extent.Offset;
-
-                        if ((offset + entry.Extent.Length) > this.fileLength)
-                        {
-                            return null;
-                        }
+                        unmanagedItemData?.Dispose();
                     }
                 }
                 else
                 {
-                    throw new FormatException($"ItemLocationEntry construction method { entry.ConstructionMethod } is not supported.");
+                    byte[] bytes = this.reader.ReadBytes((int)totalItemSize);
+
+                    data = new ManagedAvifItemData(bytes);
                 }
             }
-            catch (OverflowException)
+            else
             {
-                return null;
+                data = ReadDataFromMultipleExtents(entry);
             }
 
-            if (offset > long.MaxValue)
-            {
-                return null;
-            }
-
-            return (long)offset;
+            return data;
         }
 
         public IItemProperty TryGetAssociatedItemProperty(uint itemId, FourCC propertyType)
@@ -459,6 +455,158 @@ namespace AvifFileType
             CheckForRequiredBoxes();
         }
 
+        private AvifItemData ReadDataFromMultipleExtents(ItemLocationEntry entry)
+        {
+            AvifItemData data;
+
+            IReadOnlyList<ItemLocationExtent> extents = entry.Extents;
+            ulong totalItemSize = entry.TotalItemSize;
+
+            if (totalItemSize >= UnmanagedAvifItemDataThreshold)
+            {
+                UnmanagedAvifItemData unmanagedItemData = new UnmanagedAvifItemData(totalItemSize);
+
+                try
+                {
+                    ulong offset = 0;
+                    ulong remainingBytes = totalItemSize;
+
+                    for (int i = 0; i < extents.Count; i++)
+                    {
+                        ItemLocationExtent extent = extents[i];
+
+                        long? itemOffset = TryCalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
+
+                        if (!itemOffset.HasValue)
+                        {
+                            throw new FormatException("The item has an invalid file offset.");
+                        }
+
+                        ulong length = extent.Length;
+
+                        if (length > remainingBytes)
+                        {
+                            throw new FormatException("The extent length is greater than the number of bytes remaining for the item.");
+                        }
+
+                        this.reader.Position = itemOffset.Value;
+                        this.reader.ProperRead(unmanagedItemData.UnmanagedBuffer, offset, length);
+
+                        offset += length;
+                        remainingBytes -= length;
+                    }
+
+                    data = unmanagedItemData;
+                    unmanagedItemData = null;
+                }
+                finally
+                {
+                    unmanagedItemData?.Dispose();
+                }
+            }
+            else
+            {
+                byte[] bytes = new byte[(int)totalItemSize];
+
+                int offset = 0;
+                int remainingBytes = bytes.Length;
+
+                for (int i = 0; i < extents.Count; i++)
+                {
+                    ItemLocationExtent extent = extents[i];
+
+                    long? itemOffset = TryCalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
+
+                    if (!itemOffset.HasValue)
+                    {
+                        throw new FormatException("The item has an invalid file offset.");
+                    }
+
+                    int length = (int)extent.Length;
+
+                    if (length > remainingBytes)
+                    {
+                        throw new FormatException("The extent length is greater than the number of bytes remaining for the item.");
+                    }
+
+                    this.reader.Position = itemOffset.Value;
+                    this.reader.ProperRead(bytes, offset, length);
+
+                    offset += length;
+                    remainingBytes -= length;
+                }
+
+                data = new ManagedAvifItemData(bytes);
+            }
+
+            return data;
+        }
+
+        private long? TryCalculateExtentOffset(ulong baseOffset, ConstructionMethod constructionMethod, ItemLocationExtent extent)
+        {
+            if (extent is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(extent));
+            }
+
+            ulong offset;
+
+            try
+            {
+                if (constructionMethod == ConstructionMethod.FileOffset)
+                {
+                    checked
+                    {
+                        offset = baseOffset + extent.Offset;
+
+                        if ((offset + extent.Length) > this.fileLength)
+                        {
+                            return null;
+                        }
+                    }
+                }
+                else if (constructionMethod == ConstructionMethod.IDatBoxOffset)
+                {
+                    ItemDataBox dataBox = this.metaBox.ItemData;
+
+                    if (dataBox is null)
+                    {
+                        return null;
+                    }
+
+                    checked
+                    {
+                        if ((extent.Offset + extent.Length) > (ulong)dataBox.Length)
+                        {
+                            return null;
+                        }
+
+                        offset = (ulong)dataBox.Offset + extent.Offset;
+
+                        if ((offset + extent.Length) > this.fileLength)
+                        {
+                            return null;
+                        }
+                    }
+                }
+                else
+                {
+                    throw new FormatException($"ItemLocationEntry construction method { constructionMethod } is not supported.");
+                }
+            }
+            catch (OverflowException)
+            {
+                return null;
+            }
+
+            if (offset > long.MaxValue)
+            {
+                return null;
+            }
+
+            return (long)offset;
+        }
+
         private ImageGridDescriptor TryGetImageGridDescriptor(uint itemId)
         {
             IItemInfoEntry entry = TryGetItemInfoEntry(itemId);
@@ -469,19 +617,31 @@ namespace AvifFileType
 
                 if (locationEntry != null)
                 {
-                    if (locationEntry.Extent.Length < ImageGridDescriptor.SmallDescriptorLength)
+                    if (locationEntry.TotalItemSize < ImageGridDescriptor.SmallDescriptorLength)
                     {
                         ExceptionUtil.ThrowFormatException("Invalid image grid descriptor length.");
                     }
 
-                    long? offset = TryCalculateItemOffset(locationEntry);
-                    if (!offset.HasValue)
+                    using (AvifItemData itemData = ReadItemData(locationEntry))
                     {
-                        ExceptionUtil.ThrowFormatException("The image grid descriptor has an invalid file offset.");
-                    }
+                        Stream stream = null;
 
-                    this.reader.Position = offset.Value;
-                    return new ImageGridDescriptor(this.reader, locationEntry.Extent.Length);
+                        try
+                        {
+                            stream = itemData.GetStream();
+
+                            using (EndianBinaryReader imageGridReader = new EndianBinaryReader(stream, this.reader.Endianess))
+                            {
+                                stream = null;
+
+                                return new ImageGridDescriptor(imageGridReader, itemData.Length);
+                            }
+                        }
+                        finally
+                        {
+                            stream?.Dispose();
+                        }
+                    }
                 }
             }
 

@@ -63,7 +63,8 @@ namespace AvifFileType
                 {
                     AvifWriterItem item = items[i];
 
-                    item.ItemLocation.Extent.WriteFinalOffset(writer, (ulong)writer.Position);
+                    // We only ever write items with a single extent.
+                    item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
 
                     if (item.Image != null)
                     {

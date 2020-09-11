@@ -29,7 +29,7 @@ namespace AvifFileType
         //
         // When reading data into the unmanaged buffer the EndianBinaryReader will use a temporary managed
         // buffer that is this size.
-        private const ulong UnmanagedAvifItemDataThreshold = 81920;
+        private const ulong ManagedAvifItemDataMaxSize = 81920;
 
         private FileTypeBox fileTypeBox;
         private MetaBox metaBox;
@@ -168,7 +168,13 @@ namespace AvifFileType
 
                 ulong totalItemSize = entry.TotalItemSize;
 
-                if (totalItemSize >= UnmanagedAvifItemDataThreshold)
+                if (totalItemSize <= ManagedAvifItemDataMaxSize)
+                {
+                    byte[] bytes = this.reader.ReadBytes((int)totalItemSize);
+
+                    data = new ManagedAvifItemData(bytes);
+                }
+                else
                 {
                     UnmanagedAvifItemData unmanagedItemData = new UnmanagedAvifItemData(totalItemSize);
 
@@ -183,12 +189,6 @@ namespace AvifFileType
                     {
                         unmanagedItemData?.Dispose();
                     }
-                }
-                else
-                {
-                    byte[] bytes = this.reader.ReadBytes((int)totalItemSize);
-
-                    data = new ManagedAvifItemData(bytes);
                 }
             }
             else
@@ -462,7 +462,41 @@ namespace AvifFileType
             IReadOnlyList<ItemLocationExtent> extents = entry.Extents;
             ulong totalItemSize = entry.TotalItemSize;
 
-            if (totalItemSize >= UnmanagedAvifItemDataThreshold)
+            if (totalItemSize <= ManagedAvifItemDataMaxSize)
+            {
+                byte[] bytes = new byte[(int)totalItemSize];
+
+                int offset = 0;
+                int remainingBytes = bytes.Length;
+
+                for (int i = 0; i < extents.Count; i++)
+                {
+                    ItemLocationExtent extent = extents[i];
+
+                    long? itemOffset = TryCalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
+
+                    if (!itemOffset.HasValue)
+                    {
+                        throw new FormatException("The item has an invalid file offset.");
+                    }
+
+                    int length = (int)extent.Length;
+
+                    if (length > remainingBytes)
+                    {
+                        throw new FormatException("The extent length is greater than the number of bytes remaining for the item.");
+                    }
+
+                    this.reader.Position = itemOffset.Value;
+                    this.reader.ProperRead(bytes, offset, length);
+
+                    offset += length;
+                    remainingBytes -= length;
+                }
+
+                data = new ManagedAvifItemData(bytes);
+            }
+            else
             {
                 UnmanagedAvifItemData unmanagedItemData = new UnmanagedAvifItemData(totalItemSize);
 
@@ -503,40 +537,6 @@ namespace AvifFileType
                 {
                     unmanagedItemData?.Dispose();
                 }
-            }
-            else
-            {
-                byte[] bytes = new byte[(int)totalItemSize];
-
-                int offset = 0;
-                int remainingBytes = bytes.Length;
-
-                for (int i = 0; i < extents.Count; i++)
-                {
-                    ItemLocationExtent extent = extents[i];
-
-                    long? itemOffset = TryCalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
-
-                    if (!itemOffset.HasValue)
-                    {
-                        throw new FormatException("The item has an invalid file offset.");
-                    }
-
-                    int length = (int)extent.Length;
-
-                    if (length > remainingBytes)
-                    {
-                        throw new FormatException("The extent length is greater than the number of bytes remaining for the item.");
-                    }
-
-                    this.reader.Position = itemOffset.Value;
-                    this.reader.ProperRead(bytes, offset, length);
-
-                    offset += length;
-                    remainingBytes -= length;
-                }
-
-                data = new ManagedAvifItemData(bytes);
             }
 
             return data;

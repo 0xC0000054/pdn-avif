@@ -25,7 +25,6 @@ namespace AvifFileType
         : IDisposable
     {
         private bool disposed;
-        private ColorInformationBox colorInfoBox;
         private CICPColorData? imageColorData;
         private readonly AvifParser parser;
         private readonly uint primaryItemId;
@@ -35,6 +34,7 @@ namespace AvifFileType
         private readonly ImageMirrorBox imageMirrorBox;
         private readonly ImageGridInfo colorGridInfo;
         private readonly ImageGridInfo alphaGridInfo;
+        private readonly ColorInformationBox colorInfoBox;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AvifReader"/> class.
@@ -355,7 +355,7 @@ namespace AvifFileType
             using (AvifItemData alpha = ReadAlphaImage(itemId))
             {
                 AvifNative.DecompressAlpha(alpha, decodeInfo, fullSurface);
-            }            
+            }
         }
 
         private void EnsureCompressedImagesAreAV1()

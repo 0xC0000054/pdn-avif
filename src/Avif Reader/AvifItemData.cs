@@ -203,6 +203,7 @@ namespace AvifFileType
         protected override unsafe void UseBufferPointerImpl(UseBufferPointerDelegate action)
         {
             byte* ptr = null;
+            RuntimeHelpers.PrepareDelegate(action);
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {

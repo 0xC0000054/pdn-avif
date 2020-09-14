@@ -157,14 +157,9 @@ namespace AvifFileType
 
             if (entry.Extents.Count == 1)
             {
-                long? offset = TryCalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, entry.Extents[0]);
+                long offset = CalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, entry.Extents[0]);
 
-                if (!offset.HasValue)
-                {
-                    throw new FormatException("The item has an invalid file offset.");
-                }
-
-                this.reader.Position = offset.Value;
+                this.reader.Position = offset;
 
                 ulong totalItemSize = entry.TotalItemSize;
 
@@ -323,6 +318,71 @@ namespace AvifFileType
             return null;
         }
 
+        private long CalculateExtentOffset(ulong baseOffset, ConstructionMethod constructionMethod, ItemLocationExtent extent)
+        {
+            if (extent is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(extent));
+            }
+
+            ulong offset;
+
+            try
+            {
+                if (constructionMethod == ConstructionMethod.FileOffset)
+                {
+                    checked
+                    {
+                        offset = baseOffset + extent.Offset;
+
+                        if ((offset + extent.Length) > this.fileLength)
+                        {
+                            throw new FormatException("The item has an invalid file offset.");
+                        }
+                    }
+                }
+                else if (constructionMethod == ConstructionMethod.IDatBoxOffset)
+                {
+                    ItemDataBox dataBox = this.metaBox.ItemData;
+
+                    if (dataBox is null)
+                    {
+                        throw new FormatException("The file does not have an item data box.");
+                    }
+
+                    checked
+                    {
+                        if ((extent.Offset + extent.Length) > (ulong)dataBox.Length)
+                        {
+                            throw new FormatException("The item has an invalid data box offset.");
+                        }
+
+                        offset = (ulong)dataBox.Offset + extent.Offset;
+
+                        if ((offset + extent.Length) > this.fileLength)
+                        {
+                            throw new FormatException("The item has an invalid file offset.");
+                        }
+                    }
+                }
+                else
+                {
+                    throw new FormatException($"ItemLocationEntry construction method { constructionMethod } is not supported.");
+                }
+            }
+            catch (OverflowException ex)
+            {
+                throw new FormatException("Overflow when attempting to calculate the item file offset.", ex);
+            }
+
+            if (offset > long.MaxValue)
+            {
+                throw new FormatException($"The item file offset exceeds {long.MaxValue:F0} bytes.");
+            }
+
+            return (long)offset;
+        }
+
         private void CheckForRequiredBoxes()
         {
             if (this.fileTypeBox is null)
@@ -473,12 +533,7 @@ namespace AvifFileType
                 {
                     ItemLocationExtent extent = extents[i];
 
-                    long? itemOffset = TryCalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
-
-                    if (!itemOffset.HasValue)
-                    {
-                        throw new FormatException("The item has an invalid file offset.");
-                    }
+                    long itemOffset = CalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
 
                     int length = (int)extent.Length;
 
@@ -487,7 +542,7 @@ namespace AvifFileType
                         throw new FormatException("The extent length is greater than the number of bytes remaining for the item.");
                     }
 
-                    this.reader.Position = itemOffset.Value;
+                    this.reader.Position = itemOffset;
                     this.reader.ProperRead(bytes, offset, length);
 
                     offset += length;
@@ -509,12 +564,7 @@ namespace AvifFileType
                     {
                         ItemLocationExtent extent = extents[i];
 
-                        long? itemOffset = TryCalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
-
-                        if (!itemOffset.HasValue)
-                        {
-                            throw new FormatException("The item has an invalid file offset.");
-                        }
+                        long itemOffset = CalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
 
                         ulong length = extent.Length;
 
@@ -523,7 +573,7 @@ namespace AvifFileType
                             throw new FormatException("The extent length is greater than the number of bytes remaining for the item.");
                         }
 
-                        this.reader.Position = itemOffset.Value;
+                        this.reader.Position = itemOffset;
                         this.reader.ProperRead(unmanagedItemData.UnmanagedBuffer, offset, length);
 
                         offset += length;
@@ -540,71 +590,6 @@ namespace AvifFileType
             }
 
             return data;
-        }
-
-        private long? TryCalculateExtentOffset(ulong baseOffset, ConstructionMethod constructionMethod, ItemLocationExtent extent)
-        {
-            if (extent is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(extent));
-            }
-
-            ulong offset;
-
-            try
-            {
-                if (constructionMethod == ConstructionMethod.FileOffset)
-                {
-                    checked
-                    {
-                        offset = baseOffset + extent.Offset;
-
-                        if ((offset + extent.Length) > this.fileLength)
-                        {
-                            return null;
-                        }
-                    }
-                }
-                else if (constructionMethod == ConstructionMethod.IDatBoxOffset)
-                {
-                    ItemDataBox dataBox = this.metaBox.ItemData;
-
-                    if (dataBox is null)
-                    {
-                        return null;
-                    }
-
-                    checked
-                    {
-                        if ((extent.Offset + extent.Length) > (ulong)dataBox.Length)
-                        {
-                            return null;
-                        }
-
-                        offset = (ulong)dataBox.Offset + extent.Offset;
-
-                        if ((offset + extent.Length) > this.fileLength)
-                        {
-                            return null;
-                        }
-                    }
-                }
-                else
-                {
-                    throw new FormatException($"ItemLocationEntry construction method { constructionMethod } is not supported.");
-                }
-            }
-            catch (OverflowException)
-            {
-                return null;
-            }
-
-            if (offset > long.MaxValue)
-            {
-                return null;
-            }
-
-            return (long)offset;
         }
 
         private ImageGridDescriptor TryGetImageGridDescriptor(uint itemId)

@@ -282,19 +282,7 @@ namespace AvifFileType
 
         public ItemLocationEntry TryGetItemLocation(uint itemId)
         {
-            IReadOnlyList<ItemLocationEntry> entries = this.metaBox.ItemLocations.LocationEntries;
-
-            for (int i = 0; i < entries.Count; i++)
-            {
-                ItemLocationEntry item = entries[i];
-
-                if (item.ItemId == itemId)
-                {
-                    return item;
-                }
-            }
-
-            return null;
+            return this.metaBox.ItemLocations.TryFindItem(itemId);
         }
 
         public ItemLocationEntry TryGetXmpLocation(uint itemId)

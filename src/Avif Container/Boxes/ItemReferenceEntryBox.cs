@@ -71,6 +71,11 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowArgumentNullException(nameof(parentItemIds));
             }
 
+            if (parentItemIds.Length > ushort.MaxValue)
+            {
+                ExceptionUtil.ThrowFormatException($"The item reference box supports a maximum of 65535 linked items, actual value: { parentItemIds.Length }.");
+            }
+
             this.FromItemId = fromItemId;
             this.toItemIds = new List<uint>(parentItemIds);
         }

@@ -101,8 +101,6 @@ namespace AvifFileType.AvifContainer
 
         public byte IndexSize { get; }
 
-        public IReadOnlyList<ItemLocationEntry> LocationEntries => this.items;
-
         public void Add(ItemLocationEntry item)
         {
             if (item is null)

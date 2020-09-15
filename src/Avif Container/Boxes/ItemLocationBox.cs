@@ -113,7 +113,7 @@ namespace AvifFileType.AvifContainer
             this.items.Add(item);
         }
 
-        public ItemLocationEntry FindItem(uint itemId)
+        public ItemLocationEntry TryFindItem(uint itemId)
         {
             for (int i = 0; i < this.items.Count; i++)
             {

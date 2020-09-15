@@ -78,6 +78,21 @@ namespace AvifFileType.AvifContainer
             this.itemInfoEntries.Add(itemInfo);
         }
 
+        public IItemInfoEntry TryGetEntry(uint itemId)
+        {
+            for (int i = 0; i < this.itemInfoEntries.Count; i++)
+            {
+                IItemInfoEntry item = this.itemInfoEntries[i];
+
+                if (item.ItemId == itemId)
+                {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+
         public override void Write(BigEndianBinaryWriter writer)
         {
             base.Write(writer);

@@ -265,19 +265,7 @@ namespace AvifFileType
 
         public IItemInfoEntry TryGetItemInfoEntry(uint itemId)
         {
-            IReadOnlyList<IItemInfoEntry> entries = this.metaBox.ItemInfo.Entries;
-
-            for (int i = 0; i < entries.Count; i++)
-            {
-                IItemInfoEntry item = entries[i];
-
-                if (item.ItemId == itemId)
-                {
-                    return item;
-                }
-            }
-
-            return null;
+            return this.metaBox.ItemInfo.TryGetEntry(itemId);
         }
 
         public ItemLocationEntry TryGetItemLocation(uint itemId)

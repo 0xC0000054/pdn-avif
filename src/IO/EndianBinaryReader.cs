@@ -230,7 +230,6 @@ namespace AvifFileType
         /// <param name="offset">The starting offset in the buffer.</param>
         /// <param name="count">The count.</param>
         /// <exception cref="ArgumentNullException"><paramref name="buffer"/> is null.</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is negative.</exception>
         /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
         /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
         public unsafe void ProperRead(SafeBuffer buffer, ulong offset, ulong count)
@@ -238,10 +237,6 @@ namespace AvifFileType
             if (buffer is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
-            }
-            if (count < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(count));
             }
             VerifyNotDisposed();
 

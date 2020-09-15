@@ -63,6 +63,18 @@ namespace AvifFileType.AvifContainer
             this.parent = parent;
         }
 
+        public ItemReferenceEntryBox(uint fromItemId, FourCC referenceType, params uint[] parentItemIds)
+            : base(referenceType)
+        {
+            if (parentItemIds is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(parentItemIds));
+            }
+
+            this.FromItemId = fromItemId;
+            this.toItemIds = new List<uint>(parentItemIds);
+        }
+
         public uint FromItemId { get; }
 
         public IReadOnlyList<uint> ToItemIds => this.toItemIds;
@@ -102,18 +114,6 @@ namespace AvifFileType.AvifContainer
                     }
                 }
             }
-        }
-
-        public ItemReferenceEntryBox(uint fromItemId, FourCC referenceType, params uint[] parentItemIds)
-            : base(referenceType)
-        {
-            if (parentItemIds is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(parentItemIds));
-            }
-
-            this.FromItemId = fromItemId;
-            this.toItemIds = new List<uint>(parentItemIds);
         }
 
         /// <summary>

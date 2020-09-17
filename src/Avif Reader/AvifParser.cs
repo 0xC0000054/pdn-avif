@@ -223,22 +223,7 @@ namespace AvifFileType
 
         public ColorInformationBox TryGetColorInfoBox(uint itemId)
         {
-            IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);
-
-            if (items != null)
-            {
-                for (int i = 0; i < items.Count; i++)
-                {
-                    IItemProperty property = TryGetItemProperty(items[i].PropertyIndex);
-
-                    if (property != null && property.Type == BoxTypes.ColorInformation)
-                    {
-                        return (ColorInformationBox)property;
-                    }
-                }
-            }
-
-            return null;
+            return TryGetAssociatedItemProperty<ColorInformationBox>(itemId);
         }
 
         public ItemLocationEntry TryGetExifLocation(uint itemId)
@@ -433,26 +418,16 @@ namespace AvifFileType
 
         private bool IsAlphaChannelItem(uint itemId)
         {
-            IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);
+            AuxiliaryTypePropertyBox auxiliaryTypeBox = TryGetAssociatedItemProperty<AuxiliaryTypePropertyBox>(itemId);
 
-            if (items != null)
+            if (auxiliaryTypeBox != null)
             {
-                for (int i = 0; i < items.Count; i++)
+                string auxType = auxiliaryTypeBox.AuxType.Value;
+
+                if (string.Equals(auxType, AlphaChannelNames.AVIF, StringComparison.Ordinal) ||
+                    string.Equals(auxType, AlphaChannelNames.HEVC, StringComparison.Ordinal))
                 {
-                    IItemProperty property = TryGetItemProperty(items[i].PropertyIndex);
-
-                    if (property != null && property.Type == BoxTypes.AuxiliaryTypeProperty)
-                    {
-                        AuxiliaryTypePropertyBox auxiliaryTypeBox = (AuxiliaryTypePropertyBox)property;
-
-                        string auxType = auxiliaryTypeBox.AuxType.Value;
-
-                        if (string.Equals(auxType, AlphaChannelNames.AVIF, StringComparison.Ordinal) ||
-                            string.Equals(auxType, AlphaChannelNames.HEVC, StringComparison.Ordinal))
-                        {
-                            return true;
-                        }
-                    }
+                    return true;
                 }
             }
 

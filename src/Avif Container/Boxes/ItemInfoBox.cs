@@ -12,9 +12,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
+    [DebuggerTypeProxy(typeof(ItemInfoBoxDebugView))]
     internal sealed class ItemInfoBox
         : FullBox
     {
@@ -67,6 +70,9 @@ namespace AvifFileType.AvifContainer
         public int Count => this.itemInfoEntries.Count;
 
         public IReadOnlyList<IItemInfoEntry> Entries => this.itemInfoEntries;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay => "Count = " + this.itemInfoEntries.Count.ToString();
 
         public void Add(ItemInfoEntryBox itemInfo)
         {
@@ -131,6 +137,19 @@ namespace AvifFileType.AvifContainer
             }
 
             return size;
+        }
+
+        private sealed class ItemInfoBoxDebugView
+        {
+            private readonly ItemInfoBox itemInfoBox;
+
+            public ItemInfoBoxDebugView(ItemInfoBox itemInfoBox)
+            {
+                this.itemInfoBox = itemInfoBox;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public ItemInfoEntryBox[] Items => this.itemInfoBox.itemInfoEntries.ToArray();
         }
     }
 }

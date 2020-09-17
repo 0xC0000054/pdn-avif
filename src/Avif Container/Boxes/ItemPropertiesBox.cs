@@ -11,9 +11,12 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
+    [DebuggerTypeProxy(typeof(ItemPropertiesBoxDebugView))]
     internal sealed class ItemPropertiesBox
         : Box
     {
@@ -38,6 +41,15 @@ namespace AvifFileType.AvifContainer
         }
 
         public IReadOnlyList<IItemProperty> Properties => this.itemPropertyContainer.Properties;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"Property count = { this.itemPropertyContainer.Count}, Association count = { this.itemPropertyAssociation.Count }";
+            }
+        }
 
         public void AddProperty(IItemProperty property)
         {
@@ -67,6 +79,20 @@ namespace AvifFileType.AvifContainer
             return base.GetTotalBoxSize()
                    + this.itemPropertyContainer.GetSize()
                    + this.itemPropertyAssociation.GetSize();
+        }
+
+        private sealed class ItemPropertiesBoxDebugView
+        {
+            private readonly ItemPropertiesBox itemPropertiesBox;
+
+            public ItemPropertiesBoxDebugView(ItemPropertiesBox itemPropertiesBox)
+            {
+                this.itemPropertiesBox = itemPropertiesBox;
+            }
+
+            public ItemPropertyContainerBox ItemPropertyContainer => this.itemPropertiesBox.itemPropertyContainer;
+
+            public ItemPropertyAssociationBox ItemPropertyAssociation => this.itemPropertiesBox.itemPropertyAssociation;
         }
     }
 }

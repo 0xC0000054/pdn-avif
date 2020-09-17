@@ -12,9 +12,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
+    [DebuggerDisplay("{DebuggerDisplay, nq}")]
+    [DebuggerTypeProxy(typeof(ItemLocationBoxDebugView))]
     internal sealed class ItemLocationBox
         : FullBox
     {
@@ -101,6 +104,9 @@ namespace AvifFileType.AvifContainer
 
         public byte IndexSize { get; }
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay => "Count = " + this.items.Count.ToString();
+
         public void Add(ItemLocationEntry item)
         {
             if (item is null)
@@ -166,6 +172,19 @@ namespace AvifFileType.AvifContainer
             {
                 ExceptionUtil.ThrowInvalidOperationException($"{ name } must be 0, 4 or 8, actual value: { value }");
             }
+        }
+
+        private sealed class ItemLocationBoxDebugView
+        {
+            private readonly ItemLocationBox itemLocationBox;
+
+            public ItemLocationBoxDebugView(ItemLocationBox itemLocationBox)
+            {
+                this.itemLocationBox = itemLocationBox;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public ItemLocationEntry[] Items => this.itemLocationBox.items.ToArray();
         }
     }
 }

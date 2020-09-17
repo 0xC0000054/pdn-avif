@@ -525,6 +525,12 @@ namespace AvifFileType
                     remainingBytes -= length;
                 }
 
+                if (remainingBytes > 0)
+                {
+                    // This should never happen, the total item size is the sum of all the extent sizes.
+                    throw new FormatException("The item has more data than was read from the extents.");
+                }
+
                 data = new ManagedAvifItemData(bytes);
             }
             else
@@ -554,6 +560,12 @@ namespace AvifFileType
 
                         offset += length;
                         remainingBytes -= length;
+                    }
+
+                    if (remainingBytes > 0)
+                    {
+                        // This should never happen, the total item size is the sum of all the extent sizes.
+                        throw new FormatException("The item has more data than was read from the extents.");
                     }
 
                     data = unmanagedItemData;

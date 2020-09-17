@@ -49,6 +49,8 @@ namespace AvifFileType.AvifContainer
             }
         }
 
+        public int Count => this.properties.Count;
+
         public IReadOnlyList<IItemProperty> Properties => this.properties;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]

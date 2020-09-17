@@ -79,6 +79,8 @@ namespace AvifFileType.AvifContainer
             }
         }
 
+        public int Count => this.entries.Count;
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay => "Count = " + this.entries.Count.ToString();
 

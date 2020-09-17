@@ -57,15 +57,10 @@ namespace AvifFileType.AvifContainer
         protected ItemInfoEntryBox(ushort itemId, ushort itemProtectionIndex, FourCC itemType, string name)
             : base(2, 0, BoxTypes.ItemInfoEntry)
         {
-            if (name is null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
             this.ItemId = itemId;
             this.ItemProtectionIndex = itemProtectionIndex;
             this.ItemType = itemType;
-            this.Name = new BoxString(name);
+            this.Name = string.IsNullOrWhiteSpace(name) ? BoxString.Empty : new BoxString(name);
         }
 
         public bool IsHidden => (this.Flags & 1) == 1;

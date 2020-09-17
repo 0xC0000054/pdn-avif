@@ -33,6 +33,12 @@ namespace AvifFileType.AvifContainer
             this.ColorType = colorType;
         }
 
+        // Used via reflection to get the item property box type.
+        private ColorInformationBox()
+            : base(BoxTypes.ColorInformation)
+        {
+        }
+
         public FourCC ColorType { get; }
 
         public override void Write(BigEndianBinaryWriter writer)

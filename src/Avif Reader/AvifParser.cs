@@ -194,19 +194,26 @@ namespace AvifFileType
             return data;
         }
 
-        public IItemProperty TryGetAssociatedItemProperty(uint itemId, FourCC propertyType)
+        public TProperty TryGetAssociatedItemProperty<TProperty>(uint itemId) where TProperty : class, IItemProperty
         {
+            if (typeof(TProperty).IsAbstract)
+            {
+                ExceptionUtil.ThrowInvalidOperationException($"Cannot call this method with an abstract type, type: { typeof(TProperty).Name }.");
+            }
+
             IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
+                FourCC propertyType = ItemPropertyTypeMap.GetPropertyType<TProperty>();
+
                 for (int i = 0; i < items.Count; i++)
                 {
                     IItemProperty property = TryGetItemProperty(items[i].PropertyIndex);
 
                     if (property != null && property.Type == propertyType)
                     {
-                        return property;
+                        return (TProperty)property;
                     }
                 }
             }

@@ -459,14 +459,12 @@ namespace AvifFileType
 
             if (entry.ItemType == ItemInfoEntryTypes.AV01)
             {
-                IItemProperty property = this.parser.TryGetAssociatedItemProperty(itemId, BoxTypes.ImageSpatialExtents);
+                ImageSpatialExtentsBox extents = this.parser.TryGetAssociatedItemProperty<ImageSpatialExtentsBox>(itemId);
 
-                if (property is null)
+                if (extents is null)
                 {
                     ExceptionUtil.ThrowFormatException($"The { imageName } image size property was not found.");
                 }
-
-                ImageSpatialExtentsBox extents = (ImageSpatialExtentsBox)property;
 
                 width = extents.ImageWidth;
                 height = extents.ImageHeight;

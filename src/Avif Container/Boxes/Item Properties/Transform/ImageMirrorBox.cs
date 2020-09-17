@@ -44,6 +44,12 @@ namespace AvifFileType.AvifContainer
             this.MirrorDirection = direction;
         }
 
+        // Used via reflection to get the item property box type.
+        private ImageMirrorBox()
+            : base(BoxTypes.ImageMirror)
+        {
+        }
+
         internal ImageMirrorDirection MirrorDirection { get; }
     }
 }

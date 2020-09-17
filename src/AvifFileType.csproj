@@ -72,6 +72,7 @@
     <Compile Include="Avif Container\Boxes\Item Properties\Transform\ImageMirrorBox.cs" />
     <Compile Include="Avif Container\Boxes\Item Properties\Transform\ImageRotateBox.cs" />
     <Compile Include="Avif Container\Boxes\ItemDataBox.cs" />
+    <Compile Include="Avif Container\Boxes\Item Properties\ItemPropertyTypeMap.cs" />
     <Compile Include="Avif Container\Boxes\Rational.cs" />
     <Compile Include="Avif Container\ImageGridDescriptor.cs" />
     <Compile Include="Avif Container\ImageGridInfo.cs" />

@@ -37,6 +37,12 @@ namespace AvifFileType.AvifContainer
             this.ImageHeight = imageHeight;
         }
 
+        // Used via reflection to get the item property box type.
+        private ImageSpatialExtentsBox()
+            : base(0, 0, BoxTypes.ImageSpatialExtents)
+        {
+        }
+
         public uint ImageWidth { get; }
 
         public uint ImageHeight { get; }

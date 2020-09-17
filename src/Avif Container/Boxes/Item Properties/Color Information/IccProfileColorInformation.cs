@@ -43,6 +43,12 @@ namespace AvifFileType.AvifContainer
             this.iccProfile = iccProfile;
         }
 
+        // Used via reflection to get the item property box type.
+        private IccProfileColorInformation()
+            : base(ColorInformationBoxTypes.IccProfile)
+        {
+        }
+
         public byte[] GetProfileBytes()
         {
             return (byte[])this.iccProfile?.Clone();

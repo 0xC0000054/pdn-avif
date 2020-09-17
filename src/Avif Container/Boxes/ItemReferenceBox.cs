@@ -16,6 +16,7 @@ using System.Diagnostics;
 namespace AvifFileType.AvifContainer
 {
     [DebuggerDisplay("Count = {Count}")]
+    [DebuggerTypeProxy(typeof(ItemReferenceBoxDebugView))]
     internal sealed class ItemReferenceBox
         : FullBox
     {
@@ -80,6 +81,19 @@ namespace AvifFileType.AvifContainer
             }
 
             return size;
+        }
+
+        private sealed class ItemReferenceBoxDebugView
+        {
+            private readonly ItemReferenceBox itemReferenceBox;
+
+            public ItemReferenceBoxDebugView(ItemReferenceBox itemReferenceBox)
+            {
+                this.itemReferenceBox = itemReferenceBox;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public ItemReferenceEntryBox[] Items => this.itemReferenceBox.itemReferences.ToArray();
         }
     }
 }

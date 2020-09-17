@@ -16,6 +16,7 @@ using System.Diagnostics;
 namespace AvifFileType.AvifContainer
 {
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
+    [DebuggerTypeProxy(typeof(ItemPropertyContainerBoxDebugView))]
     internal sealed class ItemPropertyContainerBox
         : Box
     {
@@ -86,6 +87,19 @@ namespace AvifFileType.AvifContainer
             }
 
             return size;
+        }
+
+        private sealed class ItemPropertyContainerBoxDebugView
+        {
+            private readonly ItemPropertyContainerBox itemPropertyContainerBox;
+
+            public ItemPropertyContainerBoxDebugView(ItemPropertyContainerBox itemPropertyContainerBox)
+            {
+                this.itemPropertyContainerBox = itemPropertyContainerBox;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public IItemProperty[] Items => this.itemPropertyContainerBox.properties.ToArray();
         }
     }
 }

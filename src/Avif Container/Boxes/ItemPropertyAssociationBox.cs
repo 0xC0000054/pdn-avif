@@ -10,12 +10,14 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using PaintDotNet.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
     [DebuggerDisplay("{DebuggerDisplay, nq}")]
+    [DebuggerTypeProxy(typeof(ItemPropertyAssociationBoxDebugView))]
     internal sealed class ItemPropertyAssociationBox
         : FullBox
     {
@@ -202,6 +204,19 @@ namespace AvifFileType.AvifContainer
             }
 
             return size;
+        }
+
+        private sealed class ItemPropertyAssociationBoxDebugView
+        {
+            private readonly ItemPropertyAssociationBox itemPropertyAssociationBox;
+
+            public ItemPropertyAssociationBoxDebugView(ItemPropertyAssociationBox itemPropertyAssociationBox)
+            {
+                this.itemPropertyAssociationBox = itemPropertyAssociationBox;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public KeyValuePair<uint, List<ItemPropertyAssociationEntry>>[] Items => this.itemPropertyAssociationBox.entries.ToArrayEx();
         }
     }
 }

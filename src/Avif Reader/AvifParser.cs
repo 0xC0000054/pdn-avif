@@ -213,7 +213,10 @@ namespace AvifFileType
 
                     if (property != null && property.Type == propertyType)
                     {
-                        return (TProperty)property;
+                        // Use the as operator because some properties have subclasses that use the same property type.
+                        // For example, both the IccProfileColorInformation and NclxColorInformation classes use the
+                        // ColorInformation property type.
+                        return property as TProperty;
                     }
                 }
             }

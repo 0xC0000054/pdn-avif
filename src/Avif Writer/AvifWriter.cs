@@ -29,22 +29,24 @@ namespace AvifFileType
         private uint progressDone;
         private readonly uint progressTotal;
 
-        public AvifWriter(CompressedAV1Image color,
-                          CompressedAV1Image alpha,
+        public AvifWriter(IReadOnlyList<CompressedAV1Image> colorImages,
+                          IReadOnlyList<CompressedAV1Image> alphaImages,
                           AvifMetadata metadata,
+                          ImageGridMetadata imageGridMetadata,
+                          YUVChromaSubsampling chromaSubsampling,
                           ColorInformationBox colorInformationBox,
                           ProgressEventHandler progressEventHandler,
                           uint progressDone,
                           uint progressTotal)
         {
-            this.state = new AvifWriterState(color, alpha, metadata);
-            this.colorImageIsGrayscale = color.Format == YUVChromaSubsampling.Subsampling400;
+            this.state = new AvifWriterState(colorImages, alphaImages, imageGridMetadata, metadata);
+            this.colorImageIsGrayscale = chromaSubsampling == YUVChromaSubsampling.Subsampling400;
             this.colorInformationBox = colorInformationBox;
             this.progressCallback = progressEventHandler;
             this.progressDone = progressDone;
             this.progressTotal = progressTotal;
-            this.fileTypeBox = new FileTypeBox(color.Format);
-            this.metaBox = new MetaBox(this.state.PrimaryItemId, this.state.TotalDataSize > uint.MaxValue);
+            this.fileTypeBox = new FileTypeBox(chromaSubsampling);
+            this.metaBox = new MetaBox(this.state.PrimaryItemId, this.state.TotalDataSize > uint.MaxValue, this.state.ItemDataBox);
             PopulateMetaBox();
         }
 
@@ -62,6 +64,11 @@ namespace AvifFileType
                 for (int i = 0; i < items.Count; i++)
                 {
                     AvifWriterItem item = items[i];
+
+                    if (item.Image is null && item.ContentBytes is null)
+                    {
+                        continue;
+                    }
 
                     // We only ever write items with a single extent.
                     item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
@@ -129,8 +136,11 @@ namespace AvifFileType
             // This works because the color and alpha images are the same size and YUV format.
             ushort imageSpatialExtentsAssociationIndex = 0;
             ushort pixelAspectRatioAssociationIndex = 0;
-            ushort av1ConfigAssociationIndex = 0;
-            ushort pixelInformationAssociationIndex = 0;
+            ushort colorAv1ConfigAssociationIndex = 0;
+            ushort colorPixelInformationAssociationIndex = 0;
+            ushort alphaAv1ConfigAssociationIndex = 0;
+            ushort alphaPixelInformationAssociationIndex = 0;
+            ushort alphaChannelAssociationIndex = 0;
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -155,40 +165,90 @@ namespace AvifFileType
 
                     itemPropertiesBox.AddPropertyAssociation(item.Id, false, pixelAspectRatioAssociationIndex);
 
-                    if (!this.colorImageIsGrayscale || av1ConfigAssociationIndex == 0)
+                    if (colorAv1ConfigAssociationIndex == 0 || item.IsAlphaImage && alphaAv1ConfigAssociationIndex == 0)
                     {
                         itemPropertiesBox.AddProperty(AV1ConfigBoxBuilder.Build(item.Image));
-                        av1ConfigAssociationIndex = propertyAssociationIndex;
+                        if (this.colorImageIsGrayscale)
+                        {
+                            colorAv1ConfigAssociationIndex = alphaAv1ConfigAssociationIndex = propertyAssociationIndex;
+                        }
+                        else
+                        {
+                            if (item.IsAlphaImage)
+                            {
+                                alphaAv1ConfigAssociationIndex = propertyAssociationIndex;
+                            }
+                            else
+                            {
+                                colorAv1ConfigAssociationIndex = propertyAssociationIndex;
+                            }
+                        }
                         propertyAssociationIndex++;
                     }
 
-                    itemPropertiesBox.AddPropertyAssociation(item.Id, true, av1ConfigAssociationIndex);
 
-                    if (!this.colorImageIsGrayscale || pixelInformationAssociationIndex == 0)
+                    if (colorPixelInformationAssociationIndex == 0 || item.IsAlphaImage && alphaPixelInformationAssociationIndex == 0)
                     {
                         itemPropertiesBox.AddProperty(new PixelInformationBox(item.Image.Format));
-                        pixelInformationAssociationIndex = propertyAssociationIndex;
+                        if (this.colorImageIsGrayscale)
+                        {
+                            colorPixelInformationAssociationIndex = alphaPixelInformationAssociationIndex = propertyAssociationIndex;
+                        }
+                        else
+                        {
+                            if (item.IsAlphaImage)
+                            {
+                                alphaPixelInformationAssociationIndex = propertyAssociationIndex;
+                            }
+                            else
+                            {
+                                colorPixelInformationAssociationIndex = propertyAssociationIndex;
+                            }
+                        }
                         propertyAssociationIndex++;
                     }
 
-                    itemPropertiesBox.AddPropertyAssociation(item.Id, true, pixelInformationAssociationIndex);
 
                     if (item.IsAlphaImage)
                     {
-                        itemPropertiesBox.AddProperty(new AlphaChannelBox());
-                        itemPropertiesBox.AddPropertyAssociation(item.Id, true, propertyAssociationIndex);
-                        propertyAssociationIndex++;
+                        itemPropertiesBox.AddPropertyAssociation(item.Id, true, alphaAv1ConfigAssociationIndex);
+                        itemPropertiesBox.AddPropertyAssociation(item.Id, true, alphaPixelInformationAssociationIndex);
+
+                        if (alphaChannelAssociationIndex == 0)
+                        {
+                            itemPropertiesBox.AddProperty(new AlphaChannelBox());
+                            alphaChannelAssociationIndex = propertyAssociationIndex;
+                            propertyAssociationIndex++;
+                        }
+
+                        itemPropertiesBox.AddPropertyAssociation(item.Id, true, alphaChannelAssociationIndex);
                     }
                     else
                     {
-                        if (this.colorInformationBox != null)
-                        {
-                            itemPropertiesBox.AddProperty(this.colorInformationBox);
-                            itemPropertiesBox.AddPropertyAssociation(item.Id, true, propertyAssociationIndex);
-                            propertyAssociationIndex++;
-                        }
+                        itemPropertiesBox.AddPropertyAssociation(item.Id, true, colorAv1ConfigAssociationIndex);
+                        itemPropertiesBox.AddPropertyAssociation(item.Id, true, colorPixelInformationAssociationIndex);
                     }
                 }
+            }
+
+            if (this.state.ImageGrid != null)
+            {
+                itemPropertiesBox.AddProperty(new ImageSpatialExtentsBox(this.state.ImageGrid.OutputWidth, this.state.ImageGrid.OutputHeight));
+                ushort gridImageSpatialExtentsAssociationIndex = propertyAssociationIndex;
+                propertyAssociationIndex++;
+
+                itemPropertiesBox.AddPropertyAssociation(this.state.PrimaryItemId, false, gridImageSpatialExtentsAssociationIndex);
+                if (this.state.AlphaItemId != 0)
+                {
+                    itemPropertiesBox.AddPropertyAssociation(this.state.AlphaItemId, false, gridImageSpatialExtentsAssociationIndex);
+                    itemPropertiesBox.AddPropertyAssociation(this.state.AlphaItemId, true, alphaChannelAssociationIndex);
+                }
+            }
+
+            if (this.colorInformationBox != null)
+            {
+                itemPropertiesBox.AddProperty(this.colorInformationBox);
+                itemPropertiesBox.AddPropertyAssociation(this.state.PrimaryItemId, true, propertyAssociationIndex);
             }
         }
 
@@ -200,9 +260,9 @@ namespace AvifFileType
             for (int i = 0; i < items.Count; i++)
             {
                 AvifWriterItem item = items[i];
-                if (item.ItemReference != null)
+                if (item.ItemReferences.Count > 0)
                 {
-                    itemReferenceBox.Add(item.ItemReference);
+                    itemReferenceBox.Add(item.ItemReferences);
                 }
             }
         }

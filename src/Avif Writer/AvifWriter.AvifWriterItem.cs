@@ -12,6 +12,7 @@
 
 using AvifFileType.AvifContainer;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace AvifFileType
@@ -28,11 +29,6 @@ namespace AvifFileType
                     ExceptionUtil.ThrowArgumentNullException(nameof(image));
                 }
 
-                if (name is null)
-                {
-                    ExceptionUtil.ThrowArgumentNullException(nameof(name));
-                }
-
                 this.Id = id;
                 this.Name = name;
                 this.Image = image;
@@ -40,6 +36,7 @@ namespace AvifFileType
                 this.ContentBytes = null;
                 this.ItemInfoEntry = new AV01ItemInfoEntryBox(id, name);
                 this.ItemLocation = new ItemLocationEntry(id, image.Data.ByteLength);
+                this.ItemReferences = new List<ItemReferenceEntryBox>();
             }
 
             private AvifWriterItem(ushort id, string name, byte[] contentBytes, ItemInfoEntryBox itemInfo)
@@ -49,10 +46,6 @@ namespace AvifFileType
                     ExceptionUtil.ThrowArgumentNullException(nameof(contentBytes));
                 }
 
-                if (name is null)
-                {
-                    ExceptionUtil.ThrowArgumentNullException(nameof(name));
-                }
 
                 if (itemInfo is null)
                 {
@@ -66,6 +59,24 @@ namespace AvifFileType
                 this.ContentBytes = contentBytes;
                 this.ItemInfoEntry = itemInfo;
                 this.ItemLocation = new ItemLocationEntry(id, (ulong)contentBytes.Length);
+                this.ItemReferences = new List<ItemReferenceEntryBox>();
+            }
+
+            private AvifWriterItem(ushort id, string name, ulong dataBoxOffset, ulong length)
+            {
+                if (name is null)
+                {
+                    ExceptionUtil.ThrowArgumentNullException(nameof(name));
+                }
+
+                this.Id = id;
+                this.Name = name;
+                this.Image = null;
+                this.IsAlphaImage = false;
+                this.ContentBytes = null;
+                this.ItemInfoEntry = new ImageGridItemInfoEntryBox(id, name);
+                this.ItemLocation = new ItemLocationEntry(id, dataBoxOffset, length);
+                this.ItemReferences = new List<ItemReferenceEntryBox>();
             }
 
             public ushort Id { get; }
@@ -82,14 +93,32 @@ namespace AvifFileType
 
             public ItemLocationEntry ItemLocation { get; }
 
-            public ItemReferenceEntryBox ItemReference { get; set; }
+            public List<ItemReferenceEntryBox> ItemReferences { get; }
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"{ this.Id }, { this.Name }";
+            private string DebuggerDisplay
+            {
+                get
+                {
+                    if (string.IsNullOrEmpty(this.Name))
+                    {
+                        return this.Id.ToString();
+                    }
+                    else
+                    {
+                        return $"{ this.Id }, { this.Name }";
+                    }
+                }
+            }
 
             public static AvifWriterItem CreateFromImage(ushort itemId, string name, CompressedAV1Image image, bool isAlphaImage)
             {
                 return new AvifWriterItem(itemId, name, image, isAlphaImage);
+            }
+
+            public static AvifWriterItem CreateFromImageGrid(ushort itemId, string name, ulong dataBoxOffset, ulong length)
+            {
+                return new AvifWriterItem(itemId, name, dataBoxOffset, length);
             }
 
             public static AvifWriterItem CreateFromExif(ushort itemId, byte[] exif)

@@ -17,6 +17,7 @@ using PaintDotNet;
 using PaintDotNet.Imaging;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 
 namespace AvifFileType
@@ -24,6 +25,7 @@ namespace AvifFileType
     internal static class AvifFile
     {
         private const string CICPMetadataName = "AvifCICPData";
+        private const string ImageGridName = "AvifImageGrid";
         // This value is no longer written, but it is retained to
         // allow the data to be read from existing PDN files.
         private const string NclxMetadataName = "AvifNclxData";
@@ -132,10 +134,12 @@ namespace AvifFileType
                 }
             }
 
-            CompressedAV1Image color = null;
-            CompressedAV1Image alpha = null;
+            ImageGridMetadata imageGridMetadata = TryGetImageGridMetadata(document);
 
             bool hasTransparency = HasTransparency(scratchSurface);
+
+            CompressedAV1ImageCollection colorImages = new CompressedAV1ImageCollection(imageGridMetadata?.GetNumberOfTiles() ?? 1);
+            CompressedAV1ImageCollection alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
 
             // Progress is reported at the following stages:
             // 1. Before converting the image to the YUV color space
@@ -147,29 +151,61 @@ namespace AvifFileType
 
             uint progressDone = 0;
             uint progressTotal = hasTransparency ? 6U : 4U;
+            if (colorImages.Capacity > 1)
+            {
+                progressTotal *= (uint)colorImages.Capacity;
+            }
 
             try
             {
-                if (hasTransparency)
+                Rectangle[] windowRectangles = GetTileWindowRectangles(imageGridMetadata, document);
+
+                for (int i = 0; i < colorImages.Capacity; i++)
                 {
-                    AvifNative.CompressWithTransparency(scratchSurface,
-                                                        options,
-                                                        ReportCompressionProgress,
-                                                        ref progressDone,
-                                                        progressTotal,
-                                                        colorConversionInfo,
-                                                        out color,
-                                                        out alpha);
-                }
-                else
-                {
-                    AvifNative.CompressWithoutTransparency(scratchSurface,
-                                                           options,
-                                                           ReportCompressionProgress,
-                                                           ref progressDone,
-                                                           progressTotal,
-                                                           colorConversionInfo,
-                                                           out color);
+                    CompressedAV1Image color = null;
+                    CompressedAV1Image alpha = null;
+
+                    try
+                    {
+                        Rectangle windowRect = windowRectangles[i];
+                        using (Surface window = scratchSurface.CreateWindow(windowRect))
+                        {
+                            if (hasTransparency)
+                            {
+                                AvifNative.CompressWithTransparency(window,
+                                                                    options,
+                                                                    ReportCompressionProgress,
+                                                                    ref progressDone,
+                                                                    progressTotal,
+                                                                    colorConversionInfo,
+                                                                    out color,
+                                                                    out alpha);
+                            }
+                            else
+                            {
+                                AvifNative.CompressWithoutTransparency(window,
+                                                                       options,
+                                                                       ReportCompressionProgress,
+                                                                       ref progressDone,
+                                                                       progressTotal,
+                                                                       colorConversionInfo,
+                                                                       out color);
+                            }
+                        }
+
+                        colorImages.Add(color);
+                        color = null;
+                        if (hasTransparency)
+                        {
+                            alphaImages.Add(alpha);
+                            alpha = null;
+                        }
+                    }
+                    finally
+                    {
+                        color?.Dispose();
+                        alpha?.Dispose();
+                    }
                 }
 
 
@@ -188,9 +224,11 @@ namespace AvifFileType
                                                                    colorConversionInfo.fullRange);
                 }
 
-                AvifWriter writer = new AvifWriter(color,
-                                                   alpha,
+                AvifWriter writer = new AvifWriter(colorImages,
+                                                   alphaImages,
                                                    metadata,
+                                                   imageGridMetadata,
+                                                   options.yuvFormat,
                                                    colorInformationBox,
                                                    progressCallback,
                                                    progressDone,
@@ -199,8 +237,8 @@ namespace AvifFileType
             }
             finally
             {
-                color?.Dispose();
-                alpha?.Dispose();
+                colorImages?.Dispose();
+                alphaImages?.Dispose();
             }
 
             bool ReportCompressionProgress(uint done, uint total)
@@ -249,6 +287,18 @@ namespace AvifFileType
                 if (serializedValue != null)
                 {
                     doc.Metadata.SetUserValue(CICPMetadataName, serializedValue);
+                }
+            }
+
+            ImageGridMetadata imageGridMetadata = reader.ImageGridMetadata;
+
+            if (imageGridMetadata != null)
+            {
+                string serializedValue = imageGridMetadata.SerializeToString();
+
+                if (serializedValue != null)
+                {
+                    doc.Metadata.SetUserValue(ImageGridName, serializedValue);
                 }
             }
 
@@ -359,6 +409,41 @@ namespace AvifFileType
             return items;
         }
 
+        private static Rectangle[] GetTileWindowRectangles(ImageGridMetadata imageGridMetadata, Document document)
+        {
+            Rectangle[] rects;
+
+            if (imageGridMetadata is null)
+            {
+                rects = new Rectangle[] { document.Bounds };
+            }
+            else
+            {
+                rects = new Rectangle[imageGridMetadata.GetNumberOfTiles()];
+
+                // The tiles are encoded from top to bottom then left to right.
+
+                int tileWidth = checked((int)imageGridMetadata.TileImageWidth);
+                int tileHeight = checked((int)imageGridMetadata.TileImageHeight);
+
+                for (int row = 0; row < imageGridMetadata.TileRowCount; row++)
+                {
+                    int startIndex = row * imageGridMetadata.TileColumnCount;
+                    int y = row * tileHeight;
+
+                    for (int col = 0; col < imageGridMetadata.TileColumnCount; col++)
+                    {
+                        int index = startIndex + col;
+                        int x = col * tileWidth;
+
+                        rects[index] = new Rectangle(x, y, tileWidth, tileHeight);
+                    }
+                }
+            }
+
+            return rects;
+        }
+
         private static unsafe bool IsGrayscaleImage(Surface surface)
         {
             for (int y = 0; y < surface.Height; y++)
@@ -398,6 +483,26 @@ namespace AvifFileType
             }
 
             return false;
+        }
+
+        private static ImageGridMetadata TryGetImageGridMetadata(Document document)
+        {
+            ImageGridMetadata metadata = null;
+
+            string value = document.Metadata.GetUserValue(ImageGridName);
+
+            if (!string.IsNullOrEmpty(value))
+            {
+                ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
+
+                if (serializedData != null
+                    && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height))
+                {
+                    metadata = serializedData;
+                }
+            }
+
+            return metadata;
         }
     }
 }

@@ -80,6 +80,23 @@ namespace AvifFileType.AvifContainer
             this.toItemIds = new List<uint>(parentItemIds);
         }
 
+        public ItemReferenceEntryBox(uint fromItemId, FourCC referenceType, IReadOnlyList<uint> parentItemIds)
+            : base(referenceType)
+        {
+            if (parentItemIds is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(parentItemIds));
+            }
+
+            if (parentItemIds.Count > ushort.MaxValue)
+            {
+                ExceptionUtil.ThrowFormatException($"The item reference box supports a maximum of 65535 linked items, actual value: { parentItemIds.Count }.");
+            }
+
+            this.FromItemId = fromItemId;
+            this.toItemIds = new List<uint>(parentItemIds);
+        }
+
         public uint FromItemId { get; }
 
         public IReadOnlyList<uint> ToItemIds => this.toItemIds;

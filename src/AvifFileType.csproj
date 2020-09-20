@@ -64,6 +64,7 @@
     <Compile Include="Avif Container\Boxes\Enums\StronglyTypedEnumeration.cs" />
     <Compile Include="Avif Container\Boxes\IItemInfoEntry.cs" />
     <Compile Include="Avif Container\Boxes\IItemReferenceEntry.cs" />
+    <Compile Include="Avif Container\Boxes\Item Info Entries\ImageGridItemInfoEntryBox.cs" />
     <Compile Include="Avif Container\Boxes\Item Info Entries\ItemInfoEntryFactory.cs" />
     <Compile Include="Avif Container\Boxes\Item Properties\ItemPropertyFactory.cs" />
     <Compile Include="Avif Container\Boxes\Item Properties\ItemPropertyFull.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="Avif Reader\AvifReader.cs" />
     <Compile Include="Avif Reader\AvifParser.cs" />
     <Compile Include="Avif Reader\CICPSerializer.cs" />
+    <Compile Include="Avif Container\ImageGridMetadata.cs" />
     <Compile Include="Avif Reader\ImageTransform.cs" />
     <Compile Include="Avif Writer\AvifWriter.AvifWriterItem.cs" />
     <Compile Include="Avif Writer\AvifWriter.AvifWriterState.cs" />
@@ -132,6 +134,7 @@
     <Compile Include="AvifNative.cs" />
     <Compile Include="AvifFileTypeFactory.cs" />
     <Compile Include="AvifFileType.cs" />
+    <Compile Include="CompressedAV1ImageCollection.cs" />
     <Compile Include="CompressionSpeed.cs" />
     <Compile Include="ExceptionUtil.cs" />
     <Compile Include="Exif\EndianUtil.cs" />

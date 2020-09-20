@@ -50,15 +50,22 @@ namespace AvifFileType.AvifContainer
 
         public IReadOnlyList<IItemReferenceEntry> ItemReferences => this.itemReferences;
 
-        public void Add(ItemReferenceEntryBox reference)
+        public void Add(IReadOnlyList<ItemReferenceEntryBox> references)
         {
-            if (reference is null)
+            if (references is null)
             {
-                ExceptionUtil.ThrowArgumentNullException(nameof(reference));
+                ExceptionUtil.ThrowArgumentNullException(nameof(references));
             }
 
-            reference.SetParent(this);
-            this.itemReferences.Add(reference);
+            this.itemReferences.Capacity += references.Count;
+
+            for (int i = 0; i < references.Count; i++)
+            {
+                ItemReferenceEntryBox reference = references[i];
+
+                reference.SetParent(this);
+                this.itemReferences.Add(reference);
+            }
         }
 
         public override void Write(BigEndianBinaryWriter writer)

@@ -97,14 +97,13 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public MetaBox(ushort primaryItemId, bool use64BitFileOffsets)
+        public MetaBox(ushort primaryItemId, bool use64BitFileOffsets, ItemDataBox itemDataBox)
             : base(0, 0, BoxTypes.Meta)
         {
             this.Handler = new HandlerBox();
             this.PrimaryItem = new PrimaryItemBox(primaryItemId);
-            // The ItemData box is only used when reading from a file.
-            this.ItemData = null;
-            this.ItemLocations = new ItemLocationBox(use64BitFileOffsets);
+            this.ItemData = itemDataBox;
+            this.ItemLocations = new ItemLocationBox(use64BitFileOffsets, itemDataBox);
             this.ItemInfo = new ItemInfoBox();
             this.ItemReferences = new ItemReferenceBox();
             this.ItemProperties = new ItemPropertiesBox();
@@ -137,6 +136,10 @@ namespace AvifFileType.AvifContainer
                 this.ItemReferences.Write(writer);
             }
             this.ItemProperties.Write(writer);
+            if (this.ItemData != null)
+            {
+                this.ItemData.Write(writer);
+            }
         }
 
         protected override ulong GetTotalBoxSize()
@@ -147,7 +150,8 @@ namespace AvifFileType.AvifContainer
                    + this.ItemLocations.GetSize()
                    + this.ItemInfo.GetSize()
                    + (this.ItemReferences.Count > 0 ? this.ItemReferences.GetSize() : 0)
-                   + this.ItemProperties.GetSize();
+                   + this.ItemProperties.GetSize()
+                   + (this.ItemData != null ? this.ItemData.GetSize() : 0);
         }
     }
 }

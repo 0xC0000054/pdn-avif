@@ -31,6 +31,11 @@ namespace AvifFileType
             throw new ArgumentOutOfRangeException(paramName);
         }
 
+        public static void ThrowArgumentOutOfRangeException(string paramName, string message)
+        {
+            throw new ArgumentOutOfRangeException(paramName, message);
+        }
+
         public static void ThrowFormatException(string message)
         {
             throw new FormatException(message);

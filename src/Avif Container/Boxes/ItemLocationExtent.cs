@@ -82,6 +82,14 @@ namespace AvifFileType.AvifContainer
             this.offsetWritePosition = -1;
         }
 
+        public ItemLocationExtent(ulong offset, ulong length)
+        {
+            this.Index = 0;
+            this.Offset = offset;
+            this.Length = length;
+            this.offsetWritePosition = -1;
+        }
+
         public ulong Index { get; }
 
         public ulong Offset { get; }

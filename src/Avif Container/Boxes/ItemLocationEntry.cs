@@ -98,6 +98,19 @@ namespace AvifFileType.AvifContainer
             this.TotalItemSize = itemLength;
         }
 
+        public ItemLocationEntry(ushort itemId, ulong itemDataBoxOffset, ulong itemLength)
+        {
+            this.ItemId = itemId;
+            this.DataReferenceIndex = 0;
+            this.ConstructionMethod = ConstructionMethod.IDatBoxOffset;
+            this.BaseOffset = 0;
+            this.extents = new List<ItemLocationExtent>(1)
+            {
+                new ItemLocationExtent(itemDataBoxOffset, itemLength)
+            };
+            this.TotalItemSize = itemLength;
+        }
+
         public uint ItemId { get; }
 
         public ConstructionMethod ConstructionMethod { get; }
@@ -152,7 +165,7 @@ namespace AvifFileType.AvifContainer
             {
                 // Write the reserved byte and the construction method.
                 writer.Write((byte)0);
-                writer.Write((byte)ConstructionMethod.FileOffset);
+                writer.Write((byte)this.ConstructionMethod);
             }
 
             writer.Write(this.DataReferenceIndex);

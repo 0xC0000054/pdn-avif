@@ -11,21 +11,26 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
+using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace AvifFileType
 {
     internal sealed partial class AvifWriter
     {
+        // The item ids start at 1.
+        private const int FirstItemId = 1;
+
         private sealed class AvifWriterState
         {
             private readonly List<AvifWriterItem> items;
 
-            public AvifWriterState(CompressedAV1Image color, CompressedAV1Image alpha, AvifMetadata metadata)
+            public AvifWriterState(IReadOnlyList<CompressedAV1Image> colorImages, IReadOnlyList<CompressedAV1Image> alphaImages, ImageGridMetadata imageGridMetadata, AvifMetadata metadata)
             {
-                if (color is null)
+                if (colorImages is null)
                 {
-                    ExceptionUtil.ThrowArgumentNullException(nameof(color));
+                    ExceptionUtil.ThrowArgumentNullException(nameof(colorImages));
                 }
 
                 if (metadata is null)
@@ -33,43 +38,77 @@ namespace AvifFileType
                     ExceptionUtil.ThrowArgumentNullException(nameof(metadata));
                 }
 
-                this.items = new List<AvifWriterItem>();
-                // The item ids start at 1.
+                this.ImageGrid = imageGridMetadata;
+                this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
                 this.PrimaryItemId = 1;
-                Initialize(color, alpha, metadata);
+                this.AlphaItemId = (ushort)(alphaImages != null ? 2 : 0);
+                Initialize(colorImages, alphaImages, imageGridMetadata, metadata);
             }
+
+            public ushort AlphaItemId { get; private set; }
+
+            public ImageGridMetadata ImageGrid { get; }
+
+            public ItemDataBox ItemDataBox { get; private set; }
 
             public IReadOnlyList<AvifWriterItem> Items => this.items;
 
-            public ushort PrimaryItemId { get; }
+            public ushort PrimaryItemId { get; private set; }
 
             public ulong TotalDataSize { get; private set; }
 
-            private void Initialize(CompressedAV1Image color, CompressedAV1Image alpha, AvifMetadata metadata)
+            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata)
             {
-                ulong totalDataSize = color.Data.ByteLength;
+                byte[] dataBoxBuffer = new byte[8];
 
-                ushort itemId = this.PrimaryItemId;
-
-                AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, "Color", color, false);
-                this.items.Add(colorItem);
-
-                if (alpha != null)
+                MemoryStream stream = null;
+                try
                 {
-                    itemId++;
-                    AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, "Alpha", alpha, true);
-                    alphaItem.ItemReference = new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, this.PrimaryItemId);
+                    stream = new MemoryStream(dataBoxBuffer);
 
-                    this.items.Add(alphaItem);
-                    totalDataSize += alpha.Data.ByteLength;
+                    using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, leaveOpen: false))
+                    {
+                        stream = null;
+
+                        // The ImageGridDescriptor is shared between the color and alpha image.
+                        new ImageGridDescriptor(imageGridMetadata).Write(writer);
+                    }
                 }
+                finally
+                {
+                    stream?.Dispose();
+                }
+
+                return new ItemDataBox(dataBoxBuffer);
+            }
+
+            private void Initialize(IReadOnlyList<CompressedAV1Image> colorImages,
+                                    IReadOnlyList<CompressedAV1Image> alphaImages,
+                                    ImageGridMetadata imageGridMetadata,
+                                    AvifMetadata metadata)
+            {
+                ImageStateInfo result;
+
+                if (imageGridMetadata != null)
+                {
+                    result = InitializeFromImageGrid(colorImages, alphaImages, imageGridMetadata);
+                    this.ItemDataBox = CreateItemDataBox(imageGridMetadata);
+                }
+                else
+                {
+                    result = InitializeFromSingleImage(colorImages[0], alphaImages?[0]);
+                    this.ItemDataBox = null;
+                }
+
+                ushort itemId = result.NextId;
+                ulong totalDataSize = result.TotalSize;
 
                 byte[] exif = metadata.GetExifBytesReadOnly();
                 if (exif != null && exif.Length > 0)
                 {
-                    itemId++;
                     AvifWriterItem exifItem = AvifWriterItem.CreateFromExif(itemId, exif);
-                    exifItem.ItemReference = new ItemReferenceEntryBox(exifItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId);
+                    itemId++;
+                    exifItem.ItemReferences.Add(new ItemReferenceEntryBox(exifItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId));
 
                     this.items.Add(exifItem);
                     totalDataSize += (ulong)exifItem.ContentBytes.Length;
@@ -78,15 +117,154 @@ namespace AvifFileType
                 byte[] xmp = metadata.GetXmpBytesReadOnly();
                 if (xmp != null && xmp.Length > 0)
                 {
-                    itemId++;
                     AvifWriterItem xmpItem = AvifWriterItem.CreateFromXmp(itemId, xmp);
-                    xmpItem.ItemReference = new ItemReferenceEntryBox(xmpItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId);
+                    xmpItem.ItemReferences.Add(new ItemReferenceEntryBox(xmpItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId));
 
                     this.items.Add(xmpItem);
                     totalDataSize += (ulong)xmpItem.ContentBytes.Length;
                 }
 
                 this.TotalDataSize = totalDataSize;
+            }
+
+            private ImageStateInfo InitializeFromImageGrid(IReadOnlyList<CompressedAV1Image> colorImages,
+                                                           IReadOnlyList<CompressedAV1Image> alphaImages,
+                                                           ImageGridMetadata imageGridMetadata)
+            {
+                ulong totalDataSize = 0;
+                ushort itemId = FirstItemId;
+
+                List<uint> colorImageIds = new List<uint>(colorImages.Count);
+                List<uint> alphaImageIds = alphaImages != null ? new List<uint>(alphaImages.Count) : null;
+
+                for (int i = 0; i < colorImages.Count; i++)
+                {
+                    CompressedAV1Image color = colorImages[i];
+                    AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, null, color, false);
+                    itemId++;
+                    colorImageIds.Add(colorItem.Id);
+                    this.items.Add(colorItem);
+                    totalDataSize += color.Data.ByteLength;
+
+                    if (alphaImages != null)
+                    {
+                        CompressedAV1Image alpha = alphaImages[i];
+                        AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, null, alpha, true);
+                        itemId++;
+                        alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, colorItem.Id));
+                        alphaImageIds.Add(alphaItem.Id);
+
+                        this.items.Add(alphaItem);
+                        totalDataSize += alpha.Data.ByteLength;
+                    }
+                }
+
+                ulong gridDescriptorLength;
+
+                if (imageGridMetadata.OutputHeight > ushort.MaxValue || imageGridMetadata.OutputWidth > ushort.MaxValue)
+                {
+                    gridDescriptorLength = ImageGridDescriptor.LargeDescriptorLength;
+                }
+                else
+                {
+                    gridDescriptorLength = ImageGridDescriptor.SmallDescriptorLength;
+                }
+
+                AvifWriterItem colorGridItem = AvifWriterItem.CreateFromImageGrid(itemId, "Color", 0, gridDescriptorLength);
+                itemId++;
+                colorGridItem.ItemReferences.Add(new ItemReferenceEntryBox(colorGridItem.Id, ReferenceTypes.DerivedImage, colorImageIds));
+
+                this.PrimaryItemId = colorGridItem.Id;
+                this.items.Add(colorGridItem);
+                totalDataSize += gridDescriptorLength;
+
+                if (alphaImages != null)
+                {
+                    // The ImageGridDescriptor is shared between the color and alpha image.
+                    AvifWriterItem alphaGridItem = AvifWriterItem.CreateFromImageGrid(itemId, "Alpha", 0, gridDescriptorLength);
+                    itemId++;
+                    alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.AuxiliaryImage, colorGridItem.Id));
+                    alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.DerivedImage, alphaImageIds));
+
+                    this.AlphaItemId = alphaGridItem.Id;
+                    this.items.Add(alphaGridItem);
+                    totalDataSize += gridDescriptorLength;
+                }
+
+                return new ImageStateInfo(totalDataSize, itemId);
+            }
+
+            private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image alpha)
+            {
+                ulong totalDataSize = color.Data.ByteLength;
+                ushort itemId = FirstItemId;
+
+                AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, "Color", color, false);
+                itemId++;
+                this.PrimaryItemId = colorItem.Id;
+                this.items.Add(colorItem);
+
+                if (alpha != null)
+                {
+                    AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, "Alpha", alpha, true);
+                    itemId++;
+                    alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, this.PrimaryItemId));
+                    this.AlphaItemId = alphaItem.Id;
+
+                    this.items.Add(alphaItem);
+                    totalDataSize += alpha.Data.ByteLength;
+                }
+
+                return new ImageStateInfo(totalDataSize, itemId);
+            }
+
+            private static int GetItemCount(IReadOnlyList<CompressedAV1Image> colorImages, IReadOnlyList<CompressedAV1Image> alphaImages, AvifMetadata metadata)
+            {
+                int count;
+
+                if (colorImages.Count == 1)
+                {
+                    count = 1;
+                }
+                else
+                {
+                    // Add one item for the grid image.
+                    count = 1 + colorImages.Count;
+                }
+
+                if (alphaImages != null)
+                {
+                    // The color and alpha lists will always have the same number of images.
+                    count *= 2;
+                }
+
+                byte[] exif = metadata.GetExifBytesReadOnly();
+                if (exif != null && exif.Length > 0)
+                {
+                    count++;
+                }
+
+                byte[] xmp = metadata.GetXmpBytesReadOnly();
+                if (xmp != null && xmp.Length > 0)
+                {
+                    count++;
+                }
+
+                return count;
+            }
+
+            private readonly struct ImageStateInfo
+            {
+                public ImageStateInfo(ulong totalSize, ushort nextId)
+                {
+                    this.TotalSize = totalSize;
+                    this.NextId = nextId;
+                }
+
+
+                public ulong TotalSize { get; }
+
+                public ushort NextId { get; }
             }
         }
     }

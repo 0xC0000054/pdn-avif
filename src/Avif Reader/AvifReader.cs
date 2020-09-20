@@ -82,6 +82,8 @@ namespace AvifFileType
 
         public CICPColorData? ImageColorData => this.imageColorData;
 
+        public ImageGridMetadata ImageGridMetadata { get; private set; }
+
         public Surface Decode()
         {
             VerifyNotDisposed();
@@ -447,6 +449,7 @@ namespace AvifFileType
                 }
             }
 
+            this.ImageGridMetadata = new ImageGridMetadata(this.colorGridInfo, decodeInfo.expectedHeight, decodeInfo.expectedWidth);
             MaybeUseColorDataFromDecoder(decodeInfo);
         }
 

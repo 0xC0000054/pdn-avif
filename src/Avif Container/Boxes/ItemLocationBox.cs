@@ -77,8 +77,8 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public ItemLocationBox(bool use64BitOffsets)
-            : base(0, 0, BoxTypes.ItemLocation)
+        public ItemLocationBox(bool use64BitOffsets, ItemDataBox itemDataBox)
+            : base((byte)(itemDataBox != null ? 1 : 0), 0, BoxTypes.ItemLocation)
         {
             if (use64BitOffsets)
             {

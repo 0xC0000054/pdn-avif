@@ -59,7 +59,9 @@ extern "C" {
         AlphaSizeMismatch,
         ColorSizeMismatch,
         TileNclxProfileMismatch,
-        UnsupportedBitDepth
+        UnsupportedBitDepth,
+        UnknownYUVFormat,
+        TileFormatMismatch
     };
 
     // This must be kept in sync with EncoderOptions.cs
@@ -85,6 +87,8 @@ extern "C" {
         uint32_t expectedHeight;
         uint32_t tileColumnIndex;
         uint32_t tileRowIndex;
+        YUVChromaSubsampling chromaSubsampling;
+        uint32_t bitDepth;
         CICPColorData firstTileColorData;
         bool usingFirstTileColorData;
     };

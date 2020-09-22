@@ -16,6 +16,7 @@ using PaintDotNet;
 using PaintDotNet.IO;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 
@@ -217,6 +218,38 @@ namespace AvifFileType
             return null;
         }
 
+        private static void CheckImageGridAndTileBounds(uint tileWidth, uint tileHeight, YUVChromaSubsampling tileChroma, ImageGridInfo gridInfo)
+        {
+            // The MAIF standard requires that the tile size be at least 64x64.
+            if (tileWidth < 64 || tileHeight < 64)
+            {
+                ExceptionUtil.ThrowFormatException("The image grid tile size must be at least 64x64.");
+            }
+
+            // HEIF (ISO/IEC 23008-12:2017), section 6.6.2.3.1:
+            // The tiled input images shall completely “cover” the reconstructed image grid canvas...
+            if ((tileWidth * (gridInfo.TileColumnCount)) < gridInfo.OutputWidth || (tileHeight * gridInfo.TileRowCount) < gridInfo.OutputHeight)
+            {
+                ExceptionUtil.ThrowFormatException("The image grid tiles do not cover the entire output image.");
+            }
+
+            if (tileChroma == YUVChromaSubsampling.Subsampling420 || tileChroma == YUVChromaSubsampling.Subsampling422)
+            {
+                if ((tileWidth & 1) != 0 || (gridInfo.OutputWidth & 1) != 0)
+                {
+                    ExceptionUtil.ThrowFormatException("The tile and output image width must be an even number.");
+                }
+
+                if (tileChroma == YUVChromaSubsampling.Subsampling420)
+                {
+                    if ((tileHeight & 1) != 0 || (gridInfo.OutputHeight & 1) != 0)
+                    {
+                        ExceptionUtil.ThrowFormatException("The tile and output image height must be an even number.");
+                    }
+                }
+            }
+        }
+
         private void ApplyImageTransforms(ref Surface surface)
         {
             // The image transforms must be applied in the following order:
@@ -405,6 +438,7 @@ namespace AvifFileType
             };
 
             IReadOnlyList<uint> childImageIds = this.alphaGridInfo.ChildImageIds;
+            bool firstTile = true;
 
             // The tiles are encoded from top to bottom then left to right.
 
@@ -418,6 +452,15 @@ namespace AvifFileType
                     decodeInfo.tileColumnIndex = (uint)col;
 
                     DecodeAlphaImage(childImageIds[startIndex + col], decodeInfo, fullSurface);
+
+                    if (firstTile)
+                    {
+                        firstTile = false;
+                        CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
+                                                    decodeInfo.expectedHeight,
+                                                    decodeInfo.chromaSubsampling,
+                                                    this.alphaGridInfo);
+                    }
                 }
             }
         }
@@ -433,6 +476,7 @@ namespace AvifFileType
             };
 
             IReadOnlyList<uint> childImageIds = this.colorGridInfo.ChildImageIds;
+            bool firstTile = true;
 
             // The tiles are encoded from top to bottom then left to right.
 
@@ -446,6 +490,15 @@ namespace AvifFileType
                     decodeInfo.tileColumnIndex = (uint)col;
 
                     DecodeColorImage(childImageIds[startIndex + col], decodeInfo, colorInfo, fullSurface);
+
+                    if (firstTile)
+                    {
+                        firstTile = false;
+                        CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
+                                                    decodeInfo.expectedHeight,
+                                                    decodeInfo.chromaSubsampling,
+                                                    this.colorGridInfo);
+                    }
                 }
             }
 

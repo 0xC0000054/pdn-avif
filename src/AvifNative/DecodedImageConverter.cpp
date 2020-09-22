@@ -757,10 +757,97 @@ DecoderStatus ConvertColorImage(
 
     const bool isFirstTile = decodeInfo->tileColumnIndex == 0 && decodeInfo->tileRowIndex == 0;
 
-    if (isFirstTile && decodeInfo->expectedWidth == 0 && decodeInfo->expectedHeight == 0)
+    if (isFirstTile)
     {
-        decodeInfo->expectedWidth = frame->d_w;
-        decodeInfo->expectedHeight = frame->d_h;
+        if (decodeInfo->expectedWidth == 0 && decodeInfo->expectedHeight == 0)
+        {
+            decodeInfo->expectedWidth = frame->d_w;
+            decodeInfo->expectedHeight = frame->d_h;
+        }
+
+        decodeInfo->bitDepth = frame->bit_depth;
+        if (frame->monochrome)
+        {
+            decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling400;
+        }
+        else if (containerColorInfo && containerColorInfo->matrixCoefficients == CICPMatrixCoefficients::Identity
+                 || frame->mc == AOM_CICP_MC_IDENTITY)
+        {
+            decodeInfo->chromaSubsampling = YUVChromaSubsampling::IdentityMatrix;
+        }
+        else
+        {
+            switch (frame->fmt)
+            {
+            case AOM_IMG_FMT_I420:
+            case AOM_IMG_FMT_AOMI420:
+            case AOM_IMG_FMT_I42016:
+            case AOM_IMG_FMT_YV12:
+            case AOM_IMG_FMT_AOMYV12:
+            case AOM_IMG_FMT_YV1216:
+                decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling420;
+                break;
+            case AOM_IMG_FMT_I422:
+            case AOM_IMG_FMT_I42216:
+                decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling422;
+                break;
+            case AOM_IMG_FMT_I444:
+            case AOM_IMG_FMT_I44416:
+                decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling422;
+                break;
+            case AOM_IMG_FMT_NONE:
+            default:
+                return DecoderStatus::UnknownYUVFormat;
+            }
+        }
+    }
+    else
+    {
+        if (frame->bit_depth != decodeInfo->bitDepth)
+        {
+            return DecoderStatus::TileFormatMismatch;
+        }
+
+        switch (decodeInfo->chromaSubsampling)
+        {
+        case YUVChromaSubsampling::Subsampling400:
+            if (!frame->monochrome)
+            {
+                return DecoderStatus::TileFormatMismatch;
+            }
+            break;
+        case YUVChromaSubsampling::Subsampling420:
+            if (frame->fmt != AOM_IMG_FMT_I420
+                && frame->fmt != AOM_IMG_FMT_AOMI420
+                && frame->fmt != AOM_IMG_FMT_I42016
+                && frame->fmt != AOM_IMG_FMT_YV12
+                && frame->fmt != AOM_IMG_FMT_AOMYV12
+                && frame->fmt != AOM_IMG_FMT_YV1216)
+            {
+                return DecoderStatus::TileFormatMismatch;
+            }
+            break;
+        case YUVChromaSubsampling::Subsampling422:
+            if (frame->fmt != AOM_IMG_FMT_I422 && frame->fmt != AOM_IMG_FMT_I42216)
+            {
+                return DecoderStatus::TileFormatMismatch;
+            }
+            break;
+        case YUVChromaSubsampling::Subsampling444:
+            if (frame->fmt != AOM_IMG_FMT_I444 && frame->fmt != AOM_IMG_FMT_I44416)
+            {
+                return DecoderStatus::TileFormatMismatch;
+            }
+            break;
+        case YUVChromaSubsampling::IdentityMatrix:
+            if (!containerColorInfo && frame->mc != AOM_CICP_MC_IDENTITY)
+            {
+                return DecoderStatus::TileFormatMismatch;
+            }
+            break;
+        default:
+            return DecoderStatus::UnknownYUVFormat;
+        }
     }
 
     CICPColorData colorInfo = {};
@@ -916,6 +1003,15 @@ DecoderStatus ConvertAlphaImage(
     {
         decodeInfo->expectedWidth = frame->d_w;
         decodeInfo->expectedHeight = frame->d_h;
+        decodeInfo->bitDepth = frame->bit_depth;
+        decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling400;
+    }
+    else
+    {
+        if (frame->bit_depth != decodeInfo->bitDepth)
+        {
+            return DecoderStatus::TileFormatMismatch;
+        }
     }
 
     try

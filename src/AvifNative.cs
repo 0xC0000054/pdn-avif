@@ -358,6 +358,10 @@ namespace AvifFileType
                     throw new FormatException("The color image tiles must use an identical color profile.");
                 case DecoderStatus.UnsupportedBitDepth:
                     throw new FormatException("The image has an unsupported bit depth.");
+                case DecoderStatus.UnknownYUVFormat:
+                    throw new FormatException("The YUV format is not supported by the decoder.");
+                case DecoderStatus.TileFormatMismatch:
+                    throw new FormatException("The color image tiles must use the same YUV format and bit depth.");
                 default:
                     throw new FormatException("An unknown error occurred when decoding the image.");
             }

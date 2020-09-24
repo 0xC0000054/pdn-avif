@@ -11,22 +11,74 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace AvifFileType
 {
-    internal sealed class CompressedAV1ImageCollection : Collection<CompressedAV1Image>, IDisposable
+    internal sealed class CompressedAV1ImageCollection : IList<CompressedAV1Image>, IReadOnlyList<CompressedAV1Image>, IDisposable
     {
+        private readonly List<CompressedAV1Image> items;
         private bool disposed;
+        private int version;
 
-        public CompressedAV1ImageCollection(int capacity) : base(new List<CompressedAV1Image>(capacity))
+        public CompressedAV1ImageCollection(int capacity)
         {
-            this.Capacity = capacity;
+            this.items = new List<CompressedAV1Image>(capacity);
             this.disposed = false;
         }
 
-        public int Capacity { get; }
+        public CompressedAV1Image this[int index]
+        {
+            get
+            {
+                VerifyNotDisposed();
+
+                return this.items[index];
+            }
+            set
+            {
+                VerifyNotDisposed();
+
+                if ((uint)index < (uint)this.items.Count)
+                {
+                    this.items[index]?.Dispose();
+                }
+
+                this.items[index] = value;
+                this.version++;
+            }
+        }
+
+        public int Capacity => this.items.Capacity;
+
+        public int Count => this.items.Count;
+
+        public bool IsReadOnly => false;
+
+        public void Add(CompressedAV1Image item)
+        {
+            VerifyNotDisposed();
+
+            this.items.Add(item);
+            this.version++;
+        }
+
+        public void Clear()
+        {
+            for (int i = 0; i < this.items.Count; i++)
+            {
+                this.items[i]?.Dispose();
+            }
+
+            this.items.Clear();
+            this.version++;
+        }
+
+        public bool Contains(CompressedAV1Image item)
+        {
+            return this.items.Contains(item);
+        }
 
         public void Dispose()
         {
@@ -34,69 +86,80 @@ namespace AvifFileType
             {
                 this.disposed = true;
 
-                IList<CompressedAV1Image> items = this.Items;
-
-                for (int i = 0; i < items.Count; i++)
+                for (int i = 0; i < this.items.Count; i++)
                 {
-                    items[i]?.Dispose();
+                    this.items[i]?.Dispose();
                 }
+                this.version++;
             }
         }
 
-        protected override void ClearItems()
+        public Enumerator GetEnumerator()
         {
             VerifyNotDisposed();
 
-            IList<CompressedAV1Image> items = this.Items;
-
-            for (int i = 0; i < items.Count; i++)
-            {
-                items[i]?.Dispose();
-            }
-
-            base.ClearItems();
+            return new Enumerator(this);
         }
 
-        protected override void InsertItem(int index, CompressedAV1Image item)
+        public int IndexOf(CompressedAV1Image item)
         {
-            VerifyNotDisposed();
-
-            IList<CompressedAV1Image> items = this.Items;
-
-            if (index < items.Count)
-            {
-                items[index]?.Dispose();
-            }
-
-            base.InsertItem(index, item);
+            return this.items.IndexOf(item);
         }
 
-        protected override void RemoveItem(int index)
+        public void Insert(int index, CompressedAV1Image item)
         {
-            VerifyNotDisposed();
-
-            IList<CompressedAV1Image> items = this.Items;
-
-            if (index < items.Count)
+            if ((uint)index > (uint)this.items.Count)
             {
-                items[index]?.Dispose();
+                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(index));
             }
 
-            base.RemoveItem(index);
+            VerifyNotDisposed();
+
+            if (index < this.items.Count)
+            {
+                this.items[index]?.Dispose();
+            }
+            this.items.Insert(index, item);
         }
 
-        protected override void SetItem(int index, CompressedAV1Image item)
+        public bool Remove(CompressedAV1Image item)
         {
-            VerifyNotDisposed();
+            int index = this.items.IndexOf(item);
 
-            IList<CompressedAV1Image> items = this.Items;
-
-            if (index < items.Count)
+            if (index >= 0)
             {
-                items[index]?.Dispose();
+                RemoveAt(index);
+                return true;
             }
 
-            base.SetItem(index, item);
+            return false;
+        }
+
+        public void RemoveAt(int index)
+        {
+            if ((uint)index >= (uint)this.items.Count)
+            {
+                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(index));
+            }
+
+            this.items[index]?.Dispose();
+            this.items.RemoveAt(index);
+            this.version++;
+        }
+
+        void ICollection<CompressedAV1Image>.CopyTo(CompressedAV1Image[] array, int arrayIndex)
+        {
+            throw new NotSupportedException("The items are disposable resources owned by this collection.");
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        IEnumerator<CompressedAV1Image> IEnumerable<CompressedAV1Image>.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         private void VerifyNotDisposed()
@@ -104,6 +167,71 @@ namespace AvifFileType
             if (this.disposed)
             {
                 ExceptionUtil.ThrowObjectDisposedException(nameof(CompressedAV1ImageCollection));
+            }
+        }
+
+        public struct Enumerator : IEnumerator<CompressedAV1Image>
+        {
+            private CompressedAV1ImageCollection items;
+            private int index;
+            private readonly int version;
+
+            public Enumerator(CompressedAV1ImageCollection items) : this()
+            {
+                this.items = items;
+                this.index = 0;
+                this.version = items.version;
+                this.Current = default;
+            }
+
+            public CompressedAV1Image Current { get; private set; }
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (this.index == 0 || this.index >= this.items.Count)
+                    {
+                        ExceptionUtil.ThrowInvalidOperationException("The enumeration has not started or has reached the end of the collection.");
+                    }
+
+                    return this.Current;
+                }
+            }
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                CompressedAV1ImageCollection localItems = this.items;
+
+                if (localItems.version == this.version && (uint)this.index < (uint)localItems.Count)
+                {
+                    this.Current = localItems[this.index];
+                    this.index++;
+
+                    return true;
+                }
+                else
+                {
+                    if (localItems.version != this.version)
+                    {
+                        ExceptionUtil.ThrowInvalidOperationException("The collection was modified while enumerating.");
+                    }
+
+                    this.index = localItems.Count;
+                    this.Current = default;
+
+                    return false;
+                }
+            }
+
+            public void Reset()
+            {
+                this.index = 0;
+                this.Current = default;
             }
         }
     }

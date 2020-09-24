@@ -13,10 +13,10 @@
 #include "AvifNative.h"
 #include "AV1Decoder.h"
 #include "DecodedImageConverter.h"
+#include "ScopedAOMCodec.h"
 #include <aom/aom_decoder.h>
 #include <aom/aomdx.h>
 #include <aom/aom_image.h>
-
 
 namespace
 {
@@ -54,25 +54,16 @@ namespace
         }
     }
 
-    DecoderStatus InitializeDecoder(aom_codec_ctx_t* codec)
+    class ScopedAOMDecoder : public ScopedAOMCodec
     {
-        aom_codec_iface_t* iface = aom_codec_av1_dx();
-
-        const aom_codec_err_t error = aom_codec_dec_init(codec, iface, nullptr, 0);
-        if (error != AOM_CODEC_OK)
+    public:
+        ScopedAOMDecoder() : ScopedAOMCodec()
         {
-            if (error == AOM_CODEC_MEM_ERROR)
-            {
-                return DecoderStatus::OutOfMemory;
-            }
-            else
-            {
-                return DecoderStatus::CodecInitFailed;
-            }
+            aom_codec_iface_t* iface = aom_codec_av1_dx();
+            throw_on_error(aom_codec_dec_init(&codec, iface, nullptr, 0));
+            initialized = true;
         }
-
-        return DecoderStatus::Ok;
-    }
+    };
 }
 
 DecoderStatus DecodeColorImage(
@@ -87,17 +78,17 @@ DecoderStatus DecodeColorImage(
         return DecoderStatus::NullParameter;
     }
 
-    aom_codec_ctx_t codec;
+    DecoderStatus status = DecoderStatus::Ok;
 
-    DecoderStatus status = InitializeDecoder(&codec);
-
-    if (status == DecoderStatus::Ok)
+    try
     {
+        ScopedAOMDecoder codec;
+
         // The image is owned by the decoder.
 
         aom_image_t* aomImage = nullptr;
 
-        status = DecodeAV1Image(&codec,
+        status = DecodeAV1Image(codec.get(),
                                 compressedColorImage,
                                 compressedColorImageSize,
                                 &aomImage);
@@ -115,8 +106,14 @@ DecoderStatus DecodeColorImage(
                 status = ConvertColorImage(aomImage, colorInfo, decodeInfo, decodedImage);
             }
         }
-
-        aom_codec_destroy(&codec);
+    }
+    catch (const std::bad_alloc&)
+    {
+        status = DecoderStatus::OutOfMemory;
+    }
+    catch (const codec_error&)
+    {
+        status = DecoderStatus::CodecInitFailed;
     }
 
     return status;
@@ -133,17 +130,17 @@ DecoderStatus DecodeAlphaImage(
         return DecoderStatus::NullParameter;
     }
 
-    aom_codec_ctx_t codec;
+    DecoderStatus status = DecoderStatus::Ok;
 
-    DecoderStatus status = InitializeDecoder(&codec);
-
-    if (status == DecoderStatus::Ok)
+    try
     {
+        ScopedAOMDecoder codec;
+
         // The image is owned by the decoder.
 
         aom_image_t* aomImage = nullptr;
 
-        status = DecodeAV1Image(&codec,
+        status = DecodeAV1Image(codec.get(),
                                 compressedAlphaImage,
                                 compressedAlphaImageSize,
                                 &aomImage);
@@ -161,8 +158,14 @@ DecoderStatus DecodeAlphaImage(
                 status = ConvertAlphaImage(aomImage, decodeInfo, outputImage);
             }
         }
-
-        aom_codec_destroy(&codec);
+    }
+    catch (const std::bad_alloc&)
+    {
+        status = DecoderStatus::OutOfMemory;
+    }
+    catch (const codec_error&)
+    {
+        status = DecoderStatus::CodecInitFailed;
     }
 
     return status;

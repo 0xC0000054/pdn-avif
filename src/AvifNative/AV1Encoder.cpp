@@ -39,6 +39,7 @@
 #include "AV1Encoder.h"
 #include "AvifNative.h"
 #include "Memory.h"
+#include "ScopedAOMCodec.h"
 #include "aom/aomcx.h"
 #include "aom/aom_encoder.h"
 #include <array>
@@ -138,51 +139,49 @@ namespace
         size_t sz;
     };
 
-    EncoderStatus InitializeEncoder(
-        aom_codec_ctx* codec,
-        aom_codec_iface_t* iface,
-        const aom_codec_enc_cfg* cfg,
-        const AvifEncoderOptions& encodeOptions,
-        const aom_image_t* frame)
+    class ScopedAOMEncoder : public ScopedAOMCodec
     {
-        const aom_codec_err_t error = aom_codec_enc_init(codec, iface, cfg, 0);
-        if (error != AOM_CODEC_OK)
+    public:
+        ScopedAOMEncoder(aom_codec_iface_t* iface, const aom_codec_enc_cfg* cfg) : ScopedAOMCodec()
         {
-            if (error == AOM_CODEC_MEM_ERROR)
+            throw_on_error(aom_codec_enc_init(&codec, iface, cfg, 0));
+            initialized = true;
+        }
+
+        void ConfigureEncoderOptions(
+            const aom_codec_enc_cfg* cfg,
+            const AvifEncoderOptions& encodeOptions,
+            const aom_image_t* frame)
+        {
+            if (!initialized)
             {
-                return EncoderStatus::OutOfMemory;
+                throw new codec_error("ConfigureEncoderOptions called on an invalid object.");
+            }
+
+            throw_on_error(aom_codec_control(&codec, AOME_SET_CPUUSED, encodeOptions.cpuUsed));
+            throw_on_error(aom_codec_control(&codec, AOME_SET_CQ_LEVEL, encodeOptions.quality));
+
+            if (encodeOptions.quality == 0)
+            {
+                throw_on_error(aom_codec_control(&codec, AV1E_SET_LOSSLESS, 1));
+            }
+            throw_on_error(aom_codec_control(&codec, AV1E_SET_COLOR_PRIMARIES, frame->cp));
+            throw_on_error(aom_codec_control(&codec, AV1E_SET_TRANSFER_CHARACTERISTICS, frame->tc));
+            throw_on_error(aom_codec_control(&codec, AV1E_SET_MATRIX_COEFFICIENTS, frame->mc));
+            throw_on_error(aom_codec_control(&codec, AV1E_SET_COLOR_RANGE, frame->range));
+            throw_on_error(aom_codec_control(&codec, AV1E_SET_FRAME_PARALLEL_DECODING, 0));
+            throw_on_error(aom_codec_control(&codec, AV1E_SET_TILE_COLUMNS, 0));
+            throw_on_error(aom_codec_control(&codec, AV1E_SET_TILE_ROWS, 0));
+            if (cfg->g_threads > 1)
+            {
+                throw_on_error(aom_codec_control(&codec, AV1E_SET_ROW_MT, 1));
             }
             else
             {
-                return EncoderStatus::CodecInitFailed;
+                throw_on_error(aom_codec_control(&codec, AV1E_SET_ROW_MT, 0));
             }
         }
-
-        aom_codec_control(codec, AOME_SET_CPUUSED, encodeOptions.cpuUsed);
-        aom_codec_control(codec, AOME_SET_CQ_LEVEL, encodeOptions.quality);
-
-        if (encodeOptions.quality == 0)
-        {
-            aom_codec_control(codec, AV1E_SET_LOSSLESS, 1);
-        }
-        aom_codec_control(codec, AV1E_SET_COLOR_PRIMARIES, frame->cp);
-        aom_codec_control(codec, AV1E_SET_TRANSFER_CHARACTERISTICS, frame->tc);
-        aom_codec_control(codec, AV1E_SET_MATRIX_COEFFICIENTS, frame->mc);
-        aom_codec_control(codec, AV1E_SET_COLOR_RANGE, frame->range);
-        aom_codec_control(codec, AV1E_SET_FRAME_PARALLEL_DECODING, 0);
-        aom_codec_control(codec, AV1E_SET_TILE_COLUMNS, 0);
-        aom_codec_control(codec, AV1E_SET_TILE_ROWS, 0);
-        if (cfg->g_threads > 1)
-        {
-            aom_codec_control(codec, AV1E_SET_ROW_MT, 1);
-        }
-        else
-        {
-            aom_codec_control(codec, AV1E_SET_ROW_MT, 0);
-        }
-
-        return EncoderStatus::Ok;
-    }
+    };
 
     EncoderStatus DoOnePass(
         aom_codec_iface_t* iface,
@@ -192,13 +191,14 @@ namespace
         const aom_image_t* frame,
         AvifEncoderOutput* output)
     {
-        aom_codec_ctx codec;
+        EncoderStatus status = EncoderStatus::Ok;
 
-        EncoderStatus status = InitializeEncoder(&codec, iface, cfg, encodeOptions, frame);
-
-        if (status == EncoderStatus::Ok)
+        try
         {
-            aom_codec_err_t encodeError = aom_codec_encode(&codec, frame, 0, 1, 0);
+            ScopedAOMEncoder codec(iface, cfg);
+            codec.ConfigureEncoderOptions(cfg, encodeOptions, frame);
+
+            aom_codec_err_t encodeError = aom_codec_encode(codec.get(), frame, 0, 1, 0);
 
             if (encodeError == AOM_CODEC_OK)
             {
@@ -207,7 +207,7 @@ namespace
 
                 while (true)
                 {
-                    const aom_codec_cx_pkt_t* pkt = aom_codec_get_cx_data(&codec, &iter);
+                    const aom_codec_cx_pkt_t* pkt = aom_codec_get_cx_data(codec.get(), &iter);
 
                     if (pkt == nullptr)
                     {
@@ -217,7 +217,7 @@ namespace
                             break;
                         }
 
-                        encodeError = aom_codec_encode(&codec, nullptr, 0, 1, 0);
+                        encodeError = aom_codec_encode(codec.get(), nullptr, 0, 1, 0);
                         if (encodeError != AOM_CODEC_OK)
                         {
                             status = encodeError == AOM_CODEC_MEM_ERROR ? EncoderStatus::OutOfMemory : EncoderStatus::EncodeFailed;
@@ -252,8 +252,14 @@ namespace
             {
                 status = encodeError == AOM_CODEC_MEM_ERROR ? EncoderStatus::OutOfMemory : EncoderStatus::EncodeFailed;
             }
-
-            aom_codec_destroy(&codec);
+        }
+        catch (const std::bad_alloc&)
+        {
+            status = EncoderStatus::OutOfMemory;
+        }
+        catch (const codec_error&)
+        {
+            status = EncoderStatus::CodecInitFailed;
         }
 
         return status;

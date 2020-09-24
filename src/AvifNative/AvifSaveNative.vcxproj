@@ -26,6 +26,7 @@
     <ClInclude Include="CICPEnums.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="ScopedAOMCodec.h" />
     <ClInclude Include="TargetVer.h" />
     <ClInclude Include="DecodedImageConverter.h" />
     <ClInclude Include="YUVConversionHelpers.h" />

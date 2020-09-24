@@ -45,6 +45,9 @@
     <ClInclude Include="CICPEnums.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ScopedAOMCodec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Memory.cpp">

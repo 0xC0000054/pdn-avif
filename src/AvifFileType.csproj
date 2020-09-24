@@ -86,7 +86,6 @@
     <Compile Include="Avif Writer\AvifWriter.AvifWriterItem.cs" />
     <Compile Include="Avif Writer\AvifWriter.AvifWriterState.cs" />
     <Compile Include="Avif Writer\AvifWriter.cs" />
-    <Compile Include="Avif Container\BigEndianBinaryWriter.cs" />
     <Compile Include="Avif Container\AV1ConfigBoxBuilder.cs" />
     <Compile Include="Avif Container\Boxes\Item Properties\AuxiliaryTypePropertyBox.cs" />
     <Compile Include="Avif Container\Boxes\AvifBrands.cs" />
@@ -162,6 +161,7 @@
     <Compile Include="Interop\EncoderStatus.cs" />
     <Compile Include="Interop\ProgressContext.cs" />
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
+    <Compile Include="IO\BigEndianBinaryWriter.cs" />
     <Compile Include="IO\EndianBinaryReader.cs" />
     <Compile Include="IO\EndianBinaryReaderSegment.cs" />
     <Compile Include="IO\Endianess.cs" />

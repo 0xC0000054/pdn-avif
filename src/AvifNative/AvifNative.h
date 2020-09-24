@@ -25,7 +25,8 @@ extern "C" {
     {
         Fast,
         Medium,
-        Slow
+        Slow,
+        VerySlow
     };
 
     // This must be kept in sync with YUVChromaSubsampling.cs

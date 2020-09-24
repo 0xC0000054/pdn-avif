@@ -158,6 +158,7 @@ namespace AvifFileType
             compressionSpeedPCI.SetValueDisplayName(CompressionSpeed.Fast, this.strings.GetString("CompressionSpeed_Fast_DisplayName"));
             compressionSpeedPCI.SetValueDisplayName(CompressionSpeed.Medium, this.strings.GetString("CompressionSpeed_Medium_DisplayName"));
             compressionSpeedPCI.SetValueDisplayName(CompressionSpeed.Slow, this.strings.GetString("CompressionSpeed_Slow_DisplayName"));
+            compressionSpeedPCI.SetValueDisplayName(CompressionSpeed.VerySlow, this.strings.GetString("CompressionSpeed_VerySlow_DisplayName"));
 
             PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling);
             subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ChromaSubsampling_DisplayName");

@@ -16,6 +16,7 @@ namespace AvifFileType
     {
         Fast,
         Medium,
-        Slow
+        Slow,
+        VerySlow
     }
 }

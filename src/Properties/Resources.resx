@@ -141,6 +141,9 @@
   <data name="CompressionSpeed_Slow_DisplayName" xml:space="preserve">
     <value>Slow</value>
   </data>
+  <data name="CompressionSpeed_VerySlow_DisplayName" xml:space="preserve">
+    <value>Very Slow</value>
+  </data>
   <data name="ForumLink_Description" xml:space="preserve">
     <value>Forum Discussion</value>
   </data>

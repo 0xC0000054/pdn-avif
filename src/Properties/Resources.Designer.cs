@@ -133,6 +133,15 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Very Slow.
+        /// </summary>
+        internal static string CompressionSpeed_VerySlow_DisplayName {
+            get {
+                return ResourceManager.GetString("CompressionSpeed_VerySlow_DisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Forum Discussion.
         /// </summary>
         internal static string ForumLink_Description {

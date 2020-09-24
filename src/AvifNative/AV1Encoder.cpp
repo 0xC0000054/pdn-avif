@@ -69,6 +69,10 @@ namespace
                 usage = AOM_USAGE_REALTIME;
                 break;
             case CompressionSpeed::Slow:
+            case CompressionSpeed::VerySlow:
+                // The slow and very slow compression speeds use the same settings.
+                // The difference between them is that Slow may split the image into smaller tiles
+                // before encoding and Very Slow will always encode the image as a single tile.
                 cpuUsed = 0;
                 break;
             case CompressionSpeed::Medium:

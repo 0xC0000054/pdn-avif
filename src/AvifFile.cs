@@ -17,6 +17,7 @@ using PaintDotNet;
 using PaintDotNet.Imaging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 
@@ -134,7 +135,7 @@ namespace AvifFileType
                 }
             }
 
-            ImageGridMetadata imageGridMetadata = TryGetImageGridMetadata(document);
+            ImageGridMetadata imageGridMetadata = TryGetImageGridMetadata(document, options.compressionSpeed, options.yuvFormat);
 
             bool hasTransparency = HasTransparency(scratchSurface);
 
@@ -485,20 +486,136 @@ namespace AvifFileType
             return false;
         }
 
-        private static ImageGridMetadata TryGetImageGridMetadata(Document document)
+        private static ImageGridMetadata TryCalculateBestTileSize(
+            Document document,
+            CompressionSpeed compressionSpeed,
+            YUVChromaSubsampling yuvFormat)
+        {
+            // This limits us to 100 total tiles in the worst case.
+            const int MaxTileCount = 10;
+
+            int maxTileSize;
+
+            switch (compressionSpeed)
+            {
+                case CompressionSpeed.Fast:
+                    maxTileSize = 512;
+                    break;
+                case CompressionSpeed.Medium:
+                    maxTileSize = 1280;
+                    break;
+                case CompressionSpeed.Slow:
+                    maxTileSize = 1920;
+                    break;
+                case CompressionSpeed.VerySlow:
+                    // Tiles are not used for the very slow compression speed.
+                    return null;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(compressionSpeed), (int)compressionSpeed, typeof(CompressionSpeed));
+            }
+
+            int bestTileColumnCount = 1;
+            int bestTileWidth = document.Width;
+            int bestTileRowCount = 1;
+            int bestTileHeight = document.Height;
+
+            if (document.Width > maxTileSize)
+            {
+                bestTileColumnCount = 2;
+
+                while (true)
+                {
+                    bestTileWidth = document.Width / bestTileColumnCount;
+
+                    if (bestTileWidth <= maxTileSize || bestTileColumnCount == MaxTileCount)
+                    {
+                        break;
+                    }
+
+                    bestTileColumnCount++;
+                }
+            }
+
+            if (document.Height > maxTileSize)
+            {
+                bestTileRowCount = 2;
+
+                while (true)
+                {
+                    bestTileHeight = document.Height / bestTileRowCount;
+
+                    if (bestTileHeight <= maxTileSize || bestTileRowCount == MaxTileCount)
+                    {
+                        break;
+                    }
+
+                    bestTileRowCount++;
+                }
+            }
+
+            ImageGridMetadata metadata = null;
+
+            if (bestTileColumnCount > 1 || bestTileRowCount > 1)
+            {
+                bool isValidSizeForYUVFormat = true;
+
+                if (yuvFormat == YUVChromaSubsampling.Subsampling420 || yuvFormat == YUVChromaSubsampling.Subsampling422)
+                {
+                    // Some of the YUV formats require the tile and image grid output sizes to be an even number.
+                    if ((bestTileWidth & 1) != 0 || (document.Width & 1) != 0)
+                    {
+                        isValidSizeForYUVFormat = false;
+                    }
+
+                    if (yuvFormat == YUVChromaSubsampling.Subsampling420)
+                    {
+                        if ((bestTileHeight & 1) != 0 || (document.Height & 1) != 0)
+                        {
+                            isValidSizeForYUVFormat = false;
+                        }
+                    }
+                }
+
+                if (isValidSizeForYUVFormat)
+                {
+                    metadata = new ImageGridMetadata(bestTileColumnCount,
+                                                     bestTileRowCount,
+                                                     (uint)document.Height,
+                                                     (uint)document.Width,
+                                                     (uint)bestTileHeight,
+                                                     (uint)bestTileWidth);
+                }
+            }
+
+            return metadata;
+        }
+
+        private static ImageGridMetadata TryGetImageGridMetadata(
+            Document document,
+            CompressionSpeed compressionSpeed,
+            YUVChromaSubsampling yuvFormat)
         {
             ImageGridMetadata metadata = null;
 
-            string value = document.Metadata.GetUserValue(ImageGridName);
-
-            if (!string.IsNullOrEmpty(value))
+            // The VerySlow compression speed always encodes the image as a single tile.
+            if (compressionSpeed != CompressionSpeed.VerySlow)
             {
-                ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
+                string value = document.Metadata.GetUserValue(ImageGridName);
 
-                if (serializedData != null
-                    && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height))
+                if (!string.IsNullOrEmpty(value))
                 {
-                    metadata = serializedData;
+                    ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
+
+                    if (serializedData != null
+                        && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height))
+                    {
+                        metadata = serializedData;
+                    }
+                }
+
+                if (metadata is null)
+                {
+                    metadata = TryCalculateBestTileSize(document, compressionSpeed, yuvFormat);
                 }
             }
 

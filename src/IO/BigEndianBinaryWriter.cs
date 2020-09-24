@@ -35,16 +35,6 @@ namespace AvifFileType.AvifContainer
             this.buffer = new byte[sizeof(ulong)];
         }
 
-        public Stream BaseStream
-        {
-            get
-            {
-                VerifyNotDisposed();
-                this.stream.Flush();
-                return this.stream;
-            }
-        }
-
         public long Position
         {
             get

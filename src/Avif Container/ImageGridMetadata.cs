@@ -26,6 +26,16 @@ namespace AvifFileType.AvifContainer
 
         public ImageGridMetadata(int tileColumnCount, int tileRowCount, uint outputHeight, uint outputWidth, uint tileImageHeight, uint tileImageWidth)
         {
+            if (tileColumnCount < 1 || tileColumnCount > 256)
+            {
+                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(tileColumnCount), $"Must be in the range of [1, 256], actual value: { tileColumnCount }.");
+            }
+
+            if (tileRowCount < 1 || tileRowCount > 256)
+            {
+                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(tileRowCount), $"Must be in the range of [1, 256], actual value: { tileRowCount }.");
+            }
+
             this.TileColumnCount = tileColumnCount;
             this.TileRowCount = tileRowCount;
             this.OutputHeight = outputHeight;
@@ -36,6 +46,11 @@ namespace AvifFileType.AvifContainer
 
         public ImageGridMetadata(ImageGridInfo gridInfo, uint tileImageHeight, uint tileImageWidth)
         {
+            if (gridInfo is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(gridInfo));
+            }
+
             this.TileColumnCount = gridInfo.TileColumnCount;
             this.TileRowCount = gridInfo.TileRowCount;
             this.OutputHeight = gridInfo.OutputHeight;

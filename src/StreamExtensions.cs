@@ -18,9 +18,6 @@ namespace AvifFileType
 {
     internal static class StreamExtensions
     {
-        // The largest multiple of 4096 that is under the large object heap limit.
-        private const int MaxBufferSize = 81920;
-
         public static long TryReadUInt32BigEndian(this Stream stream)
         {
             int byte1 = stream.ReadByte();
@@ -48,54 +45,6 @@ namespace AvifFileType
             }
 
             return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
-        }
-
-        public static unsafe void Write(this Stream stream, SafeBuffer buffer)
-        {
-            if (buffer is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
-            }
-
-            ulong length = buffer.ByteLength;
-
-            if (length == 0)
-            {
-                return;
-            }
-
-            int bufferSize = (int)Math.Min(length, MaxBufferSize);
-            byte[] writeBuffer = new byte[bufferSize];
-
-            byte* readPtr = null;
-            System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                buffer.AcquirePointer(ref readPtr);
-
-                fixed (byte* writePtr = writeBuffer)
-                {
-                    ulong totalBytesRead = 0;
-
-                    while (totalBytesRead < length)
-                    {
-                        ulong bytesRead = Math.Min(length - totalBytesRead, MaxBufferSize);
-
-                        Buffer.MemoryCopy(readPtr + totalBytesRead, writePtr, bytesRead, bytesRead);
-
-                        stream.Write(writeBuffer, 0, (int)bytesRead);
-
-                        totalBytesRead += bytesRead;
-                    }
-                }
-            }
-            finally
-            {
-                if (readPtr != null)
-                {
-                    buffer.ReleasePointer();
-                }
-            }
         }
     }
 }

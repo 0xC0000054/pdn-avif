@@ -12,6 +12,7 @@
 
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace AvifFileType.AvifContainer
 {
@@ -151,6 +152,57 @@ namespace AvifFileType.AvifContainer
             VerifyNotDisposed();
 
             this.stream.Write(bytes, offset, count);
+        }
+
+        public unsafe void Write(SafeBuffer buffer)
+        {
+            if (buffer is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
+            }
+
+            ulong length = buffer.ByteLength;
+
+            if (length == 0)
+            {
+                return;
+            }
+
+            // The largest multiple of 4096 that is under the large object heap limit.
+            const int MaxBufferSize = 81920;
+
+            int bufferSize = (int)Math.Min(length, MaxBufferSize);
+            byte[] writeBuffer = new byte[bufferSize];
+
+            byte* readPtr = null;
+            System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+                buffer.AcquirePointer(ref readPtr);
+
+                fixed (byte* writePtr = writeBuffer)
+                {
+                    ulong totalBytesRead = 0;
+
+                    while (totalBytesRead < length)
+                    {
+                        ulong bytesRead = Math.Min(length - totalBytesRead, MaxBufferSize);
+
+                        Buffer.MemoryCopy(readPtr + totalBytesRead, writePtr, bytesRead, bytesRead);
+
+                        this.stream.Write(writeBuffer, 0, (int)bytesRead);
+
+                        totalBytesRead += bytesRead;
+                    }
+                }
+            }
+            finally
+            {
+                if (readPtr != null)
+                {
+                    buffer.ReleasePointer();
+                }
+            }
         }
 
         private void VerifyNotDisposed()

@@ -34,7 +34,7 @@ namespace AvifNative
         };
     }
 
-    typedef std::unique_ptr<aom_image, details::aom_image_deleter> unique_aom_image;
+    typedef std::unique_ptr<aom_image, details::aom_image_deleter> ScopedAOMImage;
 }
 
 namespace
@@ -69,13 +69,13 @@ namespace
             return EncoderStatus::UnknownYUVFormat;
         }
 
-        AvifNative::unique_aom_image color(ConvertColorToAOMImage(image, colorInfo, yuvFormat, aomFormat));
+        AvifNative::ScopedAOMImage color(ConvertColorToAOMImage(image, colorInfo, yuvFormat, aomFormat));
         if (!color)
         {
             return EncoderStatus::OutOfMemory;
         }
 
-        AvifNative::unique_aom_image alpha;
+        AvifNative::ScopedAOMImage alpha;
         if (compressedAlphaImage && compressedAlphaImageSize)
         {
             alpha.reset(ConvertAlphaToAOMImage(image));

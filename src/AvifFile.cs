@@ -491,8 +491,12 @@ namespace AvifFileType
             CompressionSpeed compressionSpeed,
             YUVChromaSubsampling yuvFormat)
         {
-            // This limits us to 100 total tiles in the worst case.
-            const int MaxTileCount = 10;
+            // This is the largest number of horizontal and vertical tiles that an image grid can have.
+            // While this would result in the image using 65536 tiles in the worst case, it allows
+            // memory usage to be minimized when encoding extremely wide and/or tall images.
+            //
+            // For example, a 65536x65536 pixel image would use a 128x128 grid of 512x512 pixel tiles.
+            const int MaxTileCount = 256;
 
             int maxTileSize;
 

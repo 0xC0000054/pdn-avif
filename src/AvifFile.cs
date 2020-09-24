@@ -607,7 +607,7 @@ namespace AvifFileType
                     ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
 
                     if (serializedData != null
-                        && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height))
+                        && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height, yuvFormat))
                     {
                         metadata = serializedData;
                     }

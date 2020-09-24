@@ -61,12 +61,13 @@ namespace AvifFileType.AvifContainer
             return checked(this.TileColumnCount * this.TileRowCount);
         }
 
-        public bool IsValidForImage(uint documentWidth, uint documentHeight)
+        public bool IsValidForImage(uint documentWidth, uint documentHeight, YUVChromaSubsampling yuvFormat)
         {
             return this.OutputWidth == documentWidth
                    && this.OutputHeight == documentHeight
                    && (this.TileColumnCount * this.TileImageWidth) == documentWidth
-                   && (this.TileRowCount * this.TileImageHeight) == documentHeight;
+                   && (this.TileRowCount * this.TileImageHeight) == documentHeight
+                   && IsValidForYUVFormat(yuvFormat);
         }
 
         public static ImageGridMetadata TryDeserialize(string value)
@@ -119,6 +120,28 @@ namespace AvifFileType.AvifContainer
             string propertyValue = haystack.Substring(valueStartIndex, valueEndIndex - valueStartIndex);
 
             return uint.Parse(propertyValue, CultureInfo.InvariantCulture);
+        }
+
+        private bool IsValidForYUVFormat(YUVChromaSubsampling yuvFormat)
+        {
+            if (yuvFormat == YUVChromaSubsampling.Subsampling420 || yuvFormat == YUVChromaSubsampling.Subsampling422)
+            {
+                // Some of the YUV formats require the tile and image grid output sizes to be an even number.
+                if ((this.TileColumnCount & 1) != 0 || (this.OutputWidth & 1) != 0)
+                {
+                    return false;
+                }
+
+                if (yuvFormat == YUVChromaSubsampling.Subsampling420)
+                {
+                    if ((this.TileRowCount & 1) != 0 || (this.OutputHeight & 1) != 0)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
     }
 }

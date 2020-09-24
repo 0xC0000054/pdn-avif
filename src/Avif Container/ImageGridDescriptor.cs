@@ -29,11 +29,11 @@ namespace AvifFileType.AvifContainer
             }
 
             byte flags = reader.ReadByte();
-            bool largeOutputFields = (flags & 1) == 1;
+            this.LargeOutputFields = (flags & 1) == 1;
 
             this.RowsMinusOne = reader.ReadByte();
             this.ColumnsMinusOne = reader.ReadByte();
-            if (largeOutputFields)
+            if (this.LargeOutputFields)
             {
                 if (length < LargeDescriptorLength)
                 {
@@ -56,6 +56,7 @@ namespace AvifFileType.AvifContainer
             this.ColumnsMinusOne = (byte)(imageGridMetadata.TileColumnCount - 1);
             this.OutputWidth = imageGridMetadata.OutputWidth;
             this.OutputHeight = imageGridMetadata.OutputHeight;
+            this.LargeOutputFields = this.OutputWidth > ushort.MaxValue || this.OutputHeight > ushort.MaxValue;
         }
 
         public byte RowsMinusOne { get; }
@@ -66,16 +67,21 @@ namespace AvifFileType.AvifContainer
 
         public uint OutputHeight { get; }
 
+        private bool LargeOutputFields { get; }
+
+        public int GetSize()
+        {
+            return this.LargeOutputFields ? LargeDescriptorLength : SmallDescriptorLength;
+        }
+
         public void Write(BigEndianBinaryWriter writer)
         {
-            bool largeOutputFields = this.OutputWidth > ushort.MaxValue || this.OutputHeight > ushort.MaxValue;
-
             writer.Write(RequiredVersion);
-            writer.Write((byte)(largeOutputFields ? 1 : 0));
+            writer.Write((byte)(this.LargeOutputFields ? 1 : 0));
             writer.Write(this.RowsMinusOne);
             writer.Write(this.ColumnsMinusOne);
 
-            if (largeOutputFields)
+            if (this.LargeOutputFields)
             {
                 writer.Write(this.OutputWidth);
                 writer.Write(this.OutputHeight);

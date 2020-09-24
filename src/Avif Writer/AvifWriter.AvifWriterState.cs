@@ -59,7 +59,9 @@ namespace AvifFileType
 
             private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata)
             {
-                byte[] dataBoxBuffer = new byte[8];
+                ImageGridDescriptor imageGridDescriptor = new ImageGridDescriptor(imageGridMetadata);
+
+                byte[] dataBoxBuffer = new byte[imageGridDescriptor.GetSize()];
 
                 MemoryStream stream = null;
                 try
@@ -71,7 +73,7 @@ namespace AvifFileType
                         stream = null;
 
                         // The ImageGridDescriptor is shared between the color and alpha image.
-                        new ImageGridDescriptor(imageGridMetadata).Write(writer);
+                        imageGridDescriptor.Write(writer);
                     }
                 }
                 finally

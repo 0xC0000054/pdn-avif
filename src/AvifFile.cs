@@ -488,8 +488,7 @@ namespace AvifFileType
 
         private static ImageGridMetadata TryCalculateBestTileSize(
             Document document,
-            CompressionSpeed compressionSpeed,
-            YUVChromaSubsampling yuvFormat)
+            CompressionSpeed compressionSpeed)
         {
             // This is the largest number of horizontal and vertical tiles that an image grid can have.
             // While this would result in the image using 65536 tiles in the worst case, it allows
@@ -497,6 +496,8 @@ namespace AvifFileType
             //
             // For example, a 65536x65536 pixel image would use a 128x128 grid of 512x512 pixel tiles.
             const int MaxTileCount = 256;
+            // The MAIF specification requires that the tile size be at least 64x64 pixels.
+            const int MinTileSize = 64;
 
             int maxTileSize;
 
@@ -525,35 +526,49 @@ namespace AvifFileType
 
             if (document.Width > maxTileSize)
             {
-                bestTileColumnCount = 2;
-
-                while (true)
+                for (int tileColumnCount = 2; tileColumnCount <= MaxTileCount; tileColumnCount++)
                 {
-                    bestTileWidth = document.Width / bestTileColumnCount;
+                    int tileWidth = document.Width / tileColumnCount;
 
-                    if (bestTileWidth <= maxTileSize || bestTileColumnCount == MaxTileCount)
+                    if (tileWidth < MinTileSize)
                     {
                         break;
                     }
 
-                    bestTileColumnCount++;
+                    if ((tileWidth & 1) == 0 && (tileWidth * tileColumnCount) == document.Width)
+                    {
+                        bestTileWidth = tileWidth;
+                        bestTileColumnCount = tileColumnCount;
+
+                        if (tileWidth <= maxTileSize)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
 
             if (document.Height > maxTileSize)
             {
-                bestTileRowCount = 2;
-
-                while (true)
+                for (int tileRowCount = 2; tileRowCount <= MaxTileCount;  tileRowCount++)
                 {
-                    bestTileHeight = document.Height / bestTileRowCount;
+                    int tileHeight = document.Height / tileRowCount;
 
-                    if (bestTileHeight <= maxTileSize || bestTileRowCount == MaxTileCount)
+                    if (tileHeight < MinTileSize)
                     {
                         break;
                     }
 
-                    bestTileRowCount++;
+                    if ((tileHeight & 1) == 0 && (tileHeight * tileRowCount) == document.Height)
+                    {
+                        bestTileHeight = tileHeight;
+                        bestTileRowCount = tileRowCount;
+
+                        if (tileHeight <= maxTileSize)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -561,34 +576,12 @@ namespace AvifFileType
 
             if (bestTileColumnCount > 1 || bestTileRowCount > 1)
             {
-                bool isValidSizeForYUVFormat = true;
-
-                if (yuvFormat == YUVChromaSubsampling.Subsampling420 || yuvFormat == YUVChromaSubsampling.Subsampling422)
-                {
-                    // Some of the YUV formats require the tile and image grid output sizes to be an even number.
-                    if ((bestTileWidth & 1) != 0 || (document.Width & 1) != 0)
-                    {
-                        isValidSizeForYUVFormat = false;
-                    }
-
-                    if (yuvFormat == YUVChromaSubsampling.Subsampling420)
-                    {
-                        if ((bestTileHeight & 1) != 0 || (document.Height & 1) != 0)
-                        {
-                            isValidSizeForYUVFormat = false;
-                        }
-                    }
-                }
-
-                if (isValidSizeForYUVFormat)
-                {
-                    metadata = new ImageGridMetadata(bestTileColumnCount,
-                                                     bestTileRowCount,
-                                                     (uint)document.Height,
-                                                     (uint)document.Width,
-                                                     (uint)bestTileHeight,
-                                                     (uint)bestTileWidth);
-                }
+                metadata = new ImageGridMetadata(bestTileColumnCount,
+                                                 bestTileRowCount,
+                                                 (uint)document.Height,
+                                                 (uint)document.Width,
+                                                 (uint)bestTileHeight,
+                                                 (uint)bestTileWidth);
             }
 
             return metadata;
@@ -604,22 +597,26 @@ namespace AvifFileType
             // The VerySlow compression speed always encodes the image as a single tile.
             if (compressionSpeed != CompressionSpeed.VerySlow)
             {
-                string value = document.Metadata.GetUserValue(ImageGridName);
-
-                if (!string.IsNullOrEmpty(value))
+                // The image must have an even size to be eligible for tiling.
+                if ((document.Width & 1) == 0 && (document.Height & 1) == 0)
                 {
-                    ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
+                    string value = document.Metadata.GetUserValue(ImageGridName);
 
-                    if (serializedData != null
-                        && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height, yuvFormat))
+                    if (!string.IsNullOrEmpty(value))
                     {
-                        metadata = serializedData;
-                    }
-                }
+                        ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
 
-                if (metadata is null)
-                {
-                    metadata = TryCalculateBestTileSize(document, compressionSpeed, yuvFormat);
+                        if (serializedData != null
+                            && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height, yuvFormat))
+                        {
+                            metadata = serializedData;
+                        }
+                    }
+
+                    if (metadata is null)
+                    {
+                        metadata = TryCalculateBestTileSize(document, compressionSpeed);
+                    }
                 }
             }
 

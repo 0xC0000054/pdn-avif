@@ -550,23 +550,32 @@ namespace AvifFileType
 
             if (document.Height > maxTileSize)
             {
-                for (int tileRowCount = 2; tileRowCount <= MaxTileCount;  tileRowCount++)
+                if (document.Width == document.Height)
                 {
-                    int tileHeight = document.Height / tileRowCount;
-
-                    if (tileHeight < MinTileSize)
+                    // Square images use the same number of horizontal and vertical tiles.
+                    bestTileHeight = bestTileWidth;
+                    bestTileRowCount = bestTileColumnCount;
+                }
+                else
+                {
+                    for (int tileRowCount = 2; tileRowCount <= MaxTileCount; tileRowCount++)
                     {
-                        break;
-                    }
+                        int tileHeight = document.Height / tileRowCount;
 
-                    if ((tileHeight & 1) == 0 && (tileHeight * tileRowCount) == document.Height)
-                    {
-                        bestTileHeight = tileHeight;
-                        bestTileRowCount = tileRowCount;
-
-                        if (tileHeight <= maxTileSize)
+                        if (tileHeight < MinTileSize)
                         {
                             break;
+                        }
+
+                        if ((tileHeight & 1) == 0 && (tileHeight * tileRowCount) == document.Height)
+                        {
+                            bestTileHeight = tileHeight;
+                            bestTileRowCount = tileRowCount;
+
+                            if (tileHeight <= maxTileSize)
+                            {
+                                break;
+                            }
                         }
                     }
                 }

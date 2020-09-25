@@ -68,6 +68,7 @@ namespace AvifFileType
                          int quality,
                          CompressionSpeed compressionSpeed,
                          YUVChromaSubsampling chromaSubsampling,
+                         bool preserveExistingTileSize,
                          int? maxEncoderThreadsOverride,
                          Surface scratchSurface,
                          ProgressEventHandler progressCallback)
@@ -135,7 +136,10 @@ namespace AvifFileType
                 }
             }
 
-            ImageGridMetadata imageGridMetadata = TryGetImageGridMetadata(document, options.compressionSpeed, options.yuvFormat);
+            ImageGridMetadata imageGridMetadata = TryGetImageGridMetadata(document,
+                                                                          options.compressionSpeed,
+                                                                          options.yuvFormat,
+                                                                          preserveExistingTileSize);
 
             bool hasTransparency = HasTransparency(scratchSurface);
 
@@ -599,7 +603,8 @@ namespace AvifFileType
         private static ImageGridMetadata TryGetImageGridMetadata(
             Document document,
             CompressionSpeed compressionSpeed,
-            YUVChromaSubsampling yuvFormat)
+            YUVChromaSubsampling yuvFormat,
+            bool preserveExistingTileSize)
         {
             ImageGridMetadata metadata = null;
 
@@ -609,16 +614,19 @@ namespace AvifFileType
                 // The image must have an even size to be eligible for tiling.
                 if ((document.Width & 1) == 0 && (document.Height & 1) == 0)
                 {
-                    string value = document.Metadata.GetUserValue(ImageGridName);
-
-                    if (!string.IsNullOrEmpty(value))
+                    if (preserveExistingTileSize)
                     {
-                        ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
+                        string value = document.Metadata.GetUserValue(ImageGridName);
 
-                        if (serializedData != null
-                            && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height, yuvFormat))
+                        if (!string.IsNullOrEmpty(value))
                         {
-                            metadata = serializedData;
+                            ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
+
+                            if (serializedData != null
+                                && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height, yuvFormat))
+                            {
+                                metadata = serializedData;
+                            }
                         }
                     }
 

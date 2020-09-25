@@ -160,6 +160,15 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Preserve Existing Tile Size.
+        /// </summary>
+        internal static string PreserveExistingTileSize_Description {
+            get {
+                return ResourceManager.GetString("PreserveExistingTileSize_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Quality.
         /// </summary>
         internal static string Quality_DisplayName {

@@ -771,7 +771,7 @@ DecoderStatus ConvertColorImage(
             decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling400;
         }
         else if (containerColorInfo && containerColorInfo->matrixCoefficients == CICPMatrixCoefficients::Identity
-                 || frame->mc == AOM_CICP_MC_IDENTITY)
+                 || !containerColorInfo && frame->mc == AOM_CICP_MC_IDENTITY)
         {
             decodeInfo->chromaSubsampling = YUVChromaSubsampling::IdentityMatrix;
         }

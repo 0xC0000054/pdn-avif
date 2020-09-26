@@ -793,7 +793,7 @@ DecoderStatus ConvertColorImage(
                 break;
             case AOM_IMG_FMT_I444:
             case AOM_IMG_FMT_I44416:
-                decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling422;
+                decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling444;
                 break;
             case AOM_IMG_FMT_NONE:
             default:

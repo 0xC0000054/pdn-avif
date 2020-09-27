@@ -178,7 +178,6 @@ namespace AvifFileType
 
                 this.PrimaryItemId = colorGridItem.Id;
                 this.items.Add(colorGridItem);
-                totalDataSize += gridDescriptorLength;
 
                 if (alphaImages != null)
                 {
@@ -190,7 +189,6 @@ namespace AvifFileType
 
                     this.AlphaItemId = alphaGridItem.Id;
                     this.items.Add(alphaGridItem);
-                    totalDataSize += gridDescriptorLength;
                 }
 
                 return new ImageStateInfo(totalDataSize, itemId);

@@ -53,9 +53,9 @@ namespace AvifFileType
 
             public IReadOnlyList<AvifWriterItem> Items => this.items;
 
-            public ushort PrimaryItemId { get; private set; }
+            public ulong MediaDataBoxContentSize { get; private set; }
 
-            public ulong TotalDataSize { get; private set; }
+            public ushort PrimaryItemId { get; private set; }
 
             private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata)
             {
@@ -103,7 +103,7 @@ namespace AvifFileType
                 }
 
                 ushort itemId = result.NextId;
-                ulong totalDataSize = result.TotalSize;
+                ulong mediaDataBoxContentSize = result.MediaDataBoxContentSize;
 
                 byte[] exif = metadata.GetExifBytesReadOnly();
                 if (exif != null && exif.Length > 0)
@@ -113,7 +113,7 @@ namespace AvifFileType
                     exifItem.ItemReferences.Add(new ItemReferenceEntryBox(exifItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId));
 
                     this.items.Add(exifItem);
-                    totalDataSize += (ulong)exifItem.ContentBytes.Length;
+                    mediaDataBoxContentSize += (ulong)exifItem.ContentBytes.Length;
                 }
 
                 byte[] xmp = metadata.GetXmpBytesReadOnly();
@@ -123,17 +123,17 @@ namespace AvifFileType
                     xmpItem.ItemReferences.Add(new ItemReferenceEntryBox(xmpItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId));
 
                     this.items.Add(xmpItem);
-                    totalDataSize += (ulong)xmpItem.ContentBytes.Length;
+                    mediaDataBoxContentSize += (ulong)xmpItem.ContentBytes.Length;
                 }
 
-                this.TotalDataSize = totalDataSize;
+                this.MediaDataBoxContentSize = mediaDataBoxContentSize;
             }
 
             private ImageStateInfo InitializeFromImageGrid(IReadOnlyList<CompressedAV1Image> colorImages,
                                                            IReadOnlyList<CompressedAV1Image> alphaImages,
                                                            ImageGridMetadata imageGridMetadata)
             {
-                ulong totalDataSize = 0;
+                ulong mediaDataBoxContentSize = 0;
                 ushort itemId = FirstItemId;
 
                 List<uint> colorImageIds = new List<uint>(colorImages.Count);
@@ -146,7 +146,7 @@ namespace AvifFileType
                     itemId++;
                     colorImageIds.Add(colorItem.Id);
                     this.items.Add(colorItem);
-                    totalDataSize += color.Data.ByteLength;
+                    mediaDataBoxContentSize += color.Data.ByteLength;
 
                     if (alphaImages != null)
                     {
@@ -157,7 +157,7 @@ namespace AvifFileType
                         alphaImageIds.Add(alphaItem.Id);
 
                         this.items.Add(alphaItem);
-                        totalDataSize += alpha.Data.ByteLength;
+                        mediaDataBoxContentSize += alpha.Data.ByteLength;
                     }
                 }
 
@@ -191,12 +191,12 @@ namespace AvifFileType
                     this.items.Add(alphaGridItem);
                 }
 
-                return new ImageStateInfo(totalDataSize, itemId);
+                return new ImageStateInfo(mediaDataBoxContentSize, itemId);
             }
 
             private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image alpha)
             {
-                ulong totalDataSize = color.Data.ByteLength;
+                ulong mediaDataBoxContentSize = color.Data.ByteLength;
                 ushort itemId = FirstItemId;
 
                 AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, "Color", color, false);
@@ -212,10 +212,10 @@ namespace AvifFileType
                     this.AlphaItemId = alphaItem.Id;
 
                     this.items.Add(alphaItem);
-                    totalDataSize += alpha.Data.ByteLength;
+                    mediaDataBoxContentSize += alpha.Data.ByteLength;
                 }
 
-                return new ImageStateInfo(totalDataSize, itemId);
+                return new ImageStateInfo(mediaDataBoxContentSize, itemId);
             }
 
             private static int GetItemCount(IReadOnlyList<CompressedAV1Image> colorImages, IReadOnlyList<CompressedAV1Image> alphaImages, AvifMetadata metadata)
@@ -255,14 +255,14 @@ namespace AvifFileType
 
             private readonly struct ImageStateInfo
             {
-                public ImageStateInfo(ulong totalSize, ushort nextId)
+                public ImageStateInfo(ulong mediaDataBoxContentSize, ushort nextId)
                 {
-                    this.TotalSize = totalSize;
+                    this.MediaDataBoxContentSize = mediaDataBoxContentSize;
                     this.NextId = nextId;
                 }
 
 
-                public ulong TotalSize { get; }
+                public ulong MediaDataBoxContentSize { get; }
 
                 public ushort NextId { get; }
             }

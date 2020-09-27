@@ -46,7 +46,9 @@ namespace AvifFileType
             this.progressDone = progressDone;
             this.progressTotal = progressTotal;
             this.fileTypeBox = new FileTypeBox(chromaSubsampling);
-            this.metaBox = new MetaBox(this.state.PrimaryItemId, this.state.TotalDataSize > uint.MaxValue, this.state.ItemDataBox);
+            this.metaBox = new MetaBox(this.state.PrimaryItemId,
+                                       this.state.MediaDataBoxContentSize > uint.MaxValue,
+                                       this.state.ItemDataBox);
             PopulateMetaBox();
         }
 
@@ -57,7 +59,7 @@ namespace AvifFileType
                 this.fileTypeBox.Write(writer);
                 this.metaBox.Write(writer);
 
-                new MediaDataBox(this.state.TotalDataSize).Write(writer);
+                new MediaDataBox(this.state.MediaDataBoxContentSize).Write(writer);
 
                 IReadOnlyList<AvifWriterItem> items = this.state.Items;
 

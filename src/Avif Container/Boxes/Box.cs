@@ -57,6 +57,11 @@ namespace AvifFileType.AvifContainer
             {
                 throw new IOException($"The box is larger than { long.MaxValue } bytes.", ex);
             }
+
+            if (this.End > reader.Length)
+            {
+                throw new FormatException($"The { this.Type } box size exceeds the file length.");
+            }
         }
 
         public Box(in EndianBinaryReaderSegment reader)
@@ -98,6 +103,11 @@ namespace AvifFileType.AvifContainer
             catch (OverflowException ex)
             {
                 throw new IOException($"The box is larger than { long.MaxValue } bytes.", ex);
+            }
+
+            if (this.End > reader.EndOffset)
+            {
+                throw new FormatException($"The { this.Type } box size exceeds the segment length.");
             }
         }
 

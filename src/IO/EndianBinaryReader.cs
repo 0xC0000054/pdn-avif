@@ -212,7 +212,7 @@ namespace AvifFileType
 
             while (totalBytesRead < count)
             {
-                int bytesRead = Read(bytes, offset + totalBytesRead, count - totalBytesRead);
+                int bytesRead = ReadInternal(bytes, offset + totalBytesRead, count - totalBytesRead);
 
                 if (bytesRead == 0)
                 {
@@ -262,7 +262,7 @@ namespace AvifFileType
 
                     while (totalBytesRead < count)
                     {
-                        ulong bytesRead = (ulong)Read(readBuffer, 0, (int)Math.Min(count - totalBytesRead, MaxReadBufferSize));
+                        ulong bytesRead = (ulong)ReadInternal(readBuffer, 0, (int)Math.Min(count - totalBytesRead, MaxReadBufferSize));
 
                         if (bytesRead == 0)
                         {
@@ -307,6 +307,19 @@ namespace AvifFileType
             }
             VerifyNotDisposed();
 
+            return ReadInternal(bytes, offset, count);
+        }
+
+        /// <summary>
+        /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <param name="offset">The starting offset in the array.</param>
+        /// <param name="count">The count.</param>
+        /// <returns>The number of bytes read from the stream.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        private int ReadInternal(byte[] bytes, int offset, int count)
+        {
             if (count == 0)
             {
                 return 0;

@@ -40,8 +40,6 @@ namespace AvifFileType
 
                 this.ImageGrid = imageGridMetadata;
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
-                this.PrimaryItemId = 1;
-                this.AlphaItemId = (ushort)(alphaImages != null ? 2 : 0);
                 Initialize(colorImages, alphaImages, imageGridMetadata, metadata);
             }
 

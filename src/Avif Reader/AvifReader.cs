@@ -626,7 +626,7 @@ namespace AvifFileType
                 ExceptionUtil.ThrowFormatException("The alpha image item location was not found.");
             }
 
-            return ReadImageData(entry);
+            return this.parser.ReadItemData(entry);
         }
 
         private AvifItemData ReadColorImage(uint itemId)
@@ -636,16 +636,6 @@ namespace AvifFileType
             if (entry is null)
             {
                 ExceptionUtil.ThrowFormatException("The color image item location was not found.");
-            }
-
-            return ReadImageData(entry);
-        }
-
-        private AvifItemData ReadImageData(ItemLocationEntry entry)
-        {
-            if (entry is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(entry));
             }
 
             return this.parser.ReadItemData(entry);

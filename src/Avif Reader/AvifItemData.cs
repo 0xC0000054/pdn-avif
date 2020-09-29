@@ -110,7 +110,7 @@ namespace AvifFileType
 
         protected override Stream GetStreamImpl()
         {
-            return new MemoryStream(this.buffer);
+            return new MemoryStream(this.buffer, writable: false);
         }
 
         protected override byte[] ToArrayImpl()
@@ -169,7 +169,7 @@ namespace AvifFileType
         protected override Stream GetStreamImpl()
         {
             // The UnmanagedMemoryStream class does not take ownership of the SafeBuffer.
-            return new UnmanagedMemoryStream(this.buffer, 0, checked((long)this.Length), FileAccess.ReadWrite);
+            return new UnmanagedMemoryStream(this.buffer, 0, checked((long)this.Length), FileAccess.Read);
         }
 
         protected override unsafe byte[] ToArrayImpl()

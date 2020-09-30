@@ -120,6 +120,7 @@ namespace AvifFileType
                 this.items[index]?.Dispose();
             }
             this.items.Insert(index, item);
+            this.version++;
         }
 
         public bool Remove(CompressedAV1Image item)

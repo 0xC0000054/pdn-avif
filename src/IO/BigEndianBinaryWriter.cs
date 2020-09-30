@@ -10,11 +10,12 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using AvifFileType.AvifContainer;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace AvifFileType.AvifContainer
+namespace AvifFileType
 {
     internal sealed class BigEndianBinaryWriter
         : IDisposable

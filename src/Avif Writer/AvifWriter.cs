@@ -77,7 +77,7 @@ namespace AvifFileType
 
                     if (item.Image != null)
                     {
-                        writer.Write(item.Image.Data);
+                        item.Image.Data.Write(writer);
 
                         this.progressDone++;
                         this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));

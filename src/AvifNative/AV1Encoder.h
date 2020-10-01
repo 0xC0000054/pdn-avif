@@ -24,10 +24,9 @@ EncoderStatus CompressAOMImages(
     const aom_image* alpha,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
+    CompressedAV1OutputAlloc outputAllocator,
     void** compressedColorImage,
-    size_t* compressedColorImageSize,
-    void** compressedAlphaImage,
-    size_t* compressedAlphaImageSize);
+    void** compressedAlphaImage);
 
 #ifdef __cplusplus
 }

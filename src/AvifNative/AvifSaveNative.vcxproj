@@ -24,7 +24,6 @@
     <ClInclude Include="AvifNative.h" />
     <ClInclude Include="ChromaSubsampling.h" />
     <ClInclude Include="CICPEnums.h" />
-    <ClInclude Include="Memory.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScopedAOMCodec.h" />
     <ClInclude Include="TargetVer.h" />
@@ -36,7 +35,6 @@
     <ClCompile Include="AV1Encoder.cpp" />
     <ClCompile Include="AvifNative.cpp" />
     <ClCompile Include="ChromaSubsampling.cpp" />
-    <ClCompile Include="Memory.cpp" />
     <ClCompile Include="DecodedImageConverter.cpp" />
     <ClCompile Include="YUVConversionHelpers.cpp" />
   </ItemGroup>

@@ -155,12 +155,17 @@
     <Compile Include="Interop\AvifNative_86.cs" />
     <Compile Include="Interop\BitmapData.cs" />
     <Compile Include="Interop\CICPColorData.cs" />
+    <Compile Include="Interop\CompressedAV1Data.cs" />
+    <Compile Include="Interop\CompressedAV1DataAllocator.cs" />
     <Compile Include="Interop\DecodeInfo.cs" />
     <Compile Include="Interop\DecoderStatus.cs" />
     <Compile Include="Interop\EncoderOptions.cs" />
     <Compile Include="Interop\EncoderStatus.cs" />
+    <Compile Include="Interop\IPinnableBuffer.cs" />
+    <Compile Include="Interop\ManagedCompressedAV1Data.cs" />
     <Compile Include="Interop\ProgressContext.cs" />
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
+    <Compile Include="Interop\UnmanagedCompressedAV1Data.cs" />
     <Compile Include="IO\BigEndianBinaryWriter.cs" />
     <Compile Include="IO\EndianBinaryReader.cs" />
     <Compile Include="IO\EndianBinaryReaderSegment.cs" />
@@ -170,7 +175,6 @@
     <Compile Include="Localization\PdnLocalizedStringResourceManager.cs" />
     <Compile Include="PluginSupportInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Interop\SafeAV1Image.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

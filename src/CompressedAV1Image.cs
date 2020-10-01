@@ -18,9 +18,9 @@ namespace AvifFileType
     internal sealed class CompressedAV1Image
         : IDisposable
     {
-        private SafeAV1Image data;
+        private CompressedAV1Data data;
 
-        public CompressedAV1Image(SafeAV1Image data, int width, int height, YUVChromaSubsampling format)
+        public CompressedAV1Image(CompressedAV1Data data, int width, int height, YUVChromaSubsampling format)
         {
             if (data is null)
             {
@@ -33,7 +33,7 @@ namespace AvifFileType
             this.Format = format;
         }
 
-        public SafeAV1Image Data
+        public CompressedAV1Data Data
         {
             get
             {

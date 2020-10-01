@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////
+﻿////////////////////////////////////////////////////////////////////////
 //
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
@@ -10,14 +10,14 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-#pragma once
+using System;
 
-#include <stdint.h>
-#include <memory>
-
-namespace AvifMemory
+namespace AvifFileType.Interop
 {
-    void* Allocate(size_t sizeInBytes);
+    internal interface IPinnableBuffer
+    {
+        IntPtr Pin();
 
-    void Free(void* ptr);
+        void Unpin();
+    }
 }

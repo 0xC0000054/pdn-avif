@@ -119,6 +119,8 @@ extern "C" {
         uint32_t progressTotal;
     };
 
+    typedef void*(__stdcall* CompressedAV1OutputAlloc)(size_t sizeInBytes);
+
     __declspec(dllexport) DecoderStatus __stdcall DecompressColorImage(
         const uint8_t* compressedColorImage,
         size_t compressedColorImageSize,
@@ -137,12 +139,9 @@ extern "C" {
         const EncoderOptions* encodeOptions,
         ProgressContext* progressContext,
         const CICPColorData& colorInfo,
+        CompressedAV1OutputAlloc outputAllocator,
         void** compressedColorImage,
-        size_t* compressedColorImageSize,
-        void** compressedAlphaImage,
-        size_t* compressedAlphaImageSize);
-
-    __declspec(dllexport) bool __stdcall FreeImageData(void* imageData);
+        void** compressedAlphaImage);
 
 #ifdef __cplusplus
 }

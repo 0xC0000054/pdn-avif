@@ -137,12 +137,6 @@ namespace
         }
     };
 
-    struct AvifEncoderOutput
-    {
-        void* buf;
-        size_t sz;
-    };
-
     class ScopedAOMEncoder : public ScopedAOMCodec
     {
     public:
@@ -193,7 +187,8 @@ namespace
         const AvifEncoderOptions& encodeOptions,
         ProgressContext* progressContext,
         const aom_image_t* frame,
-        AvifEncoderOutput* output)
+        CompressedAV1OutputAlloc outputAllocator,
+        void** output)
     {
         EncoderStatus status = EncoderStatus::Ok;
 
@@ -233,11 +228,10 @@ namespace
                     {
                         if (progressContext->progressCallback(++progressContext->progressDone, progressContext->progressTotal))
                         {
-                            output->buf = AvifMemory::Allocate(pkt->data.frame.sz);
-                            if (output->buf)
+                            *output = outputAllocator(pkt->data.frame.sz);
+                            if (*output)
                             {
-                                memcpy_s(output->buf, pkt->data.frame.sz, pkt->data.frame.buf, pkt->data.frame.sz);
-                                output->sz = pkt->data.frame.sz;
+                                memcpy_s(*output, pkt->data.frame.sz, pkt->data.frame.buf, pkt->data.frame.sz);
                             }
                             else
                             {
@@ -274,8 +268,8 @@ namespace
         const AvifEncoderOptions& encodeOptions,
         ProgressContext* progressContext,
         const aom_image_t* frame,
-        void** outputImage,
-        size_t* outputImageSize)
+        CompressedAV1OutputAlloc outputAllocator,
+        void** outputImage)
     {
         aom_codec_enc_cfg_t aom_cfg;
 
@@ -314,17 +308,10 @@ namespace
             return EncoderStatus::UnknownYUVFormat;
         }
 
-        AvifEncoderOutput output = {};
         aom_cfg.g_pass = AOM_RC_ONE_PASS;
 
-        EncoderStatus error = DoOnePass(iface, &aom_cfg, encodeOptions, progressContext, frame, &output);
-
-        if (error == EncoderStatus::Ok)
-        {
-            *outputImage = output.buf;
-            *outputImageSize = output.sz;
-        }
-
+        EncoderStatus error = DoOnePass(iface, &aom_cfg, encodeOptions, progressContext, frame,
+                                        outputAllocator, outputImage);
         return error;
     }
 }
@@ -334,12 +321,16 @@ EncoderStatus CompressAOMImages(
     const aom_image* alpha,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
+    CompressedAV1OutputAlloc outputAllocator,
     void** compressedColorImage,
-    size_t* compressedColorImageSize,
-    void** compressedAlphaImage,
-    size_t* compressedAlphaImageSize)
+    void** compressedAlphaImage)
 {
-    if (compressedColorImage && compressedColorImageSize)
+    if (!outputAllocator)
+    {
+        return EncoderStatus::NullParameter;
+    }
+
+    if (compressedColorImage)
     {
         *compressedColorImage = nullptr;
         *compressedColorImage = 0;
@@ -351,10 +342,9 @@ EncoderStatus CompressAOMImages(
 
     if (alpha)
     {
-        if (compressedAlphaImage && compressedAlphaImageSize)
+        if (compressedAlphaImage)
         {
             *compressedAlphaImage = nullptr;
-            *compressedAlphaImageSize = 0;
         }
         else
         {
@@ -372,20 +362,12 @@ EncoderStatus CompressAOMImages(
     }
 
     EncoderStatus status = EncodeAOMImage(iface, options, progressContext, color,
-                                           compressedColorImage, compressedColorImageSize);
+                                          outputAllocator, compressedColorImage);
 
     if (status == EncoderStatus::Ok && alpha)
     {
         status = EncodeAOMImage(iface, options, progressContext, alpha,
-                                compressedAlphaImage, compressedAlphaImageSize);
-
-        if (status != EncoderStatus::Ok)
-        {
-            // Cleanup the color image
-            AvifMemory::Free(*compressedColorImage);
-            *compressedColorImage = nullptr;
-            *compressedColorImageSize = 0;
-        }
+                                outputAllocator, compressedAlphaImage);
     }
 
     return status;

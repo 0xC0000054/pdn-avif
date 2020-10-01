@@ -25,10 +25,9 @@ namespace AvifFileType.Interop
             EncoderOptions options,
             [In, Out] ProgressContext progressContext,
             [In] ref CICPColorData colorInfo,
-            out SafeAV1ImageX64 colorImage,
-            out UIntPtr colorImageSize,
-            out SafeAV1ImageX64 alphaImage,
-            out UIntPtr alphaImageSize);
+            [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
+            out IntPtr colorImage,
+            out IntPtr alphaImage);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
         internal static unsafe extern EncoderStatus CompressImage(
@@ -36,10 +35,9 @@ namespace AvifFileType.Interop
             EncoderOptions options,
             [In, Out] ProgressContext progressContext,
             [In] ref CICPColorData colorInfo,
-            out SafeAV1ImageX64 colorImage,
-            out UIntPtr colorImageSize,
-            IntPtr alphaImage_MustBeZero,
-            IntPtr alphaImageSize_MustBeZero);
+            [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
+            out IntPtr colorImage,
+            IntPtr alphaImage_MustBeZero);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
         internal static extern unsafe DecoderStatus DecompressColorImage(
@@ -63,9 +61,5 @@ namespace AvifFileType.Interop
             UIntPtr compressedAlphaImageSize,
             [In, Out] DecodeInfo decodeInfo,
             [In] ref BitmapData fullImage);
-
-        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        [return: MarshalAs(UnmanagedType.U1)]
-        internal static extern bool FreeImageData(IntPtr handle);
     }
 }

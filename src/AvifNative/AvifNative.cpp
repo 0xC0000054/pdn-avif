@@ -44,10 +44,9 @@ namespace
         const EncoderOptions* encodeOptions,
         ProgressContext* progressContext,
         const CICPColorData& colorInfo,
+        CompressedAV1OutputAlloc outputAllocator,
         void** compressedColorImage,
-        size_t* compressedColorImageSize,
-        void** compressedAlphaImage,
-        size_t* compressedAlphaImageSize)
+        void** compressedAlphaImage)
     {
         const YUVChromaSubsampling yuvFormat = encodeOptions->yuvFormat;
 
@@ -76,7 +75,7 @@ namespace
         }
 
         AvifNative::ScopedAOMImage alpha;
-        if (compressedAlphaImage && compressedAlphaImageSize)
+        if (compressedAlphaImage)
         {
             alpha.reset(ConvertAlphaToAOMImage(image));
             if (!alpha)
@@ -90,10 +89,9 @@ namespace
             alpha.get(),
             encodeOptions,
             progressContext,
+            outputAllocator,
             compressedColorImage,
-            compressedColorImageSize,
-            compressedAlphaImage,
-            compressedAlphaImageSize);
+            compressedAlphaImage);
     }
 }
 
@@ -130,12 +128,11 @@ EncoderStatus __stdcall CompressImage(
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
     const CICPColorData& colorInfo,
+    CompressedAV1OutputAlloc outputAllocator,
     void** compressedColorImage,
-    size_t* compressedColorImageSize,
-    void** compressedAlphaImage,
-    size_t* compressedAlphaImageSize)
+    void** compressedAlphaImage)
 {
-    if (!image || !encodeOptions || !progressContext || !compressedColorImage || !compressedColorImageSize)
+    if (!image || !encodeOptions || !progressContext || !outputAllocator || !compressedColorImage)
     {
         return EncoderStatus::NullParameter;
     }
@@ -150,18 +147,7 @@ EncoderStatus __stdcall CompressImage(
         encodeOptions,
         progressContext,
         colorInfo,
+        outputAllocator,
         compressedColorImage,
-        compressedColorImageSize,
-        compressedAlphaImage,
-        compressedAlphaImageSize);
-}
-
-bool __stdcall FreeImageData(void* imageData)
-{
-    if (imageData)
-    {
-        AvifMemory::Free(imageData);
-    }
-
-    return true;
+        compressedAlphaImage);
 }

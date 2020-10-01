@@ -13,6 +13,7 @@
 using AvifFileType.Interop;
 using PaintDotNet;
 using System;
+using System.Runtime.ExceptionServices;
 
 namespace AvifFileType
 {
@@ -37,62 +38,44 @@ namespace AvifFileType
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
 
-            UIntPtr colorImageSize;
-            UIntPtr alphaImageSize;
-
-            if (IntPtr.Size == 8)
+            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(2))
             {
-                SafeAV1ImageX64 colorImage;
-                SafeAV1ImageX64 alphaImage;
+                IntPtr colorImage;
+                IntPtr alphaImage;
 
-                EncoderStatus status = AvifNative_64.CompressImage(ref bitmapData,
-                                                                   options,
-                                                                   progressContext,
-                                                                   ref colorInfo,
-                                                                   out colorImage,
-                                                                   out colorImageSize,
-                                                                   out alphaImage,
-                                                                   out alphaImageSize);
+                CompressedAV1OutputAlloc outputAllocDelegate = new CompressedAV1OutputAlloc(allocator.Allocate);
+                EncoderStatus status = EncoderStatus.Ok;
+
+                if (IntPtr.Size == 8)
+                {
+                    status = AvifNative_64.CompressImage(ref bitmapData,
+                                                         options,
+                                                         progressContext,
+                                                         ref colorInfo,
+                                                         outputAllocDelegate,
+                                                         out colorImage,
+                                                         out alphaImage);
+                }
+                else
+                {
+                    status = AvifNative_86.CompressImage(ref bitmapData,
+                                                         options,
+                                                         progressContext,
+                                                         ref colorInfo,
+                                                         outputAllocDelegate,
+                                                         out colorImage,
+                                                         out alphaImage);
+                }
+
+                GC.KeepAlive(outputAllocDelegate);
 
                 if (status != EncoderStatus.Ok)
                 {
-                    colorImage?.Dispose();
-                    alphaImage?.Dispose();
-                    HandleError(status);
+                    HandleError(status, allocator.ExceptionInfo);
                 }
 
-                colorImage.Initialize(colorImageSize.ToUInt64());
-                alphaImage.Initialize(alphaImageSize.ToUInt64());
-
-                color = new CompressedAV1Image(colorImage, surface.Width, surface.Height, options.yuvFormat);
-                alpha = new CompressedAV1Image(alphaImage, surface.Width, surface.Height, YUVChromaSubsampling.Subsampling400);
-            }
-            else
-            {
-                SafeAV1ImageX86 colorImage;
-                SafeAV1ImageX86 alphaImage;
-
-                EncoderStatus status = AvifNative_86.CompressImage(ref bitmapData,
-                                                                   options,
-                                                                   progressContext,
-                                                                   ref colorInfo,
-                                                                   out colorImage,
-                                                                   out colorImageSize,
-                                                                   out alphaImage,
-                                                                   out alphaImageSize);
-
-                if (status != EncoderStatus.Ok)
-                {
-                    colorImage?.Dispose();
-                    alphaImage?.Dispose();
-                    HandleError(status);
-                }
-
-                colorImage.Initialize(colorImageSize.ToUInt64());
-                alphaImage.Initialize(alphaImageSize.ToUInt64());
-
-                color = new CompressedAV1Image(colorImage, surface.Width, surface.Height, options.yuvFormat);
-                alpha = new CompressedAV1Image(alphaImage, surface.Width, surface.Height, YUVChromaSubsampling.Subsampling400);
+                color = new CompressedAV1Image(allocator.GetCompressedAV1Data(colorImage), surface.Width, surface.Height, options.yuvFormat);
+                alpha = new CompressedAV1Image(allocator.GetCompressedAV1Data(alphaImage), surface.Width, surface.Height, YUVChromaSubsampling.Subsampling400);
             }
 
             progressDone = progressContext.progressDone;
@@ -117,53 +100,42 @@ namespace AvifFileType
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
 
-            UIntPtr colorImageSize;
-
-            if (IntPtr.Size == 8)
+            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1))
             {
-                SafeAV1ImageX64 colorImage;
+                IntPtr colorImage;
 
-                EncoderStatus status = AvifNative_64.CompressImage(ref bitmapData,
-                                                                   options,
-                                                                   progressContext,
-                                                                   ref colorInfo,
-                                                                   out colorImage,
-                                                                   out colorImageSize,
-                                                                   IntPtr.Zero,
-                                                                   IntPtr.Zero);
+                CompressedAV1OutputAlloc outputAllocDelegate = new CompressedAV1OutputAlloc(allocator.Allocate);
+                EncoderStatus status = EncoderStatus.Ok;
+
+                if (IntPtr.Size == 8)
+                {
+                    status = AvifNative_64.CompressImage(ref bitmapData,
+                                                         options,
+                                                         progressContext,
+                                                         ref colorInfo,
+                                                         outputAllocDelegate,
+                                                         out colorImage,
+                                                         IntPtr.Zero);
+                }
+                else
+                {
+                    status = AvifNative_86.CompressImage(ref bitmapData,
+                                                         options,
+                                                         progressContext,
+                                                         ref colorInfo,
+                                                         outputAllocDelegate,
+                                                         out colorImage,
+                                                         IntPtr.Zero);
+                }
+
+                GC.KeepAlive(outputAllocDelegate);
 
                 if (status != EncoderStatus.Ok)
                 {
-                    colorImage?.Dispose();
-                    HandleError(status);
+                    HandleError(status, allocator.ExceptionInfo);
                 }
 
-                colorImage.Initialize(colorImageSize.ToUInt64());
-
-                color = new CompressedAV1Image(colorImage, surface.Width, surface.Height, options.yuvFormat);
-            }
-            else
-            {
-                SafeAV1ImageX86 colorImage;
-
-                EncoderStatus status = AvifNative_86.CompressImage(ref bitmapData,
-                                                                   options,
-                                                                   progressContext,
-                                                                   ref colorInfo,
-                                                                   out colorImage,
-                                                                   out colorImageSize,
-                                                                   IntPtr.Zero,
-                                                                   IntPtr.Zero);
-
-                if (status != EncoderStatus.Ok)
-                {
-                    colorImage?.Dispose();
-                    HandleError(status);
-                }
-
-                colorImage.Initialize(colorImageSize.ToUInt64());
-
-                color = new CompressedAV1Image(colorImage, surface.Width, surface.Height, options.yuvFormat);
+                color = new CompressedAV1Image(allocator.GetCompressedAV1Data(colorImage), surface.Width, surface.Height, options.yuvFormat);
             }
 
             progressDone = progressContext.progressDone;
@@ -313,26 +285,33 @@ namespace AvifFileType
             }
         }
 
-        private static void HandleError(EncoderStatus status)
+        private static void HandleError(EncoderStatus status, ExceptionDispatchInfo exceptionDispatchInfo)
         {
-            switch (status)
+            if (exceptionDispatchInfo != null)
             {
-                case EncoderStatus.Ok:
-                    break;
-                case EncoderStatus.NullParameter:
-                    throw new FormatException("A required encoder parameter was null.");
-                case EncoderStatus.OutOfMemory:
-                    throw new OutOfMemoryException();
-                case EncoderStatus.UnknownYUVFormat:
-                    throw new FormatException("The YUV format is not supported by the encoder.");
-                case EncoderStatus.CodecInitFailed:
-                    throw new FormatException("Unable to initialize AV1 encoder.");
-                case EncoderStatus.EncodeFailed:
-                    throw new FormatException("The AV1 encode failed.");
-                case EncoderStatus.UserCancelled:
-                    throw new OperationCanceledException();
-                default:
-                    throw new FormatException("An unknown error occurred when encoding the image.");
+                exceptionDispatchInfo.Throw();
+            }
+            else
+            {
+                switch (status)
+                {
+                    case EncoderStatus.Ok:
+                        break;
+                    case EncoderStatus.NullParameter:
+                        throw new FormatException("A required encoder parameter was null.");
+                    case EncoderStatus.OutOfMemory:
+                        throw new OutOfMemoryException();
+                    case EncoderStatus.UnknownYUVFormat:
+                        throw new FormatException("The YUV format is not supported by the encoder.");
+                    case EncoderStatus.CodecInitFailed:
+                        throw new FormatException("Unable to initialize AV1 encoder.");
+                    case EncoderStatus.EncodeFailed:
+                        throw new FormatException("The AV1 encode failed.");
+                    case EncoderStatus.UserCancelled:
+                        throw new OperationCanceledException();
+                    default:
+                        throw new FormatException("An unknown error occurred when encoding the image.");
+                }
             }
         }
 

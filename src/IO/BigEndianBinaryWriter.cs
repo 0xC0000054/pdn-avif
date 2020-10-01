@@ -152,6 +152,8 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
             }
 
+            VerifyNotDisposed();
+
             ulong length = buffer.ByteLength;
 
             if (length == 0)

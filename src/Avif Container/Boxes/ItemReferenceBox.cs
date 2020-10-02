@@ -48,8 +48,6 @@ namespace AvifFileType.AvifContainer
 
         public int Count => this.itemReferences.Count;
 
-        public IReadOnlyList<IItemReferenceEntry> ItemReferences => this.itemReferences;
-
         public void Add(IReadOnlyList<ItemReferenceEntryBox> references)
         {
             if (references is null)

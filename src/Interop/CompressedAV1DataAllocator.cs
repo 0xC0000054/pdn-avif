@@ -117,7 +117,7 @@ namespace AvifFileType.Interop
             // It is used as the managed buffer size cutoff to avoid having to allocate both an unmanaged buffer and
             // a temporary managed buffer for as many images as possible.
             //
-            // The BigEndinaBinaryWriter will use a temporary managed buffer that is this size when reading data
+            // The BigEndianBinaryWriter will use a temporary managed buffer that is this size when reading data
             // from the unmanaged buffer.
             private const ulong ManagedCompressedAV1DataMaxSize = 81920;
 

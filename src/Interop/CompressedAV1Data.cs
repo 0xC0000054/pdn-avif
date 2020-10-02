@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Diagnostics;
 
 namespace AvifFileType.Interop
 {
+    [DebuggerDisplay("Length = {ByteLength}")]
     internal abstract class CompressedAV1Data
         : IDisposable, IPinnableBuffer
     {

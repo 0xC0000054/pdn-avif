@@ -12,9 +12,11 @@
 
 using AvifFileType.Interop;
 using System;
+using System.Diagnostics;
 
 namespace AvifFileType
 {
+    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     internal sealed class CompressedAV1Image
         : IDisposable
     {
@@ -48,6 +50,39 @@ namespace AvifFileType
         public int Height { get; }
 
         public YUVChromaSubsampling Format { get; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay
+        {
+            get
+            {
+                string yuvFormat;
+                switch (this.Format)
+                {
+                    case YUVChromaSubsampling.Subsampling420:
+                        yuvFormat = "YUV 4:2:0";
+                        break;
+                    case YUVChromaSubsampling.Subsampling422:
+                        yuvFormat = "YUV 4:2:2";
+                        break;
+                    case YUVChromaSubsampling.Subsampling444:
+                        yuvFormat = "YUV 4:4:4";
+                        break;
+                    case YUVChromaSubsampling.Subsampling400:
+                        yuvFormat = "YUV 4:0:0";
+                        break;
+                    case YUVChromaSubsampling.IdentityMatrix:
+                        yuvFormat = "Identity matrix";
+                        break;
+                    default:
+                        yuvFormat = "Unknown";
+                        break;
+                }
+                string dataLength = this.data != null ? $"{ this.data.ByteLength } bytes" : "Disposed";
+
+                return $"Width: { this.Width }, Height: { this.Height }, Format: { yuvFormat }, Data: { dataLength }";
+            }
+        }
 
         public void Dispose()
         {

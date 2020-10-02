@@ -68,6 +68,37 @@ namespace AvifFileType.AvifContainer
             }
         }
 
+        public IEnumerable<IItemReferenceEntry> EnumerateMatchingReferences(uint itemId, FourCC requiredReferenceType)
+        {
+            foreach (ItemReferenceEntryBox item in this.itemReferences)
+            {
+                if (item.Type != requiredReferenceType)
+                {
+                    continue;
+                }
+
+                if (item.Type == ReferenceTypes.DerivedImage)
+                {
+                    // Derived images place the parent item id in the FromItemId field.
+                    if (item.FromItemId == itemId)
+                    {
+                        yield return item;
+                    }
+                }
+                else
+                {
+                    IReadOnlyList<uint> toItemIds = item.ToItemIds;
+                    for (int i = 0; i < toItemIds.Count; i++)
+                    {
+                        if (toItemIds[i] == itemId)
+                        {
+                            yield return item;
+                        }
+                    }
+                }
+            }
+        }
+
         public override void Write(BigEndianBinaryWriter writer)
         {
             base.Write(writer);

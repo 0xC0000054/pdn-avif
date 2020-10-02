@@ -388,34 +388,11 @@ namespace AvifFileType
 
             if (itemReferenceBox != null)
             {
-                foreach (IItemReferenceEntry item in itemReferenceBox.ItemReferences)
-                {
-                    if (item.Type != requiredReferenceType)
-                    {
-                        continue;
-                    }
-
-                    if (item.Type == ReferenceTypes.DerivedImage)
-                    {
-                        // Derived images place the parent item id in the FromItemId field.
-                        if (item.FromItemId == itemId)
-                        {
-                            yield return item;
-                        }
-                    }
-                    else
-                    {
-                        IReadOnlyList<uint> toItemIds = item.ToItemIds;
-                        for (int i = 0; i < toItemIds.Count; i++)
-                        {
-                            if (toItemIds[i] == itemId)
-                            {
-                                yield return item;
-                            }
-                        }
-                    }
-
-                }
+                return itemReferenceBox.EnumerateMatchingReferences(itemId, requiredReferenceType);
+            }
+            else
+            {
+                return Enumerable.Empty<IItemReferenceEntry>();
             }
         }
 

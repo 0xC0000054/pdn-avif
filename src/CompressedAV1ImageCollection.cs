@@ -13,9 +13,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AvifFileType
 {
+    [DebuggerDisplay("Count = {Count}")]
+    [DebuggerTypeProxy(typeof(CompressedAV1ImageCollectionDebugView))]
     internal sealed class CompressedAV1ImageCollection : IList<CompressedAV1Image>, IReadOnlyList<CompressedAV1Image>, IDisposable
     {
         private readonly List<CompressedAV1Image> items;
@@ -234,6 +237,19 @@ namespace AvifFileType
                 this.index = 0;
                 this.Current = default;
             }
+        }
+
+        private sealed class CompressedAV1ImageCollectionDebugView
+        {
+            private readonly CompressedAV1ImageCollection collection;
+
+            public CompressedAV1ImageCollectionDebugView(CompressedAV1ImageCollection collection)
+            {
+                this.collection = collection;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public CompressedAV1Image[] Items => this.collection.items.ToArray();
         }
     }
 }

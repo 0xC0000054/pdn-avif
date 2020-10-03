@@ -75,10 +75,7 @@ namespace AvifFileType.AvifContainer
 
         public uint TileImageWidth { get; }
 
-        public int GetNumberOfTiles()
-        {
-            return this.tileCount.Value;
-        }
+        public int TileCount => this.tileCount.Value;
 
         public bool IsValidForImage(uint documentWidth, uint documentHeight, YUVChromaSubsampling yuvFormat)
         {

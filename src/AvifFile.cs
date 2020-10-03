@@ -143,7 +143,7 @@ namespace AvifFileType
 
             bool hasTransparency = HasTransparency(scratchSurface);
 
-            CompressedAV1ImageCollection colorImages = new CompressedAV1ImageCollection(imageGridMetadata?.GetNumberOfTiles() ?? 1);
+            CompressedAV1ImageCollection colorImages = new CompressedAV1ImageCollection(imageGridMetadata?.TileCount ?? 1);
             CompressedAV1ImageCollection alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
 
             // Progress is reported at the following stages:
@@ -424,7 +424,7 @@ namespace AvifFileType
             }
             else
             {
-                rects = new Rectangle[imageGridMetadata.GetNumberOfTiles()];
+                rects = new Rectangle[imageGridMetadata.TileCount];
 
                 // The tiles are encoded from top to bottom then left to right.
 

@@ -999,10 +999,13 @@ DecoderStatus ConvertAlphaImage(
 
     const bool isFirstTile = decodeInfo->tileColumnIndex == 0 && decodeInfo->tileRowIndex == 0;
 
-    if (isFirstTile && decodeInfo->expectedWidth == 0 && decodeInfo->expectedHeight == 0)
+    if (isFirstTile)
     {
-        decodeInfo->expectedWidth = frame->d_w;
-        decodeInfo->expectedHeight = frame->d_h;
+        if (decodeInfo->expectedWidth == 0 && decodeInfo->expectedHeight == 0)
+        {
+            decodeInfo->expectedWidth = frame->d_w;
+            decodeInfo->expectedHeight = frame->d_h;
+        }
         decodeInfo->bitDepth = frame->bit_depth;
         decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling400;
     }

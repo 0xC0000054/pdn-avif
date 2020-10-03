@@ -72,11 +72,11 @@ protected:
         {
             if (err == AOM_CODEC_MEM_ERROR)
             {
-                throw new std::bad_alloc();
+                throw std::bad_alloc();
             }
             else
             {
-                throw new codec_error(err);
+                throw codec_error(err);
             }
         }
     }

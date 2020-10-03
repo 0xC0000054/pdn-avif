@@ -418,6 +418,10 @@ aom_image_t* ConvertAlphaToAOMImage(const BitmapData* bgraImage)
     aomImage->range = AOM_CR_FULL_RANGE;
     aomImage->monochrome = 1;
 
+    aomImage->cp = AOM_CICP_CP_UNSPECIFIED;
+    aomImage->tc = AOM_CICP_TC_UNSPECIFIED;
+    aomImage->mc = AOM_CICP_MC_UNSPECIFIED;
+
     AlphaToY8(
         bgraImage,
         reinterpret_cast<uint8_t*>(aomImage->planes[AOM_PLANE_Y]),

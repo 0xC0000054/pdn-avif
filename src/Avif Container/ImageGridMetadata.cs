@@ -24,6 +24,8 @@ namespace AvifFileType.AvifContainer
         private const string TileImageHeightPropertyName = "TileImageHeight";
         private const string TileImageWidthPropertyName = "TileImageWidth";
 
+        private readonly Lazy<int> tileCount;
+
         public ImageGridMetadata(int tileColumnCount, int tileRowCount, uint outputHeight, uint outputWidth, uint tileImageHeight, uint tileImageWidth)
         {
             if (tileColumnCount < 1 || tileColumnCount > 256)
@@ -42,6 +44,7 @@ namespace AvifFileType.AvifContainer
             this.OutputWidth = outputWidth;
             this.TileImageHeight = tileImageHeight;
             this.TileImageWidth = tileImageWidth;
+            this.tileCount = new Lazy<int>(GetTileCount);
         }
 
         public ImageGridMetadata(ImageGridInfo gridInfo, uint tileImageHeight, uint tileImageWidth)
@@ -57,6 +60,7 @@ namespace AvifFileType.AvifContainer
             this.OutputWidth = gridInfo.OutputWidth;
             this.TileImageHeight = tileImageHeight;
             this.TileImageWidth = tileImageWidth;
+            this.tileCount = new Lazy<int>(GetTileCount);
         }
 
         public int TileColumnCount { get; }
@@ -73,7 +77,7 @@ namespace AvifFileType.AvifContainer
 
         public int GetNumberOfTiles()
         {
-            return checked(this.TileColumnCount * this.TileRowCount);
+            return this.tileCount.Value;
         }
 
         public bool IsValidForImage(uint documentWidth, uint documentHeight, YUVChromaSubsampling yuvFormat)
@@ -123,6 +127,11 @@ namespace AvifFileType.AvifContainer
                                  this.TileImageHeight,
                                  TileImageWidthPropertyName,
                                  this.TileImageWidth);
+        }
+
+        private int GetTileCount()
+        {
+            return checked(this.TileColumnCount * this.TileRowCount);
         }
 
         private static uint GetPropertyValue(string haystack, string propertyName)

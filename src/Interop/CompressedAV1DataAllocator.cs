@@ -24,12 +24,10 @@ namespace AvifFileType.Interop
         : IDisposable
     {
         private List<CompressedDataState> compressedData;
-        private int ownedItemCount;
 
         public CompressedAV1DataAllocator(int capacity)
         {
             this.compressedData = new List<CompressedDataState>(capacity);
-            this.ownedItemCount = 0;
         }
 
         public ExceptionDispatchInfo ExceptionInfo { get; private set; }
@@ -43,7 +41,6 @@ namespace AvifFileType.Interop
             {
                 CompressedDataState state = new CompressedDataState(size);
                 this.compressedData.Add(state);
-                this.ownedItemCount++;
 
                 nativePointer = state.NativePointer;
             }
@@ -61,16 +58,13 @@ namespace AvifFileType.Interop
         {
             if (this.compressedData != null)
             {
-                if (this.ownedItemCount > 0)
+                for (int i = 0; i < this.compressedData.Count; i++)
                 {
-                    for (int i = 0; i < this.compressedData.Count; i++)
-                    {
-                        CompressedDataState state = this.compressedData[i];
+                    CompressedDataState state = this.compressedData[i];
 
-                        if (state.OwnsDataBuffer)
-                        {
-                            state.Dispose();
-                        }
+                    if (state.OwnsDataBuffer)
+                    {
+                        state.Dispose();
                     }
                 }
 
@@ -91,7 +85,6 @@ namespace AvifFileType.Interop
                 if (state.NativePointer == nativePointer)
                 {
                     data = state.GetData();
-                    this.ownedItemCount--;
                 }
             }
 

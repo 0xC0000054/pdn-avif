@@ -74,11 +74,11 @@ namespace AvifFileType.AvifContainer
             {
                 case YUVChromaSubsampling.Subsampling400:
                 case YUVChromaSubsampling.Subsampling420:
-                case YUVChromaSubsampling.IdentityMatrix:
                     return SequenceProfile.Main;
                 case YUVChromaSubsampling.Subsampling422:
                     return SequenceProfile.Professional;
                 case YUVChromaSubsampling.Subsampling444:
+                case YUVChromaSubsampling.IdentityMatrix:
                     return SequenceProfile.High;
                 default:
                     throw new InvalidEnumArgumentException(nameof(format), (int)format, typeof(YUVChromaSubsampling));

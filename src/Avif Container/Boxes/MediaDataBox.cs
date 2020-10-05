@@ -17,7 +17,7 @@ namespace AvifFileType.AvifContainer
     {
         private readonly ulong dataLength;
 
-        public unsafe MediaDataBox(ulong length)
+        public MediaDataBox(ulong length)
             : base(BoxTypes.MediaData)
         {
             this.dataLength = length;

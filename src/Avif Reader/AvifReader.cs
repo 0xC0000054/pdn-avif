@@ -228,7 +228,7 @@ namespace AvifFileType
 
             // HEIF (ISO/IEC 23008-12:2017), section 6.6.2.3.1:
             // The tiled input images shall completely “cover” the reconstructed image grid canvas...
-            if ((tileWidth * (gridInfo.TileColumnCount)) < gridInfo.OutputWidth || (tileHeight * gridInfo.TileRowCount) < gridInfo.OutputHeight)
+            if ((tileWidth * gridInfo.TileColumnCount) < gridInfo.OutputWidth || (tileHeight * gridInfo.TileRowCount) < gridInfo.OutputHeight)
             {
                 ExceptionUtil.ThrowFormatException("The image grid tiles do not cover the entire output image.");
             }

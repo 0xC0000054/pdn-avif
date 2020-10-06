@@ -77,7 +77,7 @@ namespace AvifFileType.AvifContainer
 
             for (int i = 3; i >= 0; i--)
             {
-                uint c = ((value >> (i * 8)) & 0xff);
+                uint c = (value >> (i * 8)) & 0xff;
 
                 // Ignore any bytes that are not printable ASCII characters
                 // because they can not be displayed in the debugger watch windows.

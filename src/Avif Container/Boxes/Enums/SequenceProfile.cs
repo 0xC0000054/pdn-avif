@@ -49,6 +49,7 @@ namespace AvifFileType.AvifContainer
         {
         }
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay => $"{ this.Name } ({ this.Value })";
 
         /// <summary>

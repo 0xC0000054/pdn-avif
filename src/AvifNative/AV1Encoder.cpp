@@ -333,7 +333,6 @@ EncoderStatus CompressAOMImages(
     if (compressedColorImage)
     {
         *compressedColorImage = nullptr;
-        *compressedColorImage = 0;
     }
     else
     {

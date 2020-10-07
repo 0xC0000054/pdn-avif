@@ -130,7 +130,7 @@ namespace
             LIMITED_TO_FULL(1024, 60160, 65535);
             break;
         default:
-            throw new unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
+            throw unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
         }
         return v;
     }
@@ -151,7 +151,7 @@ namespace
             LIMITED_TO_FULL(1024, 61440, 65535);
             break;
         default:
-            throw new unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
+            throw unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
         }
         return v;
     }
@@ -171,7 +171,7 @@ namespace
                 image->bit_depth != 12 &&
                 image->bit_depth != 16)
             {
-                throw new unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
+                throw unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
             }
 
             const int count = 1 << static_cast<int>(image->bit_depth);

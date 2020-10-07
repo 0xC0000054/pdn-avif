@@ -220,7 +220,7 @@ namespace AvifFileType
 
         private static void CheckImageGridAndTileBounds(uint tileWidth, uint tileHeight, YUVChromaSubsampling tileChroma, ImageGridInfo gridInfo)
         {
-            // The MIAF specification (ISO/IEC 23000-22) requires that the tile size be at least 64x64.
+            // The MIAF specification (ISO/IEC 23000-22:2019) requires that the tile size be at least 64x64.
             if (tileWidth < 64 || tileHeight < 64)
             {
                 ExceptionUtil.ThrowFormatException("The image grid tile size must be at least 64x64.");

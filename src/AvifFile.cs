@@ -500,7 +500,7 @@ namespace AvifFileType
             //
             // For example, a 65536x65536 pixel image would use a 128x128 grid of 512x512 pixel tiles.
             const int MaxTileCount = 256;
-            // The MIAF specification (ISO/IEC 23000-22) requires that the tile size be at least 64x64 pixels.
+            // The MIAF specification (ISO/IEC 23000-22:2019) requires that the tile size be at least 64x64 pixels.
             const int MinTileSize = 64;
 
             int maxTileSize;

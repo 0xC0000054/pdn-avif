@@ -298,6 +298,42 @@ namespace AvifFileType
             }
         }
 
+        private void CheckImageItemType(uint itemId, ImageGridInfo gridInfo, string imageName, bool checkingGridChildren = false)
+        {
+            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+
+            if (entry is null)
+            {
+                ExceptionUtil.ThrowFormatException($"The { imageName } image does not exist.");
+            }
+            else if (entry.ItemType != ItemInfoEntryTypes.AV01)
+            {
+                if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
+                {
+                    if (checkingGridChildren)
+                    {
+                        ExceptionUtil.ThrowFormatException("Nested image grids are not supported.");
+                    }
+
+                    if (gridInfo is null)
+                    {
+                        ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
+                    }
+
+                    IReadOnlyList<uint> childImageIds = gridInfo.ChildImageIds;
+
+                    for (int i = 0; i < childImageIds.Count; i++)
+                    {
+                        CheckImageItemType(childImageIds[i], null, imageName, true);
+                    }
+                }
+                else
+                {
+                    ExceptionUtil.ThrowFormatException($"The { imageName } image is not a supported format.");
+                }
+            }
+        }
+
         private void CheckRequiredImageProperties(uint itemId, ImageGridInfo gridInfo, string imageName)
         {
             bool hasUnsupportedProperties = false;
@@ -338,42 +374,6 @@ namespace AvifFileType
             if (hasUnsupportedProperties)
             {
                 ExceptionUtil.ThrowFormatException($"The { imageName } image has essential item properties that are not supported.");
-            }
-        }
-
-        private void CheckImageItemType(uint itemId, ImageGridInfo gridInfo, string imageName, bool checkingGridChildren = false)
-        {
-            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
-
-            if (entry is null)
-            {
-                ExceptionUtil.ThrowFormatException($"The { imageName } image does not exist.");
-            }
-            else if (entry.ItemType != ItemInfoEntryTypes.AV01)
-            {
-                if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
-                {
-                    if (checkingGridChildren)
-                    {
-                        ExceptionUtil.ThrowFormatException("Nested image grids are not supported.");
-                    }
-
-                    if (gridInfo is null)
-                    {
-                        ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
-                    }
-
-                    IReadOnlyList<uint> childImageIds = gridInfo.ChildImageIds;
-
-                    for (int i = 0; i < childImageIds.Count; i++)
-                    {
-                        CheckImageItemType(childImageIds[i], null, imageName, true);
-                    }
-                }
-                else
-                {
-                    ExceptionUtil.ThrowFormatException($"The { imageName } image is not a supported format.");
-                }
             }
         }
 

@@ -38,5 +38,6 @@ namespace AvifFileType.AvifContainer
         public static readonly FourCC PixelAspectRatio = new FourCC('p', 'a', 's', 'p');
         public static readonly FourCC PixelInformation = new FourCC('p', 'i', 'x', 'i');
         public static readonly FourCC Skip = new FourCC('s', 'k', 'i', 'p');
+        public static readonly FourCC Uuid = new FourCC('u', 'u', 'i', 'd');
     }
 }

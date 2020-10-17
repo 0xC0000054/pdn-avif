@@ -47,6 +47,16 @@ namespace AvifFileType.AvifContainer
                     break;
             }
 
+            if (this.Type == BoxTypes.Uuid)
+            {
+                byte[] uuidBytes = reader.ReadBytes(16);
+                this.ExtendedType = new Guid(uuidBytes);
+            }
+            else
+            {
+                this.ExtendedType = null;
+            }
+
             this.DataStartOffset = reader.Position;
             this.DataLength = this.Size - boxHeaderSize;
             try
@@ -94,6 +104,16 @@ namespace AvifFileType.AvifContainer
                     break;
             }
 
+            if (this.Type == BoxTypes.Uuid)
+            {
+                byte[] uuidBytes = reader.ReadBytes(16);
+                this.ExtendedType = new Guid(uuidBytes);
+            }
+            else
+            {
+                this.ExtendedType = null;
+            }
+
             this.DataStartOffset = reader.Position;
             this.DataLength = this.Size - boxHeaderSize;
             try
@@ -120,6 +140,7 @@ namespace AvifFileType.AvifContainer
 
             this.Size = header.Size;
             this.Type = header.Type;
+            this.ExtendedType = header.ExtendedType;
             this.DataStartOffset = header.DataStartOffset;
             this.DataLength = header.DataLength;
             this.End = header.End;
@@ -129,6 +150,7 @@ namespace AvifFileType.AvifContainer
         {
             this.Size = -1;
             this.Type = type;
+            this.ExtendedType = null;
             this.DataStartOffset = -1;
             this.DataLength = -1;
             this.End = -1;
@@ -139,6 +161,8 @@ namespace AvifFileType.AvifContainer
         public long Size { get; }
 
         public FourCC Type { get; }
+
+        public Guid? ExtendedType { get; }
 
         public long DataStartOffset { get; }
 

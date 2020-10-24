@@ -17,9 +17,7 @@ The plugin will override the bundled version if it has higher version number.
   Classic | C:\Program Files\Paint.NET\FileTypes    
   Microsoft Store | Documents\paint.net App Files\FileTypes
 
-3. Open the Windows Run dialog (Start > Run or `Windows Key` + `R`)
-4. Type `paintdotnet:/set:FileTypes/BuiltInAV1FileTypeEnabled=false` and press the `Enter` key
-5. Restart Paint.NET.
+3. Restart Paint.NET.
 
 ## License
 

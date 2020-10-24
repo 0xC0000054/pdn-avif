@@ -78,7 +78,6 @@ namespace AvifFileType
                     SupportsLayers = false
                 })
         {
-#if PDN_BUNDLED
             PaintDotNet.Avif.IAvifFileTypeStrings avifFileTypeStrings = host?.Services.GetService<PaintDotNet.Avif.IAvifFileTypeStrings>();
 
             if (avifFileTypeStrings != null)
@@ -86,7 +85,6 @@ namespace AvifFileType
                 this.strings = new PdnLocalizedStringResourceManager(avifFileTypeStrings);
             }
             else
-#endif
             {
                 this.strings = new BuiltinStringResourceManager();
             }

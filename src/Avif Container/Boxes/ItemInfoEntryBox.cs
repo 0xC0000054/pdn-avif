@@ -54,8 +54,8 @@ namespace AvifFileType.AvifContainer
             this.Name = header.Name;
         }
 
-        protected ItemInfoEntryBox(ushort itemId, ushort itemProtectionIndex, FourCC itemType, string name)
-            : base(2, 0, BoxTypes.ItemInfoEntry)
+        protected ItemInfoEntryBox(uint itemId, ushort itemProtectionIndex, FourCC itemType, string name)
+            : base((byte)(itemId > ushort.MaxValue ? 3 : 2), 0, BoxTypes.ItemInfoEntry)
         {
             this.ItemId = itemId;
             this.ItemProtectionIndex = itemProtectionIndex;

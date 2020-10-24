@@ -28,12 +28,12 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public MimeItemInfoEntryBox(ushort itemId, ushort itemProtectionIndex, string name, string contentType)
+        public MimeItemInfoEntryBox(uint itemId, ushort itemProtectionIndex, string name, string contentType)
             : this(itemId, itemProtectionIndex, name, contentType, null)
         {
         }
 
-        public MimeItemInfoEntryBox(ushort itemId, ushort itemProtectionIndex, string name, string contentType, string contentEncoding)
+        public MimeItemInfoEntryBox(uint itemId, ushort itemProtectionIndex, string name, string contentType, string contentEncoding)
             : base(itemId, itemProtectionIndex, ItemInfoEntryTypes.Mime, name)
         {
             if (contentType is null)

@@ -15,7 +15,7 @@ namespace AvifFileType.AvifContainer
     internal sealed class AV01ItemInfoEntryBox
         : ItemInfoEntryBox
     {
-        public AV01ItemInfoEntryBox(ushort itemId, string name)
+        public AV01ItemInfoEntryBox(uint itemId, string name)
             : base(itemId, 0, ItemInfoEntryTypes.AV01, name)
         {
         }

@@ -97,14 +97,14 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public MetaBox(ushort primaryItemId, bool use64BitFileOffsets, ItemDataBox itemDataBox)
+        public MetaBox(uint primaryItemId, int itemCount, bool use64BitFileOffsets, ItemDataBox itemDataBox)
             : base(0, 0, BoxTypes.Meta)
         {
             this.Handler = new HandlerBox();
             this.PrimaryItem = new PrimaryItemBox(primaryItemId);
             this.ItemData = itemDataBox;
-            this.ItemLocations = new ItemLocationBox(use64BitFileOffsets, itemDataBox);
-            this.ItemInfo = new ItemInfoBox();
+            this.ItemLocations = new ItemLocationBox(use64BitFileOffsets, itemCount, itemDataBox);
+            this.ItemInfo = new ItemInfoBox(itemCount);
             this.ItemReferences = new ItemReferenceBox();
             this.ItemProperties = new ItemPropertiesBox();
         }

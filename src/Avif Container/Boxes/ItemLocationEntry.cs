@@ -85,7 +85,7 @@ namespace AvifFileType.AvifContainer
             this.TotalItemSize = totalItemSize;
         }
 
-        public ItemLocationEntry(ushort itemId, ulong itemLength)
+        public ItemLocationEntry(uint itemId, ulong itemLength)
         {
             this.ItemId = itemId;
             this.DataReferenceIndex = 0;
@@ -98,7 +98,7 @@ namespace AvifFileType.AvifContainer
             this.TotalItemSize = itemLength;
         }
 
-        public ItemLocationEntry(ushort itemId, ulong itemDataBoxOffset, ulong itemLength)
+        public ItemLocationEntry(uint itemId, ulong itemDataBoxOffset, ulong itemLength)
         {
             this.ItemId = itemId;
             this.DataReferenceIndex = 0;

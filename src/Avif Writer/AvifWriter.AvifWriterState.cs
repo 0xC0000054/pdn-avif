@@ -20,7 +20,7 @@ namespace AvifFileType
     internal sealed partial class AvifWriter
     {
         // The item ids start at 1.
-        private const int FirstItemId = 1;
+        private const uint FirstItemId = 1;
 
         private sealed class AvifWriterState
         {
@@ -43,7 +43,7 @@ namespace AvifFileType
                 Initialize(colorImages, alphaImages, imageGridMetadata, metadata);
             }
 
-            public ushort AlphaItemId { get; private set; }
+            public uint AlphaItemId { get; private set; }
 
             public ImageGridMetadata ImageGrid { get; }
 
@@ -53,7 +53,7 @@ namespace AvifFileType
 
             public ulong MediaDataBoxContentSize { get; private set; }
 
-            public ushort PrimaryItemId { get; private set; }
+            public uint PrimaryItemId { get; private set; }
 
             private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata)
             {
@@ -100,7 +100,7 @@ namespace AvifFileType
                     this.ItemDataBox = null;
                 }
 
-                ushort itemId = result.NextId;
+                uint itemId = result.NextId;
                 ulong mediaDataBoxContentSize = result.MediaDataBoxContentSize;
 
                 byte[] exif = metadata.GetExifBytesReadOnly();
@@ -132,7 +132,7 @@ namespace AvifFileType
                                                            ImageGridMetadata imageGridMetadata)
             {
                 ulong mediaDataBoxContentSize = 0;
-                ushort itemId = FirstItemId;
+                uint itemId = FirstItemId;
 
                 List<uint> colorImageIds = new List<uint>(colorImages.Count);
                 List<uint> alphaImageIds = alphaImages != null ? new List<uint>(alphaImages.Count) : null;
@@ -195,7 +195,7 @@ namespace AvifFileType
             private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image alpha)
             {
                 ulong mediaDataBoxContentSize = color.Data.ByteLength;
-                ushort itemId = FirstItemId;
+                uint itemId = FirstItemId;
 
                 AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, "Color", color, false);
                 itemId++;
@@ -253,7 +253,7 @@ namespace AvifFileType
 
             private readonly struct ImageStateInfo
             {
-                public ImageStateInfo(ulong mediaDataBoxContentSize, ushort nextId)
+                public ImageStateInfo(ulong mediaDataBoxContentSize, uint nextId)
                 {
                     this.MediaDataBoxContentSize = mediaDataBoxContentSize;
                     this.NextId = nextId;
@@ -262,7 +262,7 @@ namespace AvifFileType
 
                 public ulong MediaDataBoxContentSize { get; }
 
-                public ushort NextId { get; }
+                public uint NextId { get; }
             }
         }
     }

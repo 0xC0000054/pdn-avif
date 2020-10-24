@@ -15,7 +15,7 @@ namespace AvifFileType.AvifContainer
     internal sealed class ExifItemInfoEntry
         : ItemInfoEntryBox
     {
-        public ExifItemInfoEntry(ushort itemId)
+        public ExifItemInfoEntry(uint itemId)
             : base(itemId, 0, ItemInfoEntryTypes.Exif, "Exif")
         {
         }

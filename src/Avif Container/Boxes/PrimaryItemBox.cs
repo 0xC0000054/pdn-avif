@@ -31,8 +31,8 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public PrimaryItemBox(ushort itemId)
-            : base(0, 0, BoxTypes.PrimaryItem)
+        public PrimaryItemBox(uint itemId)
+            : base((byte)(itemId > ushort.MaxValue ? 1 : 0), 0, BoxTypes.PrimaryItem)
         {
             this.ItemId = itemId;
         }

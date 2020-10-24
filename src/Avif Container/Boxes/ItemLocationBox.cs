@@ -77,8 +77,8 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public ItemLocationBox(bool use64BitOffsets, ItemDataBox itemDataBox)
-            : base((byte)(itemDataBox != null ? 1 : 0), 0, BoxTypes.ItemLocation)
+        public ItemLocationBox(bool use64BitOffsets, int itemCount, ItemDataBox itemDataBox)
+            : base(CalculateBoxVersion(itemCount, itemDataBox), 0, BoxTypes.ItemLocation)
         {
             if (use64BitOffsets)
             {
@@ -93,7 +93,7 @@ namespace AvifFileType.AvifContainer
             // The base offset and index size fields are not used.
             this.BaseOffsetSize = 0;
             this.IndexSize = 0;
-            this.items = new List<ItemLocationEntry>();
+            this.items = new List<ItemLocationEntry>(itemCount);
         }
 
         public byte OffsetSize { get; }
@@ -164,6 +164,18 @@ namespace AvifFileType.AvifContainer
                    + sizeof(byte) // Base offset size and reserved
                    + (this.Version < 2 ? (ulong)sizeof(ushort) : sizeof(uint)) // Item count
                    + ((ulong)this.items.Count * (ulong)ItemLocationEntry.GetSize(this));
+        }
+
+        private static byte CalculateBoxVersion(int itemCount, ItemDataBox itemDataBox)
+        {
+            if (itemCount > ushort.MaxValue)
+            {
+                return 2;
+            }
+            else
+            {
+                return (byte)(itemDataBox != null ? 1 : 0);
+            }
         }
 
         private static void ValidateSizeFieldRange(byte value, string name)

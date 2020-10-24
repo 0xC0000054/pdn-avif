@@ -29,7 +29,7 @@ namespace AvifFileType.AvifContainer
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay => $"ItemId: { this.ItemId }, Name: \"{ this.Name }\", Uri: \"{ this.uri }\"";
 
-        public UriItemEntryInfoBox(ushort itemId, ushort itemProtectionIndex, string name, string uri)
+        public UriItemEntryInfoBox(uint itemId, ushort itemProtectionIndex, string name, string uri)
             : base(itemId, itemProtectionIndex, ItemInfoEntryTypes.Uri, name)
         {
             if (uri is null)

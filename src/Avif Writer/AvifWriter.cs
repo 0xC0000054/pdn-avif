@@ -47,6 +47,7 @@ namespace AvifFileType
             this.progressTotal = progressTotal;
             this.fileTypeBox = new FileTypeBox(chromaSubsampling);
             this.metaBox = new MetaBox(this.state.PrimaryItemId,
+                                       this.state.Items.Count,
                                        this.state.MediaDataBoxContentSize > uint.MaxValue,
                                        this.state.ItemDataBox);
             PopulateMetaBox();

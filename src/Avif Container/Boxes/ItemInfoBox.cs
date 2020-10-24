@@ -23,10 +23,10 @@ namespace AvifFileType.AvifContainer
     {
         private readonly List<ItemInfoEntryBox> itemInfoEntries;
 
-        public ItemInfoBox()
-            : base(0, 0, BoxTypes.ItemInfo)
+        public ItemInfoBox(int itemCount)
+            : base((byte)(itemCount > ushort.MaxValue ? 1 : 0), 0, BoxTypes.ItemInfo)
         {
-            this.itemInfoEntries = new List<ItemInfoEntryBox>();
+            this.itemInfoEntries = new List<ItemInfoEntryBox>(itemCount);
         }
 
         public ItemInfoBox(in EndianBinaryReaderSegment reader, Box header)

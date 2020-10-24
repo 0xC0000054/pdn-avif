@@ -17,7 +17,7 @@ namespace AvifFileType.AvifContainer
     {
         internal const string XmpContentType = "application/rdf+xml";
 
-        public XmpItemInfoEntry(ushort itemId) : base(itemId, 0, "XMP", XmpContentType)
+        public XmpItemInfoEntry(uint itemId) : base(itemId, 0, "XMP", XmpContentType)
         {
         }
     }

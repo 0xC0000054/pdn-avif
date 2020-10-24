@@ -14,7 +14,7 @@ namespace AvifFileType.AvifContainer
 {
     internal sealed class ImageGridItemInfoEntryBox : ItemInfoEntryBox
     {
-        public ImageGridItemInfoEntryBox(ushort itemId, string name)
+        public ImageGridItemInfoEntryBox(uint itemId, string name)
             : base(itemId, 0, ItemInfoEntryTypes.ImageGrid, name)
         {
         }

@@ -24,6 +24,7 @@ namespace AvifFileType
     {
         private readonly int? maxEncoderThreadsOverride;
         private readonly IAvifStringResourceManager strings;
+        private readonly Lazy<IByteArrayPool> byteArrayPool;
 
         // Names of the properties
         private enum PropertyNames
@@ -89,6 +90,7 @@ namespace AvifFileType
                 this.strings = new BuiltinStringResourceManager();
             }
             this.maxEncoderThreadsOverride = maxEncoderThreads;
+            this.byteArrayPool = new Lazy<IByteArrayPool>(() => new ByteArrayPool());
         }
 
         /// <summary>
@@ -199,7 +201,8 @@ namespace AvifFileType
                           preserveExistingTileSize,
                           this.maxEncoderThreadsOverride,
                           scratchSurface,
-                          progressCallback);
+                          progressCallback,
+                          this.byteArrayPool.Value);
         }
 
         /// <summary>
@@ -207,7 +210,7 @@ namespace AvifFileType
         /// </summary>
         protected override Document OnLoad(Stream input)
         {
-            return AvifFile.Load(input);
+            return AvifFile.Load(input, this.byteArrayPool.Value);
         }
     }
 }

@@ -31,11 +31,11 @@ namespace AvifFileType
         // allow the data to be read from existing PDN files.
         private const string NclxMetadataName = "AvifNclxData";
 
-        public static Document Load(Stream input)
+        public static Document Load(Stream input, IByteArrayPool arrayPool)
         {
             Document doc = null;
 
-            using (AvifReader reader = new AvifReader(input, leaveOpen: true))
+            using (AvifReader reader = new AvifReader(input, leaveOpen: true, arrayPool))
             {
                 Surface surface = null;
                 bool disposeSurface = true;
@@ -46,7 +46,7 @@ namespace AvifFileType
 
                     doc = new Document(surface.Width, surface.Height);
 
-                    AddAvifMetadataToDocument(doc, reader);
+                    AddAvifMetadataToDocument(doc, reader, arrayPool);
 
                     doc.Layers.Add(Layer.CreateBackgroundLayer(surface, takeOwnership: true));
                     disposeSurface = false;
@@ -71,7 +71,8 @@ namespace AvifFileType
                          bool preserveExistingTileSize,
                          int? maxEncoderThreadsOverride,
                          Surface scratchSurface,
-                         ProgressEventHandler progressCallback)
+                         ProgressEventHandler progressCallback,
+                         IByteArrayPool arrayPool)
         {
             using (RenderArgs args = new RenderArgs(scratchSurface))
             {
@@ -237,7 +238,8 @@ namespace AvifFileType
                                                    colorInformationBox,
                                                    progressCallback,
                                                    progressDone,
-                                                   progressTotal);
+                                                   progressTotal,
+                                                   arrayPool);
                 writer.WriteTo(output);
             }
             finally
@@ -260,13 +262,13 @@ namespace AvifFileType
             }
         }
 
-        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader)
+        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader, IByteArrayPool arrayPool)
         {
             byte[] exifBytes = reader.GetExifData();
 
             if (exifBytes != null)
             {
-                ExifValueCollection exifValues = ExifParser.Parse(exifBytes);
+                ExifValueCollection exifValues = ExifParser.Parse(exifBytes, arrayPool);
 
                 if (exifValues != null)
                 {

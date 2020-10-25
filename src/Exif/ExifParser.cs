@@ -27,8 +27,14 @@ namespace AvifFileType.Exif
         /// <returns>
         /// A collection containing the EXIF properties.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="exifBytes"/> is null.</exception>
-        internal static ExifValueCollection Parse(byte[] exifBytes)
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="exifBytes"/> is null.
+        ///
+        /// -or-
+        ///
+        /// <paramref name="arrayPool"/> is null.
+        /// </exception>
+        internal static ExifValueCollection Parse(byte[] exifBytes, IByteArrayPool arrayPool)
         {
             if (exifBytes is null)
             {
@@ -46,7 +52,7 @@ namespace AvifFileType.Exif
 
                 if (byteOrder.HasValue)
                 {
-                    using (EndianBinaryReader reader = new EndianBinaryReader(stream, byteOrder.Value))
+                    using (EndianBinaryReader reader = new EndianBinaryReader(stream, byteOrder.Value, arrayPool))
                     {
                         stream = null;
 

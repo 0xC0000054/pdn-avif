@@ -88,21 +88,26 @@ namespace AvifFileType
         : AvifItemData
     {
         private byte[] buffer;
+        private readonly IByteArrayPool arrayPool;
 
-        public ManagedAvifItemData(byte[] buffer)
+        public ManagedAvifItemData(int length, IByteArrayPool pool)
             : base()
         {
-            if (buffer is null)
-            {
-                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(buffer));
-            }
+            this.buffer = pool.Rent(length);
+            this.Length = (ulong)length;
+            this.arrayPool = pool;
+        }
 
-            this.buffer = buffer;
-            this.Length = (ulong)buffer.Length;
+        internal byte[] GetBuffer()
+        {
+            VerifyNotDisposed();
+
+            return this.buffer;
         }
 
         protected override void Dispose(bool disposing)
         {
+            this.arrayPool.Return(this.buffer);
             this.buffer = null;
 
             base.Dispose(disposing);
@@ -110,12 +115,12 @@ namespace AvifFileType
 
         protected override Stream GetStreamImpl()
         {
-            return new MemoryStream(this.buffer, writable: false);
+            return new MemoryStream(this.buffer, 0, (int)this.Length, writable: false);
         }
 
         protected override byte[] ToArrayImpl()
         {
-            byte[] array = new byte[this.buffer.Length];
+            byte[] array = new byte[this.Length];
             this.buffer.CopyTo(array, 0);
 
             return array;

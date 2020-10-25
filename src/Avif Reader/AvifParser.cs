@@ -35,15 +35,17 @@ namespace AvifFileType
         private MetaBox metaBox;
         private EndianBinaryReader reader;
         private readonly ulong fileLength;
+        private readonly IByteArrayPool arrayPool;
 
-        public AvifParser(Stream stream, bool leaveOpen)
+        public AvifParser(Stream stream, bool leaveOpen, IByteArrayPool arrayPool)
         {
             if (stream is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(stream));
             }
 
-            this.reader = new EndianBinaryReader(stream, Endianess.Big, leaveOpen);
+            this.arrayPool = arrayPool;
+            this.reader = new EndianBinaryReader(stream, Endianess.Big, leaveOpen, arrayPool);
             Parse();
             this.fileLength = (ulong)stream.Length;
         }
@@ -165,9 +167,11 @@ namespace AvifFileType
 
                 if (totalItemSize <= ManagedAvifItemDataMaxSize)
                 {
-                    byte[] bytes = this.reader.ReadBytes((int)totalItemSize);
+                    ManagedAvifItemData managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
 
-                    data = new ManagedAvifItemData(bytes);
+                    this.reader.ProperRead(managedItemData.GetBuffer(), 0, (int)managedItemData.Length);
+
+                    data = managedItemData;
                 }
                 else
                 {
@@ -462,10 +466,11 @@ namespace AvifFileType
 
             if (totalItemSize <= ManagedAvifItemDataMaxSize)
             {
-                byte[] bytes = new byte[(int)totalItemSize];
+                ManagedAvifItemData managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
 
                 int offset = 0;
-                int remainingBytes = bytes.Length;
+                int remainingBytes = (int)managedItemData.Length;
+                byte[] bytes = managedItemData.GetBuffer();
 
                 for (int i = 0; i < extents.Count; i++)
                 {
@@ -493,7 +498,7 @@ namespace AvifFileType
                     throw new FormatException("The item has more data than was read from the extents.");
                 }
 
-                data = new ManagedAvifItemData(bytes);
+                data = managedItemData;
             }
             else
             {
@@ -565,7 +570,7 @@ namespace AvifFileType
                         {
                             stream = itemData.GetStream();
 
-                            using (EndianBinaryReader imageGridReader = new EndianBinaryReader(stream, this.reader.Endianess))
+                            using (EndianBinaryReader imageGridReader = new EndianBinaryReader(stream, this.reader.Endianess, this.arrayPool))
                             {
                                 stream = null;
 

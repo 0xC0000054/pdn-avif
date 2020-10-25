@@ -51,6 +51,10 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include=".Net Core\ArrayPool\ArrayPool.cs" />
+    <Compile Include=".Net Core\ArrayPool\DefaultArrayPool.cs" />
+    <Compile Include=".Net Core\ArrayPool\DefaultArrayPoolBucket.cs" />
+    <Compile Include=".Net Core\ArrayPool\Utilities.cs" />
     <Compile Include="Avif Container\Boxes\AlphaChannelNames.cs" />
     <Compile Include="Avif Container\Boxes\Enums\CICPColorPrimaries.cs" />
     <Compile Include="Avif Container\Boxes\Enums\CICPMatrixCoefficients.cs" />
@@ -151,6 +155,7 @@
     <Compile Include="Exif\TagDataType.cs" />
     <Compile Include="Exif\TagDataTypeUtil.cs" />
     <Compile Include="Exif\TiffConstants.cs" />
+    <Compile Include="IByteArrayPool.cs" />
     <Compile Include="Interop\AvifNative_64.cs" />
     <Compile Include="Interop\AvifNative_86.cs" />
     <Compile Include="Interop\BitmapData.cs" />
@@ -167,6 +172,7 @@
     <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
     <Compile Include="Interop\UnmanagedCompressedAV1Data.cs" />
     <Compile Include="IO\BigEndianBinaryWriter.cs" />
+    <Compile Include="ByteArrayPool.cs" />
     <Compile Include="IO\EndianBinaryReader.cs" />
     <Compile Include="IO\EndianBinaryReaderSegment.cs" />
     <Compile Include="IO\Endianess.cs" />
@@ -189,6 +195,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "D:\Program Files\paint.net\FileTypes" /y</PostBuildEvent>

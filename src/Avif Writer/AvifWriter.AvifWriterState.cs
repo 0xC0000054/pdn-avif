@@ -25,7 +25,11 @@ namespace AvifFileType
         {
             private readonly List<AvifWriterItem> items;
 
-            public AvifWriterState(IReadOnlyList<CompressedAV1Image> colorImages, IReadOnlyList<CompressedAV1Image> alphaImages, ImageGridMetadata imageGridMetadata, AvifMetadata metadata)
+            public AvifWriterState(IReadOnlyList<CompressedAV1Image> colorImages,
+                                   IReadOnlyList<CompressedAV1Image> alphaImages,
+                                   ImageGridMetadata imageGridMetadata,
+                                   AvifMetadata metadata,
+                                   IByteArrayPool arrayPool)
             {
                 if (colorImages is null)
                 {
@@ -37,9 +41,14 @@ namespace AvifFileType
                     ExceptionUtil.ThrowArgumentNullException(nameof(metadata));
                 }
 
+                if (arrayPool is null)
+                {
+                    ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
+                }
+
                 this.ImageGrid = imageGridMetadata;
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
-                Initialize(colorImages, alphaImages, imageGridMetadata, metadata);
+                Initialize(colorImages, alphaImages, imageGridMetadata, metadata, arrayPool);
             }
 
             public uint AlphaItemId { get; private set; }
@@ -54,7 +63,7 @@ namespace AvifFileType
 
             public uint PrimaryItemId { get; private set; }
 
-            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata)
+            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata, IByteArrayPool arrayPool)
             {
                 ImageGridDescriptor imageGridDescriptor = new ImageGridDescriptor(imageGridMetadata);
 
@@ -65,7 +74,7 @@ namespace AvifFileType
                 {
                     stream = new MemoryStream(dataBoxBuffer);
 
-                    using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, leaveOpen: false))
+                    using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, leaveOpen: false, arrayPool))
                     {
                         stream = null;
 
@@ -84,14 +93,15 @@ namespace AvifFileType
             private void Initialize(IReadOnlyList<CompressedAV1Image> colorImages,
                                     IReadOnlyList<CompressedAV1Image> alphaImages,
                                     ImageGridMetadata imageGridMetadata,
-                                    AvifMetadata metadata)
+                                    AvifMetadata metadata,
+                                    IByteArrayPool arrayPool)
             {
                 ImageStateInfo result;
 
                 if (imageGridMetadata != null)
                 {
                     result = InitializeFromImageGrid(colorImages, alphaImages, imageGridMetadata);
-                    this.ItemDataBox = CreateItemDataBox(imageGridMetadata);
+                    this.ItemDataBox = CreateItemDataBox(imageGridMetadata, arrayPool);
                 }
                 else
                 {

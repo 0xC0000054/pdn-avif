@@ -23,8 +23,9 @@ namespace AvifFileType
         private Stream stream;
         private readonly bool leaveOpen;
         private readonly byte[] buffer;
+        private readonly IByteArrayPool arrayPool;
 
-        public BigEndianBinaryWriter(Stream stream, bool leaveOpen)
+        public BigEndianBinaryWriter(Stream stream, bool leaveOpen, IByteArrayPool arrayPool)
         {
             if (stream is null)
             {
@@ -34,6 +35,7 @@ namespace AvifFileType
             this.stream = stream;
             this.leaveOpen = leaveOpen;
             this.buffer = new byte[sizeof(ulong)];
+            this.arrayPool = arrayPool;
         }
 
         public long Position
@@ -165,7 +167,7 @@ namespace AvifFileType
             const int MaxBufferSize = 81920;
 
             int bufferSize = (int)Math.Min(length, MaxBufferSize);
-            byte[] writeBuffer = new byte[bufferSize];
+            byte[] writeBuffer = this.arrayPool.Rent(bufferSize);
 
             byte* readPtr = null;
             System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
@@ -196,6 +198,8 @@ namespace AvifFileType
                     buffer.ReleasePointer();
                 }
             }
+
+            this.arrayPool.Return(writeBuffer);
         }
 
         private void VerifyNotDisposed()

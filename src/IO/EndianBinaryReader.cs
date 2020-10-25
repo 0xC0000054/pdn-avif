@@ -22,26 +22,33 @@ namespace AvifFileType
     internal sealed class EndianBinaryReader
         : IDisposable
     {
+        private const int MaxBufferSize = 4096;
+
 #pragma warning disable IDE0032 // Use auto property
         private Stream stream;
         private int readOffset;
         private int readLength;
-
+        private bool disposed;
         private readonly byte[] buffer;
         private readonly int bufferSize;
         private readonly Endianess endianess;
         private readonly bool leaveOpen;
+        private readonly IByteArrayPool arrayPool;
 #pragma warning restore IDE0032 // Use auto property
-
-        private const int MaxBufferSize = 4096;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EndianBinaryReader"/> class.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="byteOrder">The byte order of the stream.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
-        public EndianBinaryReader(Stream stream, Endianess byteOrder) : this(stream, byteOrder, false)
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is null.
+        ///
+        /// -or-
+        ///
+        /// <paramref name="arrayPool"/> is null.
+        /// </exception>
+        public EndianBinaryReader(Stream stream, Endianess byteOrder, IByteArrayPool arrayPool) : this(stream, byteOrder, false, arrayPool)
         {
         }
 
@@ -53,17 +60,30 @@ namespace AvifFileType
         /// <param name="leaveOpen">
         /// <see langword="true"/> to leave the stream open after the EndianBinaryReader is disposed; otherwise, <see langword="false"/>
         /// </param>
-        /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
-        public EndianBinaryReader(Stream stream, Endianess byteOrder, bool leaveOpen)
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is null.
+        ///
+        /// -or-
+        ///
+        /// <paramref name="arrayPool"/> is null.
+        /// </exception>
+        public EndianBinaryReader(Stream stream, Endianess byteOrder, bool leaveOpen, IByteArrayPool arrayPool)
         {
+            if (arrayPool is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
+            }
+
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
             this.bufferSize = (int)Math.Min(stream.Length, MaxBufferSize);
-            this.buffer = new byte[this.bufferSize];
+            this.buffer = arrayPool.Rent(this.bufferSize);
             this.endianess = byteOrder;
             this.leaveOpen = leaveOpen;
+            this.arrayPool = arrayPool;
 
             this.readOffset = 0;
             this.readLength = 0;
+            this.disposed = false;
         }
 
         public Endianess Endianess => this.endianess;
@@ -174,10 +194,18 @@ namespace AvifFileType
         /// </summary>
         public void Dispose()
         {
-            if (this.stream != null && !this.leaveOpen)
+            if (!this.disposed)
             {
-                this.stream.Dispose();
-                this.stream = null;
+                this.arrayPool.Return(this.buffer);
+
+                if (this.stream != null)
+                {
+                    if (!this.leaveOpen)
+                    {
+                        this.stream.Dispose();
+                    }
+                    this.stream = null;
+                }
             }
         }
 
@@ -248,7 +276,7 @@ namespace AvifFileType
             // The largest multiple of 4096 that is under the large object heap limit.
             const int MaxReadBufferSize = 81920;
 
-            byte[] readBuffer = new byte[((int)Math.Min(count, MaxReadBufferSize))];
+            byte[] readBuffer = this.arrayPool.Rent((int)Math.Min(count, MaxReadBufferSize));
 
             byte* writePtr = null;
             System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
@@ -282,6 +310,8 @@ namespace AvifFileType
                     buffer.ReleasePointer();
                 }
             }
+
+            this.arrayPool.Return(readBuffer);
         }
 
         /// <summary>
@@ -743,7 +773,7 @@ namespace AvifFileType
         /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
         private void VerifyNotDisposed()
         {
-            if (this.stream is null)
+            if (this.disposed)
             {
                 throw new ObjectDisposedException(nameof(EndianBinaryReader));
             }

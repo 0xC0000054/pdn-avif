@@ -41,7 +41,7 @@ namespace AvifFileType
         /// </summary>
         /// <param name="parser">The parser.</param>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
-        public AvifReader(Stream input, bool leaveOpen)
+        public AvifReader(Stream input, bool leaveOpen, IByteArrayPool arrayPool)
         {
             if (input is null)
             {
@@ -50,7 +50,7 @@ namespace AvifFileType
 
             // The parser is initialized first because it will throw an exception
             // if the AVIF file is invalid or not supported.
-            this.parser = new AvifParser(input, leaveOpen);
+            this.parser = new AvifParser(input, leaveOpen, arrayPool);
             this.primaryItemId = this.parser.GetPrimaryItemId();
             this.alphaItemId = this.parser.GetAlphaItemId(this.primaryItemId);
             this.colorInfoBox = this.parser.TryGetColorInfoBox(this.primaryItemId);

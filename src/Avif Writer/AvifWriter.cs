@@ -24,6 +24,7 @@ namespace AvifFileType
         private readonly MetaBox metaBox;
         private readonly ColorInformationBox colorInformationBox;
         private readonly bool colorImageIsGrayscale;
+        private readonly IByteArrayPool arrayPool;
 
         private readonly ProgressEventHandler progressCallback;
         private uint progressDone;
@@ -37,9 +38,11 @@ namespace AvifFileType
                           ColorInformationBox colorInformationBox,
                           ProgressEventHandler progressEventHandler,
                           uint progressDone,
-                          uint progressTotal)
+                          uint progressTotal,
+                          IByteArrayPool arrayPool)
         {
-            this.state = new AvifWriterState(colorImages, alphaImages, imageGridMetadata, metadata);
+            this.state = new AvifWriterState(colorImages, alphaImages, imageGridMetadata, metadata, arrayPool);
+            this.arrayPool = arrayPool;
             this.colorImageIsGrayscale = chromaSubsampling == YUVChromaSubsampling.Subsampling400;
             this.colorInformationBox = colorInformationBox;
             this.progressCallback = progressEventHandler;
@@ -55,7 +58,7 @@ namespace AvifFileType
 
         public void WriteTo(Stream stream)
         {
-            using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, true))
+            using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, true, this.arrayPool))
             {
                 this.fileTypeBox.Write(writer);
                 this.metaBox.Write(writer);

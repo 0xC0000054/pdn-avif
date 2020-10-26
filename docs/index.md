@@ -1,37 +1,23 @@
-## Welcome to GitHub Pages
+## Welcome to the pdn-avif project site
 
-You can use the [editor on GitHub](https://github.com/0xC0000054/pdn-avif/edit/master/docs/index.md) to maintain and preview the content for your website in Markdown files.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+This project is a [Paint.NET](http://www.getpaint.net) filetype plugin that allows AVIF images to be loaded and saved with transparency.
 
-### Markdown
+### The plugin is bundled with Paint.NET 4.2.14 and later.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+If you need the features from a newer version you can still install the plugin.   
+The plugin will override the bundled version if it has higher version number.
 
-```markdown
-Syntax highlighted code block
+The latest version can be downloaded from the [Releases](https://github.com/0xC0000054/pdn-avif/releases) page on GitHub.
 
-# Header 1
-## Header 2
-### Header 3
+### Installation
 
-- Bulleted
-- List
+1. Close Paint.NET.
+2. Place AvifFileType.dll, AvifNative_x86.dll and AvifNative_x64.dll in the Paint.NET FileTypes folder which is usually located in one the following locations depending on the Paint.NET version you have installed.
 
-1. Numbered
-2. List
+  Paint.NET Version |  FileTypes Folder Location
+  --------|----------
+  Classic | C:\Program Files\Paint.NET\FileTypes    
+  Microsoft Store | Documents\paint.net App Files\FileTypes
 
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/0xC0000054/pdn-avif/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+3. Restart Paint.NET.

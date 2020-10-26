@@ -496,12 +496,16 @@ namespace AvifFileType
             Document document,
             CompressionSpeed compressionSpeed)
         {
-            // This is the largest number of horizontal and vertical tiles that an image grid can have.
-            // While this would result in the image using 65536 tiles in the worst case, it allows
+            // Although the HEIF specification (ISO/IEC 23008-12:2017) allows an image grid to have up to 256 tiles
+            // in each direction (65536 total), the ISO base media file format (ISO/IEC 14496-12:2015) limits
+            // an item reference box to 65535 items.
+            // Because of this we limit the maximum number of tiles to 250.
+            //
+            // While this would result in the image using 62500 tiles in the worst case, it allows
             // memory usage to be minimized when encoding extremely wide and/or tall images.
             //
             // For example, a 65536x65536 pixel image would use a 128x128 grid of 512x512 pixel tiles.
-            const int MaxTileCount = 256;
+            const int MaxTileCount = 250;
             // The MIAF specification (ISO/IEC 23000-22:2019) requires that the tile size be at least 64x64 pixels.
             const int MinTileSize = 64;
 

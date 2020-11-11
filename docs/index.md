@@ -21,3 +21,8 @@ The latest version can be downloaded from the [Releases](https://github.com/0xC0
   Microsoft Store | Documents\paint.net App Files\FileTypes
 
 3. Restart Paint.NET.
+
+## Technical information
+
+[Using image grids to reduce memory usage when encoding](using-image-grids.md)
+

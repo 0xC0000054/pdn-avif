@@ -1,6 +1,7 @@
 ## Using image grids to reduce memory usage when encoding
 
-[TOC]
+* TOC
+{:toc}
 
 ### Introduction
 

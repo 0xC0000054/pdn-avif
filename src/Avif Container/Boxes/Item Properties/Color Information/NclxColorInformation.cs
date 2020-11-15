@@ -41,12 +41,6 @@ namespace AvifFileType.AvifContainer
             this.FullRange = fullRange;
         }
 
-        // Used via reflection to get the item property box type.
-        private NclxColorInformation()
-            : base(ColorInformationBoxTypes.Nclx)
-        {
-        }
-
         public CICPColorPrimaries ColorPrimaries { get; }
 
         public CICPTransferCharacteristics TransferCharacteristics { get; }

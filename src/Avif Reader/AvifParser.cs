@@ -209,18 +209,13 @@ namespace AvifFileType
 
             if (items != null)
             {
-                FourCC propertyType = ItemPropertyTypeMap.GetPropertyType<TProperty>();
-
                 for (int i = 0; i < items.Count; i++)
                 {
                     IItemProperty property = TryGetItemProperty(items[i].PropertyIndex);
 
-                    if (property != null && property.Type == propertyType)
+                    if (property is TProperty requestedProperty)
                     {
-                        // Use the as operator because some properties have subclasses that use the same property type.
-                        // For example, both the IccProfileColorInformation and NclxColorInformation classes use the
-                        // ColorInformation property type.
-                        return property as TProperty;
+                        return requestedProperty;
                     }
                 }
             }

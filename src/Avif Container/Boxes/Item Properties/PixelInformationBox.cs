@@ -59,12 +59,6 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        // Used via reflection to get the item property box type.
-        private PixelInformationBox()
-            : base(0, 0, BoxTypes.PixelInformation)
-        {
-        }
-
         public IReadOnlyList<byte> ChannelBitDepths { get; }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]

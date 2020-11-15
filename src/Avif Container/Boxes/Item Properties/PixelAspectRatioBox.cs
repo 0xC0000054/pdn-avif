@@ -32,12 +32,6 @@ namespace AvifFileType.AvifContainer
             this.VerticalSpacing = verticalSpacing;
         }
 
-        // Used via reflection to get the item property box type.
-        private PixelAspectRatioBox()
-            : base(BoxTypes.PixelAspectRatio)
-        {
-        }
-
         public uint HorizontalSpacing { get; }
 
         public uint VerticalSpacing { get; }

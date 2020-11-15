@@ -45,12 +45,6 @@ namespace AvifFileType.AvifContainer
             this.auxSubType = Array.Empty<byte>();
         }
 
-        // Used via reflection to get the item property box type.
-        private AuxiliaryTypePropertyBox()
-            : base(0, 0, BoxTypes.AuxiliaryTypeProperty)
-        {
-        }
-
         public IReadOnlyList<byte> AuxSubType => this.auxSubType;
 
         public BoxString AuxType { get; }

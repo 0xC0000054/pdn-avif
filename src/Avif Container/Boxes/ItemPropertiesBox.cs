@@ -40,8 +40,6 @@ namespace AvifFileType.AvifContainer
             this.itemPropertyAssociation = new ItemPropertyAssociationBox();
         }
 
-        public IReadOnlyList<IItemProperty> Properties => this.itemPropertyContainer.Properties;
-
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay
         {
@@ -64,6 +62,11 @@ namespace AvifFileType.AvifContainer
         public IReadOnlyList<ItemPropertyAssociationEntry> TryGetAssociatedProperties(uint itemId)
         {
             return this.itemPropertyAssociation.TryGetAssociatedProperties(itemId);
+        }
+
+        public IItemProperty TryGetProperty(uint propertyIndex)
+        {
+            return this.itemPropertyContainer.TryGetProperty(propertyIndex);
         }
 
         public override void Write(BigEndianBinaryWriter writer)

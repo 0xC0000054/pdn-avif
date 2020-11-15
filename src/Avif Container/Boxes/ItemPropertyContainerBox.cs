@@ -52,8 +52,6 @@ namespace AvifFileType.AvifContainer
 
         public int Count => this.properties.Count;
 
-        public IReadOnlyList<IItemProperty> Properties => this.properties;
-
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay => "Count = " + this.properties.Count.ToString();
 
@@ -65,6 +63,16 @@ namespace AvifFileType.AvifContainer
             }
 
             this.properties.Add(property);
+        }
+
+        public IItemProperty TryGetProperty(uint propertyIndex)
+        {
+            if (propertyIndex > 0 && propertyIndex <= (uint)this.properties.Count)
+            {
+                return this.properties[(int)(propertyIndex - 1)];
+            }
+
+            return null;
         }
 
         public override void Write(BigEndianBinaryWriter writer)

@@ -87,13 +87,14 @@ namespace AvifFileType
             imageRotate = null;
             imageMirror = null;
 
-            IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);
+            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
+            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
                 for (int i = 0; i < items.Count; i++)
                 {
-                    IItemProperty property = TryGetItemProperty(items[i].PropertyIndex);
+                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
 
                     if (property != null)
                     {
@@ -116,30 +117,22 @@ namespace AvifFileType
 
         public bool HasUnsupportedEssentialProperties(uint itemId)
         {
-            IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);
+            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
+            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
-                IReadOnlyList<IItemProperty> properties = this.metaBox.ItemProperties.Properties;
-
                 for (int i = 0; i < items.Count; i++)
                 {
                     ItemPropertyAssociationEntry entry = items[i];
 
                     if (entry.Essential)
                     {
-                        uint propertyIndex = entry.PropertyIndex;
+                        IItemProperty property = itemPropertiesBox.TryGetProperty(entry.PropertyIndex);
 
-                        if (propertyIndex > 0 && propertyIndex <= (uint)properties.Count)
+                        if (property is null)
                         {
-                            int itemIndex = (int)(propertyIndex - 1);
-
-                            IItemProperty property = properties[itemIndex];
-
-                            if (property is null)
-                            {
-                                return true;
-                            }
+                            return true;
                         }
                     }
                 }
@@ -205,13 +198,14 @@ namespace AvifFileType
                 ExceptionUtil.ThrowInvalidOperationException($"Cannot call this method with an abstract type, type: { typeof(TProperty).Name }.");
             }
 
-            IReadOnlyList<ItemPropertyAssociationEntry> items = this.metaBox.ItemProperties.TryGetAssociatedProperties(itemId);
+            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
+            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
                 for (int i = 0; i < items.Count; i++)
                 {
-                    IItemProperty property = TryGetItemProperty(items[i].PropertyIndex);
+                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
 
                     if (property is TProperty requestedProperty)
                     {
@@ -581,18 +575,6 @@ namespace AvifFileType
             }
 
             return null;
-        }
-
-        private IItemProperty TryGetItemProperty(uint propertyIndex)
-        {
-            IReadOnlyList<IItemProperty> properties = this.metaBox.ItemProperties.Properties;
-
-            if (propertyIndex == 0 || propertyIndex > (uint)properties.Count)
-            {
-                return null;
-            }
-
-            return properties[(int)(propertyIndex - 1)];
         }
 
         private sealed class AvifParserDebugView

@@ -153,7 +153,7 @@ namespace
         {
             if (!initialized)
             {
-                throw new codec_error("ConfigureEncoderOptions called on an invalid object.");
+                throw codec_error("ConfigureEncoderOptions called on an invalid object.");
             }
 
             throw_on_error(aom_codec_control(&codec, AOME_SET_CPUUSED, encodeOptions.cpuUsed));

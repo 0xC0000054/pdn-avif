@@ -420,8 +420,7 @@ namespace AvifFileType
             DecodeInfo decodeInfo = new DecodeInfo
             {
                 expectedWidth = 0,
-                expectedHeight = 0,
-                usingFirstTileColorData = false
+                expectedHeight = 0
             };
 
             IReadOnlyList<uint> childImageIds = this.alphaGridInfo.ChildImageIds;
@@ -458,8 +457,7 @@ namespace AvifFileType
             DecodeInfo decodeInfo = new DecodeInfo
             {
                 expectedWidth = 0,
-                expectedHeight = 0,
-                usingFirstTileColorData = false
+                expectedHeight = 0
             };
 
             IReadOnlyList<uint> childImageIds = this.colorGridInfo.ChildImageIds;
@@ -548,8 +546,7 @@ namespace AvifFileType
                     tileColumnIndex = 0,
                     tileRowIndex = 0,
                     expectedWidth = (uint)fullSurface.Width,
-                    expectedHeight = (uint)fullSurface.Height,
-                    usingFirstTileColorData = false
+                    expectedHeight = (uint)fullSurface.Height
                 };
 
                 DecodeAlphaImage(this.alphaItemId, decodeInfo, fullSurface);
@@ -581,8 +578,7 @@ namespace AvifFileType
                     tileColumnIndex = 0,
                     tileRowIndex = 0,
                     expectedWidth = (uint)fullSurface.Width,
-                    expectedHeight = (uint)fullSurface.Height,
-                    usingFirstTileColorData = false
+                    expectedHeight = (uint)fullSurface.Height
                 };
 
                 DecodeColorImage(this.primaryItemId, decodeInfo, colorConversionInfo, fullSurface);
@@ -620,7 +616,7 @@ namespace AvifFileType
             {
                 this.ImageColorData = containerColorData;
             }
-            else if (decodeInfo.usingFirstTileColorData)
+            else
             {
                 this.ImageColorData = new CICPColorData
                 {

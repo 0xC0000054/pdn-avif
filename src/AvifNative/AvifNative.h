@@ -91,7 +91,6 @@ extern "C" {
         YUVChromaSubsampling chromaSubsampling;
         uint32_t bitDepth;
         CICPColorData firstTileColorData;
-        bool usingFirstTileColorData;
     };
 
     struct BitmapData

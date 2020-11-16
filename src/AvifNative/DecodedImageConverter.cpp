@@ -869,19 +869,15 @@ DecoderStatus ConvertColorImage(
             decodeInfo->firstTileColorData.transferCharacteristics = colorInfo.transferCharacteristics;
             decodeInfo->firstTileColorData.matrixCoefficients = colorInfo.matrixCoefficients;
             decodeInfo->firstTileColorData.fullRange = colorInfo.fullRange;
-            decodeInfo->usingFirstTileColorData = true;
         }
         else
         {
-            if (decodeInfo->usingFirstTileColorData)
+            if (decodeInfo->firstTileColorData.colorPrimaries != colorInfo.colorPrimaries ||
+                decodeInfo->firstTileColorData.transferCharacteristics != colorInfo.transferCharacteristics ||
+                decodeInfo->firstTileColorData.matrixCoefficients != colorInfo.matrixCoefficients ||
+                decodeInfo->firstTileColorData.fullRange != colorInfo.fullRange)
             {
-                if (decodeInfo->firstTileColorData.colorPrimaries != colorInfo.colorPrimaries ||
-                    decodeInfo->firstTileColorData.transferCharacteristics != colorInfo.transferCharacteristics ||
-                    decodeInfo->firstTileColorData.matrixCoefficients != colorInfo.matrixCoefficients ||
-                    decodeInfo->firstTileColorData.fullRange != colorInfo.fullRange)
-                {
-                    return DecoderStatus::TileNclxProfileMismatch;
-                }
+                return DecoderStatus::TileNclxProfileMismatch;
             }
         }
     }

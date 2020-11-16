@@ -24,7 +24,5 @@ namespace AvifFileType.Interop
         public YUVChromaSubsampling chromaSubsampling;
         public uint bitDepth;
         public CICPColorData firstTileColorData;
-        [MarshalAs(UnmanagedType.U1)]
-        public bool usingFirstTileColorData;
     }
 }

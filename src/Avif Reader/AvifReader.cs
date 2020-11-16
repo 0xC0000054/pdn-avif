@@ -25,7 +25,6 @@ namespace AvifFileType
         : IDisposable
     {
         private bool disposed;
-        private CICPColorData? imageColorData;
         private readonly AvifParser parser;
         private readonly uint primaryItemId;
         private readonly uint alphaItemId;
@@ -67,20 +66,9 @@ namespace AvifFileType
             {
                 this.alphaGridInfo = null;
             }
-
-            if (this.colorInfoBox is NclxColorInformation nclx)
-            {
-                this.imageColorData = new CICPColorData
-                {
-                    colorPrimaries = nclx.ColorPrimaries,
-                    transferCharacteristics = nclx.TransferCharacteristics,
-                    matrixCoefficients = nclx.MatrixCoefficients,
-                    fullRange = nclx.FullRange
-                };
-            }
         }
 
-        public CICPColorData? ImageColorData => this.imageColorData;
+        public CICPColorData? ImageColorData { get; private set; }
 
         public ImageGridMetadata ImageGridMetadata { get; private set; }
 
@@ -502,7 +490,7 @@ namespace AvifFileType
             }
 
             this.ImageGridMetadata = new ImageGridMetadata(this.colorGridInfo, decodeInfo.expectedHeight, decodeInfo.expectedWidth);
-            MaybeUseColorDataFromDecoder(decodeInfo);
+            SetImageColorData(colorInfo, decodeInfo);
         }
 
         private Size GetImageSize(uint itemId, ImageGridInfo gridInfo, string imageName)
@@ -545,20 +533,6 @@ namespace AvifFileType
             }
 
             return new Size((int)width, (int)height);
-        }
-
-        private void MaybeUseColorDataFromDecoder(DecodeInfo decodeInfo)
-        {
-            if (!this.imageColorData.HasValue && decodeInfo.usingFirstTileColorData)
-            {
-                this.imageColorData = new CICPColorData
-                {
-                    colorPrimaries = decodeInfo.firstTileColorData.colorPrimaries,
-                    transferCharacteristics = decodeInfo.firstTileColorData.transferCharacteristics,
-                    matrixCoefficients = decodeInfo.firstTileColorData.matrixCoefficients,
-                    fullRange = decodeInfo.firstTileColorData.fullRange
-                };
-            }
         }
 
         private void ProcessAlphaImage(Surface fullSurface)
@@ -612,7 +586,7 @@ namespace AvifFileType
                 };
 
                 DecodeColorImage(this.primaryItemId, decodeInfo, colorConversionInfo, fullSurface);
-                MaybeUseColorDataFromDecoder(decodeInfo);
+                SetImageColorData(colorConversionInfo, decodeInfo);
             }
         }
 
@@ -638,6 +612,24 @@ namespace AvifFileType
             }
 
             return this.parser.ReadItemData(entry);
+        }
+
+        private void SetImageColorData(CICPColorData? containerColorData, DecodeInfo decodeInfo)
+        {
+            if (containerColorData.HasValue)
+            {
+                this.ImageColorData = containerColorData;
+            }
+            else if (decodeInfo.usingFirstTileColorData)
+            {
+                this.ImageColorData = new CICPColorData
+                {
+                    colorPrimaries = decodeInfo.firstTileColorData.colorPrimaries,
+                    transferCharacteristics = decodeInfo.firstTileColorData.transferCharacteristics,
+                    matrixCoefficients = decodeInfo.firstTileColorData.matrixCoefficients,
+                    fullRange = decodeInfo.firstTileColorData.fullRange
+                };
+            }
         }
 
         private void VerifyNotDisposed()

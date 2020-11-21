@@ -2,20 +2,18 @@
 
 * TOC
 {:toc}
-
 ### Introduction
 
-The HEIF[^1] and MIAF[^2] formats that AVIF is based on have a concept called an image grid.
-An image grid is a collection of smaller images that a decoder will combine to form a larger image. Saving a large image using an image grid can significantly reduce the CPU and memory usage when encoding, at the expense of compression efficiency/file size. Many smart-phones that output images in HEIF-based formats (e.g. HEIC) use this technique.
+As of version 2.0.0 the AOM encoder is very memory hungry, when saving a 4032x3024 pixel image without using an image grid I noticed in task manager that it was using approximately 2.5 GB of memory on speed 6 with Realtime usage.
+The AOM encoder also lacks the ability to cancel an encode operation that is in progress. This is a problem for Paint.NET and other GUI applications that provide a preview to the user when saving,
+as the user has to wait until AOM has finished encoding the current frame before the encode can restart with the new settings. 
 
-As an example, the memory usage I recorded when encoding a 4032x3024 pixel image on AOM speed 6 with Realtime usage is as follows:
-
-| Image grid setting                            | Approximate memory usage |
-| --------------------------------------------- | ------------------------ |
-| None, the image was encoded as a single frame | 2.5 GB                   |
-| 8x6 grid of 504x504 pixel tiles               | 340 MB                   |
-
-Encoding smaller images can also help improve the UI responsiveness, as AOM version 2.0.0 lacks the ability to cancel an encode.
+To solve this problem the pdn-avif FileType plugin uses an image grid when saving files at most compression speeds, this reduces the encoder memory usage and improves the UI responsiveness by providing more opportunities to report progress and cancel the encode operation after each frame is encoded.
+An image grid is a collection of smaller images that a decoder will combine to form a larger image.
+Many smart-phones that output images in HEIF-based formats (e.g. HEIC) use this technique.
+A file saved using an image grid will be larger and take longer to encode than a file saved as a single image.
+This is due to the fact that the encoder has to process multiple frames, and cannot compress the image data as efficiently as it can when encoding as a single frame.
+There is also some additional meta-data overhead.
 
 ### Image grid layout
 
@@ -388,6 +386,16 @@ WriteImageGridImage();
 
 The `EncodeTileImage` method compresses the input image, and writes it to the file with the necessary meta-data for it to be recognized as an image grid tile.
 The `WriteImageGridImage` method writes the main image that uses the image grid tiles.
+
+### Encode results
+
+The following table shows my results when encoding a 4032x3024 pixel image on AOM speed 6 with Realtime usage, the image was saved as YUV 4:2:2 using AOM quality 8.
+The results will vary based on the image content.
+
+| Image grid setting                            | Encode time | Approximate memory usage (per frame) | Final file size           |
+| --------------------------------------------- | ----------- | ------------------------------------ | ------------------------- |
+| None, the image was encoded as a single frame | 5 seconds   | 2.5 GB                               | 2.05 MB (2,153,828 bytes) |
+| 8x6 grid of 504x504 pixel tiles (48 frames)   | 14 seconds  | 350 MB                               | 2.06 MB (2,170,844 bytes) |
 
 ### References
 

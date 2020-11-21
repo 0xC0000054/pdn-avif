@@ -8,7 +8,7 @@ As of version 2.0.0 the AOM encoder is very memory hungry, when saving a 4032x30
 The AOM encoder also lacks the ability to cancel an encode operation that is in progress. This is a problem for Paint.NET and other GUI applications that provide a preview to the user when saving,
 as the user has to wait until AOM has finished encoding the current frame before the encode can restart with the new settings. 
 
-To solve this problem the pdn-avif FileType plugin uses an image grid when saving files at most compression speeds, this reduces the encoder memory usage and improves the UI responsiveness by providing more opportunities to report progress and cancel the encode operation after each frame is encoded.
+To solve this problem the Paint.NET AvifFileType plugin uses an image grid when saving files at most compression speeds, this reduces the encoder memory usage and improves the UI responsiveness by providing more opportunities to report progress and cancel the encode operation after each frame is encoded.
 An image grid is a collection of smaller images that a decoder will combine to form a larger image.
 Many smart-phones that output images in HEIF-based formats (e.g. HEIC) use this technique.
 A file saved using an image grid will be larger and take longer to encode than a file saved as a single image.

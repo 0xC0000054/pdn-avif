@@ -288,6 +288,10 @@ namespace
         aom_cfg.g_threads = encodeOptions.threadCount;
         aom_cfg.g_usage = encodeOptions.usage;
         aom_cfg.monochrome = frame->monochrome;
+        // Setting g_lag_in_frames to 1 when encoding a single frame
+        // reduces the number of frame buffers that libaom allocates.
+        // See https://github.com/AOMediaCodec/libavif/commit/3fcc555000fffc3172db4c19c412eea7fb1d46a3
+        aom_cfg.g_lag_in_frames = 1;
 
         // Set the profile to use based on the frame format.
         // See Annex A.2 in the AV1 Specification:

@@ -341,50 +341,6 @@ namespace AvifFileType
         }
 
         /// <summary>
-        /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
-        /// </summary>
-        /// <param name="bytes">The bytes.</param>
-        /// <param name="offset">The starting offset in the array.</param>
-        /// <param name="count">The count.</param>
-        /// <returns>The number of bytes read from the stream.</returns>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        private int ReadInternal(byte[] bytes, int offset, int count)
-        {
-            if (count == 0)
-            {
-                return 0;
-            }
-
-            if ((this.readOffset + count) <= this.readLength)
-            {
-                Buffer.BlockCopy(this.buffer, this.readOffset, bytes, offset, count);
-                this.readOffset += count;
-
-                return count;
-            }
-            else
-            {
-                // Ensure that any bytes at the end of the current buffer are included.
-                int bytesUnread = this.readLength - this.readOffset;
-
-                if (bytesUnread > 0)
-                {
-                    Buffer.BlockCopy(this.buffer, this.readOffset, bytes, offset, bytesUnread);
-                }
-
-                // Invalidate the existing buffer.
-                this.readOffset = 0;
-                this.readLength = 0;
-
-                int totalBytesRead = bytesUnread;
-
-                totalBytesRead += this.stream.Read(bytes, offset + bytesUnread, count - bytesUnread);
-
-                return totalBytesRead;
-            }
-        }
-
-        /// <summary>
         /// Reads a null-terminated UTF-8 string from the stream.
         /// </summary>
         /// <param name="endOffset">The offset that marks the end of the null-terminator search area.</param>
@@ -437,21 +393,6 @@ namespace AvifFileType
             VerifyNotDisposed();
 
             return ReadByteInternal();
-        }
-
-        /// <summary>
-        /// Reads the next byte from the current stream.
-        /// </summary>
-        /// <returns>The next byte read from the current stream.</returns>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        private byte ReadByteInternal()
-        {
-            EnsureBuffer(sizeof(byte));
-
-            byte val = this.buffer[this.readOffset];
-            this.readOffset += sizeof(byte);
-
-            return val;
         }
 
         /// <summary>
@@ -765,6 +706,65 @@ namespace AvifFileType
             }
 
             return (int)length;
+        }
+
+        /// <summary>
+        /// Reads the next byte from the current stream.
+        /// </summary>
+        /// <returns>The next byte read from the current stream.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        private byte ReadByteInternal()
+        {
+            EnsureBuffer(sizeof(byte));
+
+            byte val = this.buffer[this.readOffset];
+            this.readOffset += sizeof(byte);
+
+            return val;
+        }
+
+        /// <summary>
+        /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <param name="offset">The starting offset in the array.</param>
+        /// <param name="count">The count.</param>
+        /// <returns>The number of bytes read from the stream.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        private int ReadInternal(byte[] bytes, int offset, int count)
+        {
+            if (count == 0)
+            {
+                return 0;
+            }
+
+            if ((this.readOffset + count) <= this.readLength)
+            {
+                Buffer.BlockCopy(this.buffer, this.readOffset, bytes, offset, count);
+                this.readOffset += count;
+
+                return count;
+            }
+            else
+            {
+                // Ensure that any bytes at the end of the current buffer are included.
+                int bytesUnread = this.readLength - this.readOffset;
+
+                if (bytesUnread > 0)
+                {
+                    Buffer.BlockCopy(this.buffer, this.readOffset, bytes, offset, bytesUnread);
+                }
+
+                // Invalidate the existing buffer.
+                this.readOffset = 0;
+                this.readLength = 0;
+
+                int totalBytesRead = bytesUnread;
+
+                totalBytesRead += this.stream.Read(bytes, offset + bytesUnread, count - bytesUnread);
+
+                return totalBytesRead;
+            }
         }
 
         /// <summary>

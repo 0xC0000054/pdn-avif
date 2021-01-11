@@ -40,6 +40,6 @@ See [License.txt](License.txt) for more information.
 
 ## 3rd Party Code
 
-This project uses the following libraries. (the required header and library files are located in the `src/deps/` sub-folders).
+This project uses the following libraries. (the required header and library files are located in the `3rd-party` sub-folders).
 
 * [aom](https://aomedia.googlesource.com/aom/) (v2.0.0 tag)

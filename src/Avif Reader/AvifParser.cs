@@ -59,6 +59,25 @@ namespace AvifFileType
             }
         }
 
+        public IEnumerable<ColorInformationBox> EnumerateColorInformationBoxes(uint itemId)
+        {
+            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
+            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+
+            if (items != null)
+            {
+                for (int i = 0; i < items.Count; i++)
+                {
+                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
+
+                    if (property is ColorInformationBox colorInformationBox)
+                    {
+                        yield return colorInformationBox;
+                    }
+                }
+            }
+        }
+
         public uint GetAlphaItemId(uint primaryItemId)
         {
             uint alphaImageItemId = 0;
@@ -215,11 +234,6 @@ namespace AvifFileType
             }
 
             return null;
-        }
-
-        public ColorInformationBox TryGetColorInfoBox(uint itemId)
-        {
-            return TryGetAssociatedItemProperty<ColorInformationBox>(itemId);
         }
 
         public ItemLocationEntry TryGetExifLocation(uint itemId)

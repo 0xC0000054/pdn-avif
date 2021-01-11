@@ -215,27 +215,25 @@ namespace AvifFileType
                 }
 
 
-                ColorInformationBox colorInformationBox;
+                List<ColorInformationBox> colorInformationBoxes = new List<ColorInformationBox>(2);
 
                 byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
                 if (iccProfileBytes != null && iccProfileBytes.Length > 0)
                 {
-                    colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
+                    colorInformationBoxes.Add(new IccProfileColorInformation(iccProfileBytes));
                 }
-                else
-                {
-                    colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
+
+                colorInformationBoxes.Add(new NclxColorInformation(colorConversionInfo.colorPrimaries,
                                                                    colorConversionInfo.transferCharacteristics,
                                                                    colorConversionInfo.matrixCoefficients,
-                                                                   colorConversionInfo.fullRange);
-                }
+                                                                   colorConversionInfo.fullRange));
 
                 AvifWriter writer = new AvifWriter(colorImages,
                                                    alphaImages,
                                                    metadata,
                                                    imageGridMetadata,
                                                    options.yuvFormat,
-                                                   colorInformationBox,
+                                                   colorInformationBoxes,
                                                    progressCallback,
                                                    progressDone,
                                                    progressTotal,

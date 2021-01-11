@@ -22,7 +22,7 @@ namespace AvifFileType
         private readonly AvifWriterState state;
         private readonly FileTypeBox fileTypeBox;
         private readonly MetaBox metaBox;
-        private readonly ColorInformationBox colorInformationBox;
+        private readonly IReadOnlyList<ColorInformationBox> colorInformationBoxes;
         private readonly bool colorImageIsGrayscale;
         private readonly IByteArrayPool arrayPool;
 
@@ -35,7 +35,7 @@ namespace AvifFileType
                           AvifMetadata metadata,
                           ImageGridMetadata imageGridMetadata,
                           YUVChromaSubsampling chromaSubsampling,
-                          ColorInformationBox colorInformationBox,
+                          IReadOnlyList<ColorInformationBox> colorInformationBoxes,
                           ProgressEventHandler progressEventHandler,
                           uint progressDone,
                           uint progressTotal,
@@ -44,7 +44,7 @@ namespace AvifFileType
             this.state = new AvifWriterState(colorImages, alphaImages, imageGridMetadata, metadata, arrayPool);
             this.arrayPool = arrayPool;
             this.colorImageIsGrayscale = chromaSubsampling == YUVChromaSubsampling.Subsampling400;
-            this.colorInformationBox = colorInformationBox;
+            this.colorInformationBoxes = colorInformationBoxes ?? System.Array.Empty<ColorInformationBox>();
             this.progressCallback = progressEventHandler;
             this.progressDone = progressDone;
             this.progressTotal = progressTotal;
@@ -244,10 +244,14 @@ namespace AvifFileType
                 }
             }
 
-            if (this.colorInformationBox != null)
+            if (this.colorInformationBoxes.Count > 0)
             {
-                itemPropertiesBox.AddProperty(this.colorInformationBox);
-                itemPropertiesBox.AddPropertyAssociation(this.state.PrimaryItemId, true, propertyAssociationIndex);
+                for (int i = 0; i < this.colorInformationBoxes.Count; i++)
+                {
+                    itemPropertiesBox.AddProperty(this.colorInformationBoxes[i]);
+                    itemPropertiesBox.AddPropertyAssociation(this.state.PrimaryItemId, true, propertyAssociationIndex);
+                    propertyAssociationIndex++;
+                }
             }
         }
 

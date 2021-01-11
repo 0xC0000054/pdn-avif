@@ -33,7 +33,8 @@ namespace AvifFileType
         private readonly ImageMirrorBox imageMirrorBox;
         private readonly ImageGridInfo colorGridInfo;
         private readonly ImageGridInfo alphaGridInfo;
-        private readonly ColorInformationBox colorInfoBox;
+        private readonly IccProfileColorInformation iccProfileColorInformation;
+        private readonly NclxColorInformation nclxColorInformation;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AvifReader"/> class.
@@ -52,7 +53,6 @@ namespace AvifFileType
             this.parser = new AvifParser(input, leaveOpen, arrayPool);
             this.primaryItemId = this.parser.GetPrimaryItemId();
             this.alphaItemId = this.parser.GetAlphaItemId(this.primaryItemId);
-            this.colorInfoBox = this.parser.TryGetColorInfoBox(this.primaryItemId);
             this.parser.GetTransformationProperties(this.primaryItemId,
                                                     out this.cleanApertureBox,
                                                     out this.imageRotateBox,
@@ -65,6 +65,30 @@ namespace AvifFileType
             else
             {
                 this.alphaGridInfo = null;
+            }
+
+            // The HEIF specification allows an image to have up to one color information box of each type (ICC and/or NCLX).
+            // See the HEIF specification Amendment 3, section 6.5.5.1.
+            foreach (ColorInformationBox box in this.parser.EnumerateColorInformationBoxes(this.primaryItemId))
+            {
+                if (box is IccProfileColorInformation icc)
+                {
+                    if (this.iccProfileColorInformation != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The primary image has more than one ICC color information box.");
+                    }
+
+                    this.iccProfileColorInformation = icc;
+                }
+                else if (box is NclxColorInformation nclx)
+                {
+                    if (this.nclxColorInformation != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The primary image has more than one NCLX color information box.");
+                    }
+
+                    this.nclxColorInformation = nclx;
+                }
             }
         }
 
@@ -172,14 +196,7 @@ namespace AvifFileType
 
         public byte[] GetICCProfile()
         {
-            byte[] iccProfileBytes = null;
-
-            if (this.colorInfoBox is IccProfileColorInformation iccProfile)
-            {
-                iccProfileBytes = iccProfile.GetProfileBytes();
-            }
-
-            return iccProfileBytes;
+            return this.iccProfileColorInformation?.GetProfileBytes();
         }
 
         public byte[] GetXmpData()
@@ -556,14 +573,14 @@ namespace AvifFileType
         private void ProcessColorImage(Surface fullSurface)
         {
             CICPColorData? colorConversionInfo = null;
-            if (this.colorInfoBox is NclxColorInformation nclxColorInformation)
+            if (this.nclxColorInformation != null)
             {
                 colorConversionInfo = new CICPColorData
                 {
-                    colorPrimaries = nclxColorInformation.ColorPrimaries,
-                    transferCharacteristics = nclxColorInformation.TransferCharacteristics,
-                    matrixCoefficients = nclxColorInformation.MatrixCoefficients,
-                    fullRange = nclxColorInformation.FullRange
+                    colorPrimaries = this.nclxColorInformation.ColorPrimaries,
+                    transferCharacteristics = this.nclxColorInformation.TransferCharacteristics,
+                    matrixCoefficients = this.nclxColorInformation.MatrixCoefficients,
+                    fullRange = this.nclxColorInformation.FullRange
                 };
             }
 

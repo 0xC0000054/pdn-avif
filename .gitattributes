@@ -64,4 +64,4 @@
 
 # GitHub Linguist override
 *.cs linguist-language=C#
-src/deps/* linguist-vendored
+src/deps/ linguist-vendored

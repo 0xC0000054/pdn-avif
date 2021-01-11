@@ -65,32 +65,25 @@ namespace AvifFileType
 
                 new MediaDataBox(this.state.MediaDataBoxContentSize).Write(writer);
 
-                IReadOnlyList<AvifWriterItem> items = this.state.Items;
+                // The media data box items are written in the following order:
+                // 1. EXIF and/or XMP meta data
+                // 2. Alpha images (if present)
+                // 3. Color images
+                //
+                // The meta data is written first to improve efficiency for readers that want to use it
+                // without reading the image data.
+                // The alpha image data is written before the color image data to improve the user experience
+                // for web browsers and other applications that may display an AVIF image as it is being
+                // streamed over a network.
+                // See the following link for a discussion on alpha image data being written before color
+                // image data: https://github.com/AOMediaCodec/libavif/issues/287
 
-                for (int i = 0; i < items.Count; i++)
+                WriteMediaDataBoxItems(writer, this.state.MediaDataBoxMetadataItemIndexes);
+                if (this.state.AlphaItemId != 0)
                 {
-                    AvifWriterItem item = items[i];
-
-                    if (item.Image is null && item.ContentBytes is null)
-                    {
-                        continue;
-                    }
-
-                    // We only ever write items with a single extent.
-                    item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
-
-                    if (item.Image != null)
-                    {
-                        item.Image.Data.Write(writer);
-
-                        this.progressDone++;
-                        this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));
-                    }
-                    else
-                    {
-                        writer.Write(item.ContentBytes);
-                    }
+                    WriteMediaDataBoxItems(writer, this.state.MediaDataBoxAlphaItemIndexes);
                 }
+                WriteMediaDataBoxItems(writer, this.state.MediaDataBoxColorItemIndexes);
             }
         }
 
@@ -279,6 +272,37 @@ namespace AvifFileType
             PopulateItemLocations();
             PopulateItemProperties();
             PopulateItemReferences();
+        }
+
+        private void WriteMediaDataBoxItems(BigEndianBinaryWriter writer, IReadOnlyList<int> itemIndexes)
+        {
+            IReadOnlyList<AvifWriterItem> items = this.state.Items;
+
+            for (int i = 0; i < itemIndexes.Count; i++)
+            {
+                int index = itemIndexes[i];
+                AvifWriterItem item = items[index];
+
+                if (item.Image is null && item.ContentBytes is null)
+                {
+                    continue;
+                }
+
+                // We only ever write items with a single extent.
+                item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
+
+                if (item.Image != null)
+                {
+                    item.Image.Data.Write(writer);
+
+                    this.progressDone++;
+                    this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));
+                }
+                else
+                {
+                    writer.Write(item.ContentBytes);
+                }
+            }
         }
     }
 }

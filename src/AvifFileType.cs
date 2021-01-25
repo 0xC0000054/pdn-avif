@@ -24,7 +24,6 @@ namespace AvifFileType
         : PropertyBasedFileType
     {
         private readonly IArrayPoolService arrayPoolService;
-        private readonly int? maxEncoderThreadsOverride;
         private readonly IAvifStringResourceManager strings;
 
         // Names of the properties
@@ -41,36 +40,9 @@ namespace AvifFileType
         /// <summary>
         /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
         /// </summary>
-        public AvifFileTypePlugin()
-            : this(null, null)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
-        /// </summary>
         /// <param name="host">The host.</param>
         public AvifFileTypePlugin(IFileTypeHost host)
-            : this(host, null)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
-        /// </summary>
-        /// <param name="maxEncoderThreads">The maximum number of encoder threads.</param>
-        public AvifFileTypePlugin(int maxEncoderThreads)
-            : this(null, maxEncoderThreads)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
-        /// </summary>
-        /// <param name="host">The host.</param>
-        /// <param name="maxEncoderThreads">The maximum number of encoder threads.</param>
-        public AvifFileTypePlugin(IFileTypeHost host, int? maxEncoderThreads)
-            : base(
+             : base(
                 "AV1 (AVIF)",
                 new FileTypeOptions
                 {
@@ -91,7 +63,6 @@ namespace AvifFileType
             {
                 this.strings = new BuiltinStringResourceManager();
             }
-            this.maxEncoderThreadsOverride = maxEncoderThreads;
         }
 
         /// <summary>
@@ -200,7 +171,6 @@ namespace AvifFileType
                           compressionSpeed,
                           chromaSubsampling,
                           preserveExistingTileSize,
-                          this.maxEncoderThreadsOverride,
                           scratchSurface,
                           progressCallback,
                           this.arrayPoolService);

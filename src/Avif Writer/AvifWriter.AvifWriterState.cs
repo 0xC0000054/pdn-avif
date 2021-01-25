@@ -11,6 +11,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
+using PaintDotNet.AppModel;
 using System.Collections.Generic;
 using System.IO;
 
@@ -29,7 +30,7 @@ namespace AvifFileType
                                    IReadOnlyList<CompressedAV1Image> alphaImages,
                                    ImageGridMetadata imageGridMetadata,
                                    AvifMetadata metadata,
-                                   IByteArrayPool arrayPool)
+                                   IArrayPoolService arrayPool)
             {
                 if (colorImages is null)
                 {
@@ -69,7 +70,7 @@ namespace AvifFileType
 
             public uint PrimaryItemId { get; private set; }
 
-            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata, IByteArrayPool arrayPool)
+            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata, IArrayPoolService arrayPool)
             {
                 ImageGridDescriptor imageGridDescriptor = new ImageGridDescriptor(imageGridMetadata);
 
@@ -100,7 +101,7 @@ namespace AvifFileType
                                     IReadOnlyList<CompressedAV1Image> alphaImages,
                                     ImageGridMetadata imageGridMetadata,
                                     AvifMetadata metadata,
-                                    IByteArrayPool arrayPool)
+                                    IArrayPoolService arrayPool)
             {
                 ImageStateInfo result;
 

@@ -10,6 +10,8 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using PaintDotNet;
+using PaintDotNet.AppModel;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -29,11 +31,12 @@ namespace AvifFileType
         private int readOffset;
         private int readLength;
         private bool disposed;
-        private readonly byte[] buffer;
+        private IArrayPoolBuffer<byte> bufferFromArrayPool;
+        private byte[] buffer;
         private readonly int bufferSize;
         private readonly Endianess endianess;
         private readonly bool leaveOpen;
-        private readonly IByteArrayPool arrayPool;
+        private readonly IArrayPoolService arrayPool;
 #pragma warning restore IDE0032 // Use auto property
 
         /// <summary>
@@ -48,7 +51,7 @@ namespace AvifFileType
         ///
         /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        public EndianBinaryReader(Stream stream, Endianess byteOrder, IByteArrayPool arrayPool) : this(stream, byteOrder, false, arrayPool)
+        public EndianBinaryReader(Stream stream, Endianess byteOrder, IArrayPoolService arrayPool) : this(stream, byteOrder, false, arrayPool)
         {
         }
 
@@ -67,7 +70,7 @@ namespace AvifFileType
         ///
         /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        public EndianBinaryReader(Stream stream, Endianess byteOrder, bool leaveOpen, IByteArrayPool arrayPool)
+        public EndianBinaryReader(Stream stream, Endianess byteOrder, bool leaveOpen, IArrayPoolService arrayPool)
         {
             if (arrayPool is null)
             {
@@ -76,7 +79,8 @@ namespace AvifFileType
 
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
             this.bufferSize = (int)Math.Min(stream.Length, MaxBufferSize);
-            this.buffer = arrayPool.Rent(this.bufferSize);
+            this.bufferFromArrayPool = arrayPool.Rent<byte>(bufferSize);
+            this.buffer = this.bufferFromArrayPool.Array;
             this.endianess = byteOrder;
             this.leaveOpen = leaveOpen;
             this.arrayPool = arrayPool;
@@ -196,7 +200,8 @@ namespace AvifFileType
         {
             if (!this.disposed)
             {
-                this.arrayPool.Return(this.buffer);
+                DisposableUtil.Free(ref this.bufferFromArrayPool);
+                this.buffer = null;
 
                 if (this.stream != null)
                 {
@@ -275,43 +280,45 @@ namespace AvifFileType
 
             // The largest multiple of 4096 that is under the large object heap limit.
             const int MaxReadBufferSize = 81920;
+            int bufferSize = (int)Math.Min(count, MaxReadBufferSize);
 
-            byte[] readBuffer = this.arrayPool.Rent((int)Math.Min(count, MaxReadBufferSize));
-
-            byte* writePtr = null;
-            System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
-            try
+            using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))
             {
-                buffer.AcquirePointer(ref writePtr);
+                byte[] readBuffer = poolBuffer.Array;
 
-                fixed (byte* readPtr = readBuffer)
+                byte* writePtr = null;
+                System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+                try
                 {
-                    ulong totalBytesRead = 0;
+                    buffer.AcquirePointer(ref writePtr);
 
-                    while (totalBytesRead < count)
+                    fixed (byte* readPtr = readBuffer)
                     {
-                        ulong bytesRead = (ulong)ReadInternal(readBuffer, 0, (int)Math.Min(count - totalBytesRead, MaxReadBufferSize));
+                        ulong totalBytesRead = 0;
 
-                        if (bytesRead == 0)
+                        while (totalBytesRead < count)
                         {
-                            throw new EndOfStreamException();
+                            ulong bytesRead = (ulong)ReadInternal(readBuffer, 0, (int)Math.Min(count - totalBytesRead, MaxReadBufferSize));
+
+                            if (bytesRead == 0)
+                            {
+                                throw new EndOfStreamException();
+                            }
+
+                            Buffer.MemoryCopy(readPtr, writePtr + offset + totalBytesRead, bytesRead, bytesRead);
+
+                            totalBytesRead += bytesRead;
                         }
-
-                        Buffer.MemoryCopy(readPtr, writePtr + offset + totalBytesRead, bytesRead, bytesRead);
-
-                        totalBytesRead += bytesRead;
+                    }
+                }
+                finally
+                {
+                    if (writePtr != null)
+                    {
+                        buffer.ReleasePointer();
                     }
                 }
             }
-            finally
-            {
-                if (writePtr != null)
-                {
-                    buffer.ReleasePointer();
-                }
-            }
-
-            this.arrayPool.Return(readBuffer);
         }
 
         /// <summary>

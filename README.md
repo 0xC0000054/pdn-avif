@@ -29,7 +29,7 @@ See [License.txt](License.txt) for more information.
 ## Prerequisites
 
 * Visual Studio 2019
-* Paint.NET 4.2.14 or later
+* Paint.NET 4.2.15 or later
 
 ## Building the plugin
 

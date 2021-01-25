@@ -11,6 +11,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
@@ -22,9 +23,9 @@ namespace AvifFileType
     public sealed class AvifFileTypePlugin
         : PropertyBasedFileType
     {
+        private readonly IArrayPoolService arrayPoolService;
         private readonly int? maxEncoderThreadsOverride;
         private readonly IAvifStringResourceManager strings;
-        private readonly Lazy<IByteArrayPool> byteArrayPool;
 
         // Names of the properties
         private enum PropertyNames
@@ -79,6 +80,7 @@ namespace AvifFileType
                     SupportsLayers = false
                 })
         {
+            this.arrayPoolService = host?.Services.GetService<IArrayPoolService>();
             PaintDotNet.Avif.IAvifFileTypeStrings avifFileTypeStrings = host?.Services.GetService<PaintDotNet.Avif.IAvifFileTypeStrings>();
 
             if (avifFileTypeStrings != null)
@@ -90,7 +92,6 @@ namespace AvifFileType
                 this.strings = new BuiltinStringResourceManager();
             }
             this.maxEncoderThreadsOverride = maxEncoderThreads;
-            this.byteArrayPool = new Lazy<IByteArrayPool>(() => new ByteArrayPool());
         }
 
         /// <summary>
@@ -202,7 +203,7 @@ namespace AvifFileType
                           this.maxEncoderThreadsOverride,
                           scratchSurface,
                           progressCallback,
-                          this.byteArrayPool.Value);
+                          this.arrayPoolService);
         }
 
         /// <summary>
@@ -210,7 +211,7 @@ namespace AvifFileType
         /// </summary>
         protected override Document OnLoad(Stream input)
         {
-            return AvifFile.Load(input, this.byteArrayPool.Value);
+            return AvifFile.Load(input, this.arrayPoolService);
         }
     }
 }

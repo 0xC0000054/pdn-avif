@@ -12,6 +12,7 @@
 
 using AvifFileType.AvifContainer;
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using System.Collections.Generic;
 using System.IO;
 
@@ -24,7 +25,7 @@ namespace AvifFileType
         private readonly MetaBox metaBox;
         private readonly IReadOnlyList<ColorInformationBox> colorInformationBoxes;
         private readonly bool colorImageIsGrayscale;
-        private readonly IByteArrayPool arrayPool;
+        private readonly IArrayPoolService arrayPool;
 
         private readonly ProgressEventHandler progressCallback;
         private uint progressDone;
@@ -39,7 +40,7 @@ namespace AvifFileType
                           ProgressEventHandler progressEventHandler,
                           uint progressDone,
                           uint progressTotal,
-                          IByteArrayPool arrayPool)
+                          IArrayPoolService arrayPool)
         {
             this.state = new AvifWriterState(colorImages, alphaImages, imageGridMetadata, metadata, arrayPool);
             this.arrayPool = arrayPool;

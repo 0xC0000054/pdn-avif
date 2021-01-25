@@ -34,7 +34,7 @@ namespace AvifFileType.Exif
         ///
         /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        internal static ExifValueCollection Parse(byte[] exifBytes, IByteArrayPool arrayPool)
+        internal static ExifValueCollection Parse(byte[] exifBytes, PaintDotNet.AppModel.IArrayPoolService arrayPool)
         {
             if (exifBytes is null)
             {

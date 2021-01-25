@@ -40,12 +40,21 @@ namespace AvifFileType
         /// Initializes a new instance of the <see cref="AvifReader"/> class.
         /// </summary>
         /// <param name="parser">The parser.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
-        public AvifReader(Stream input, bool leaveOpen, IByteArrayPool arrayPool)
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="input"/> is null.
+        /// -or-
+        /// <paramref name="arrayPool"/> is null.
+        /// </exception>
+        public AvifReader(Stream input, bool leaveOpen, PaintDotNet.AppModel.IArrayPoolService arrayPool)
         {
             if (input is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(input));
+            }
+
+            if (arrayPool is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
             }
 
             // The parser is initialized first because it will throw an exception

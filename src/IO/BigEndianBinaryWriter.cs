@@ -11,6 +11,8 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
+using PaintDotNet;
+using PaintDotNet.AppModel;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -23,9 +25,9 @@ namespace AvifFileType
         private Stream stream;
         private readonly bool leaveOpen;
         private readonly byte[] buffer;
-        private readonly IByteArrayPool arrayPool;
+        private readonly IArrayPoolService arrayPool;
 
-        public BigEndianBinaryWriter(Stream stream, bool leaveOpen, IByteArrayPool arrayPool)
+        public BigEndianBinaryWriter(Stream stream, bool leaveOpen, IArrayPoolService arrayPool)
         {
             if (stream is null)
             {
@@ -167,39 +169,41 @@ namespace AvifFileType
             const int MaxBufferSize = 81920;
 
             int bufferSize = (int)Math.Min(length, MaxBufferSize);
-            byte[] writeBuffer = this.arrayPool.Rent(bufferSize);
 
-            byte* readPtr = null;
-            System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
-            try
+            using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))
             {
-                buffer.AcquirePointer(ref readPtr);
+                byte[] writeBuffer = poolBuffer.Array;
 
-                fixed (byte* writePtr = writeBuffer)
+                byte* readPtr = null;
+                System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+                try
                 {
-                    ulong totalBytesRead = 0;
+                    buffer.AcquirePointer(ref readPtr);
 
-                    while (totalBytesRead < length)
+                    fixed (byte* writePtr = writeBuffer)
                     {
-                        ulong bytesRead = Math.Min(length - totalBytesRead, MaxBufferSize);
+                        ulong totalBytesRead = 0;
 
-                        Buffer.MemoryCopy(readPtr + totalBytesRead, writePtr, bytesRead, bytesRead);
+                        while (totalBytesRead < length)
+                        {
+                            ulong bytesRead = Math.Min(length - totalBytesRead, MaxBufferSize);
 
-                        this.stream.Write(writeBuffer, 0, (int)bytesRead);
+                            Buffer.MemoryCopy(readPtr + totalBytesRead, writePtr, bytesRead, bytesRead);
 
-                        totalBytesRead += bytesRead;
+                            this.stream.Write(writeBuffer, 0, (int)bytesRead);
+
+                            totalBytesRead += bytesRead;
+                        }
+                    }
+                }
+                finally
+                {
+                    if (readPtr != null)
+                    {
+                        buffer.ReleasePointer();
                     }
                 }
             }
-            finally
-            {
-                if (readPtr != null)
-                {
-                    buffer.ReleasePointer();
-                }
-            }
-
-            this.arrayPool.Return(writeBuffer);
         }
 
         private void VerifyNotDisposed()

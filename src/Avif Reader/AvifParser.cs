@@ -11,6 +11,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
+using PaintDotNet.AppModel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,9 +36,9 @@ namespace AvifFileType
         private MetaBox metaBox;
         private EndianBinaryReader reader;
         private readonly ulong fileLength;
-        private readonly IByteArrayPool arrayPool;
+        private readonly IArrayPoolService arrayPool;
 
-        public AvifParser(Stream stream, bool leaveOpen, IByteArrayPool arrayPool)
+        public AvifParser(Stream stream, bool leaveOpen, IArrayPoolService arrayPool)
         {
             if (stream is null)
             {

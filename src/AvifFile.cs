@@ -14,6 +14,7 @@ using AvifFileType.AvifContainer;
 using AvifFileType.Exif;
 using AvifFileType.Interop;
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using PaintDotNet.Imaging;
 using System;
 using System.Collections.Generic;
@@ -31,8 +32,13 @@ namespace AvifFileType
         // allow the data to be read from existing PDN files.
         private const string NclxMetadataName = "AvifNclxData";
 
-        public static Document Load(Stream input, IByteArrayPool arrayPool)
+        public static Document Load(Stream input, IArrayPoolService arrayPool)
         {
+            if (arrayPool is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
+            }
+
             Document doc = null;
 
             using (AvifReader reader = new AvifReader(input, leaveOpen: true, arrayPool))
@@ -72,8 +78,13 @@ namespace AvifFileType
                          int? maxEncoderThreadsOverride,
                          Surface scratchSurface,
                          ProgressEventHandler progressCallback,
-                         IByteArrayPool arrayPool)
+                         IArrayPoolService arrayPool)
         {
+            if (arrayPool is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
+            }
+
             using (RenderArgs args = new RenderArgs(scratchSurface))
             {
                 document.Render(args, true);
@@ -260,7 +271,7 @@ namespace AvifFileType
             }
         }
 
-        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader, IByteArrayPool arrayPool)
+        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader, IArrayPoolService arrayPool)
         {
             byte[] exifBytes = reader.GetExifData();
 

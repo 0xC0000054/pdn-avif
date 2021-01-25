@@ -11,6 +11,8 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.Interop;
+using PaintDotNet;
+using PaintDotNet.AppModel;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -88,14 +90,14 @@ namespace AvifFileType
         : AvifItemData
     {
         private byte[] buffer;
-        private readonly IByteArrayPool arrayPool;
+        private IArrayPoolBuffer<byte> bufferFromArrayPool;
 
-        public ManagedAvifItemData(int length, IByteArrayPool pool)
+        public ManagedAvifItemData(int length, IArrayPoolService pool)
             : base()
         {
-            this.buffer = pool.Rent(length);
+            this.bufferFromArrayPool = pool.Rent<byte>(length);
+            this.buffer = this.bufferFromArrayPool.Array;
             this.Length = (ulong)length;
-            this.arrayPool = pool;
         }
 
         internal byte[] GetBuffer()
@@ -107,7 +109,7 @@ namespace AvifFileType
 
         protected override void Dispose(bool disposing)
         {
-            this.arrayPool.Return(this.buffer);
+            DisposableUtil.Free(ref this.bufferFromArrayPool);
             this.buffer = null;
 
             base.Dispose(disposing);

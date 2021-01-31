@@ -79,7 +79,7 @@ namespace AvifFileType
 
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
             this.bufferSize = (int)Math.Min(stream.Length, MaxBufferSize);
-            this.bufferFromArrayPool = arrayPool.Rent<byte>(bufferSize);
+            this.bufferFromArrayPool = arrayPool.Rent<byte>(this.bufferSize);
             this.buffer = this.bufferFromArrayPool.Array;
             this.endianess = byteOrder;
             this.leaveOpen = leaveOpen;

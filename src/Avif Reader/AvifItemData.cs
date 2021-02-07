@@ -123,7 +123,7 @@ namespace AvifFileType
         protected override byte[] ToArrayImpl()
         {
             byte[] array = new byte[this.Length];
-            this.buffer.CopyTo(array, 0);
+            Array.Copy(this.buffer, array, array.Length);
 
             return array;
         }

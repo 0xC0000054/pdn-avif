@@ -57,7 +57,6 @@ namespace AvifFileType.Exif
             }
         }
 
-
         public PaintDotNet.Imaging.ExifPropertyItem CreateExifPropertyItem()
         {
             PaintDotNet.Imaging.ExifSection exifSection;

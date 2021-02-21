@@ -296,7 +296,6 @@ namespace AvifFileType
                     this.NextId = nextId;
                 }
 
-
                 public ulong MediaDataBoxContentSize { get; }
 
                 public uint NextId { get; }

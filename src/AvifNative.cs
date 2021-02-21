@@ -162,7 +162,6 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(fullSurface));
             }
 
-
             DecoderStatus status = DecoderStatus.Ok;
 
             unsafe

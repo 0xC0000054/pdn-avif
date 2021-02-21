@@ -46,7 +46,6 @@ namespace AvifFileType
                     ExceptionUtil.ThrowArgumentNullException(nameof(contentBytes));
                 }
 
-
                 if (itemInfo is null)
                 {
                     ExceptionUtil.ThrowArgumentNullException(nameof(itemInfo));

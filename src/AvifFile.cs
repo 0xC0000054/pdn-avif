@@ -224,7 +224,6 @@ namespace AvifFileType
                     }
                 }
 
-
                 List<ColorInformationBox> colorInformationBoxes = new List<ColorInformationBox>(2);
 
                 byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();

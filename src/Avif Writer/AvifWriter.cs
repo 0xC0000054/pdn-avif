@@ -186,7 +186,6 @@ namespace AvifFileType
                         propertyAssociationIndex++;
                     }
 
-
                     if (colorPixelInformationAssociationIndex == 0 || item.IsAlphaImage && alphaPixelInformationAssociationIndex == 0)
                     {
                         itemPropertiesBox.AddProperty(new PixelInformationBox(item.Image.Format));
@@ -207,7 +206,6 @@ namespace AvifFileType
                         }
                         propertyAssociationIndex++;
                     }
-
 
                     if (item.IsAlphaImage)
                     {

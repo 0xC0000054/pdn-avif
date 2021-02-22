@@ -271,24 +271,31 @@ namespace AvifFileType
 
         private static void AddAvifMetadataToDocument(Document doc, AvifReader reader, IArrayPoolService arrayPool)
         {
-            byte[] exifBytes = reader.GetExifData();
+            AvifItemData exif = reader.GetExifData();
 
-            if (exifBytes != null)
+            if (exif != null)
             {
-                ExifValueCollection exifValues = ExifParser.Parse(exifBytes, arrayPool);
-
-                if (exifValues != null)
+                try
                 {
-                    exifValues.Remove(MetadataKeys.Image.InterColorProfile);
-                    // The HEIF specification states that the EXIF orientation tag is only
-                    // informational and should not be used to rotate the image.
-                    // See https://github.com/strukturag/libheif/issues/227#issuecomment-642165942
-                    exifValues.Remove(MetadataKeys.Image.Orientation);
+                    ExifValueCollection exifValues = ExifParser.Parse(exif, arrayPool);
 
-                    foreach (MetadataEntry entry in exifValues)
+                    if (exifValues != null)
                     {
-                        doc.Metadata.AddExifPropertyItem(entry.CreateExifPropertyItem());
+                        exifValues.Remove(MetadataKeys.Image.InterColorProfile);
+                        // The HEIF specification states that the EXIF orientation tag is only
+                        // informational and should not be used to rotate the image.
+                        // See https://github.com/strukturag/libheif/issues/227#issuecomment-642165942
+                        exifValues.Remove(MetadataKeys.Image.Orientation);
+
+                        foreach (MetadataEntry entry in exifValues)
+                        {
+                            doc.Metadata.AddExifPropertyItem(entry.CreateExifPropertyItem());
+                        }
                     }
+                }
+                finally
+                {
+                    exif.Dispose();
                 }
             }
 

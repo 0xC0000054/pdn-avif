@@ -156,7 +156,7 @@ namespace AvifFileType
             }
         }
 
-        public byte[] GetExifData()
+        public AvifItemData GetExifData()
         {
             VerifyNotDisposed();
 
@@ -164,39 +164,13 @@ namespace AvifFileType
 
             if (entry != null)
             {
-                ulong length = entry.TotalItemSize;
+                // The EXIF data block has a header consisting of a 4-byte unsigned integer that
+                // indicates the number of bytes that come before the start of the TIFF header.
+                // See ISO/IEC 23008-12:2017 section A.2.1.
 
-                // Ignore any EXIF blocks that are larger than 2GB.
-                if (length < int.MaxValue)
+                if (entry.TotalItemSize > sizeof(uint))
                 {
-                    using (AvifItemData itemData = this.parser.ReadItemData(entry))
-                    using (Stream stream = itemData.GetStream())
-                    {
-                        // The EXIF data block has a header that indicates the number of bytes
-                        // that come before the start of the TIFF header.
-                        // See ISO/IEC 23008-12:2017 section A.2.1.
-
-                        long tiffStartOffset = stream.TryReadUInt32BigEndian();
-
-                        if (tiffStartOffset != -1)
-                        {
-                            long dataLength = (long)length - tiffStartOffset - sizeof(uint);
-
-                            if (dataLength > 0)
-                            {
-                                if (tiffStartOffset != 0)
-                                {
-                                    stream.Position += tiffStartOffset;
-                                }
-
-                                byte[] bytes = new byte[dataLength];
-
-                                stream.ProperRead(bytes, 0, bytes.Length);
-
-                                return bytes;
-                            }
-                        }
-                    }
+                    return this.parser.ReadItemData(entry);
                 }
             }
 

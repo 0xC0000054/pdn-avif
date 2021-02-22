@@ -169,6 +169,7 @@
     <Compile Include="IO\EndianBinaryReader.cs" />
     <Compile Include="IO\EndianBinaryReaderSegment.cs" />
     <Compile Include="IO\Endianess.cs" />
+    <Compile Include="IO\StreamSegment.cs" />
     <Compile Include="Localization\BuiltinStringResourceManager.cs" />
     <Compile Include="Localization\IAvifStringResourceManager.cs" />
     <Compile Include="Localization\PdnLocalizedStringResourceManager.cs" />

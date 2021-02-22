@@ -23,31 +23,35 @@ namespace AvifFileType.Exif
         /// <summary>
         /// Parses the EXIF data into a collection of properties.
         /// </summary>
-        /// <param name="exifBytes">The EXIF bytes.</param>
+        /// <param name="exif">The EXIF data.</param>
         /// <returns>
         /// A collection containing the EXIF properties.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="exifBytes"/> is null.
+        /// <paramref name="exif"/> is null.
         ///
         /// -or-
         ///
         /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        internal static ExifValueCollection Parse(byte[] exifBytes, PaintDotNet.AppModel.IArrayPoolService arrayPool)
+        internal static ExifValueCollection Parse(AvifItemData exif, PaintDotNet.AppModel.IArrayPoolService arrayPool)
         {
-            if (exifBytes is null)
+            if (exif is null)
             {
-                throw new ArgumentNullException(nameof(exifBytes));
+                throw new ArgumentNullException(nameof(exif));
             }
 
             List<MetadataEntry> metadataEntries = new List<MetadataEntry>();
 
-            MemoryStream stream = null;
+            StreamSegment stream = TryParseExifMetadataHeader(exif);
+
+            if (stream is null)
+            {
+                return null;
+            }
+
             try
             {
-                stream = new MemoryStream(exifBytes);
-
                 Endianess? byteOrder = TryDetectTiffByteOrder(stream);
 
                 if (byteOrder.HasValue)
@@ -340,6 +344,42 @@ namespace AvifFileType.Exif
             {
                 return null;
             }
+        }
+
+        private static StreamSegment TryParseExifMetadataHeader(AvifItemData data)
+        {
+            // The EXIF data block has a header consisting of a big-endian 4-byte unsigned integer
+            // that indicates the number of bytes that come before the start of the TIFF header.
+            // See ISO/IEC 23008-12:2017 section A.2.1.
+
+            StreamSegment stream = null;
+            Stream avifItemStream = null;
+
+            try
+            {
+                avifItemStream = data.GetStream();
+
+                long tiffStartOffset = avifItemStream.TryReadUInt32BigEndian();
+
+                if (tiffStartOffset != -1)
+                {
+                    long origin = avifItemStream.Position + tiffStartOffset;
+                    ulong length = data.Length - (ulong)tiffStartOffset - sizeof(uint);
+
+                    if (length > 0 && length <= long.MaxValue)
+                    {
+                        stream = new StreamSegment(avifItemStream, origin, (long)length);
+                        // The StreamSegment will take ownership of the existing stream.
+                        avifItemStream = null;
+                    }
+                }
+            }
+            finally
+            {
+                avifItemStream?.Dispose();
+            }
+
+            return stream;
         }
 
         private readonly struct ParserIFDEntry

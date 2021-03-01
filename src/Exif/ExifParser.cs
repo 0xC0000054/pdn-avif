@@ -41,50 +41,48 @@ namespace AvifFileType.Exif
                 throw new ArgumentNullException(nameof(exif));
             }
 
-            List<MetadataEntry> metadataEntries = new List<MetadataEntry>();
+            ExifValueCollection metadataEntries = null;
 
             StreamSegment stream = TryParseExifMetadataHeader(exif);
 
-            if (stream is null)
+            if (stream != null)
             {
-                return null;
-            }
-
-            try
-            {
-                Endianess? byteOrder = TryDetectTiffByteOrder(stream);
-
-                if (byteOrder.HasValue)
+                try
                 {
-                    using (EndianBinaryReader reader = new EndianBinaryReader(stream, byteOrder.Value, arrayPool))
+                    Endianess? byteOrder = TryDetectTiffByteOrder(stream);
+
+                    if (byteOrder.HasValue)
                     {
-                        stream = null;
-
-                        ushort signature = reader.ReadUInt16();
-
-                        if (signature == TiffConstants.Signature)
+                        using (EndianBinaryReader reader = new EndianBinaryReader(stream, byteOrder.Value, arrayPool))
                         {
-                            uint ifdOffset = reader.ReadUInt32();
+                            stream = null;
 
-                            List<ParserIFDEntry> entries = ParseDirectories(reader, ifdOffset);
+                            ushort signature = reader.ReadUInt16();
 
-                            metadataEntries.AddRange(ConvertIFDEntriesToMetadataEntries(reader, entries));
+                            if (signature == TiffConstants.Signature)
+                            {
+                                uint ifdOffset = reader.ReadUInt32();
+
+                                List<ParserIFDEntry> entries = ParseDirectories(reader, ifdOffset);
+
+                                metadataEntries = new ExifValueCollection(ConvertIFDEntriesToMetadataEntries(reader, entries));
+                            }
                         }
                     }
                 }
-            }
-            catch (EndOfStreamException)
-            {
-            }
-            finally
-            {
-                stream?.Dispose();
+                catch (EndOfStreamException)
+                {
+                }
+                finally
+                {
+                    stream?.Dispose();
+                }
             }
 
-            return new ExifValueCollection(metadataEntries);
+            return metadataEntries;
         }
 
-        private static ICollection<MetadataEntry> ConvertIFDEntriesToMetadataEntries(EndianBinaryReader reader, List<ParserIFDEntry> entries)
+        private static List<MetadataEntry> ConvertIFDEntriesToMetadataEntries(EndianBinaryReader reader, List<ParserIFDEntry> entries)
         {
             List<MetadataEntry> metadataEntries = new List<MetadataEntry>(entries.Count);
             bool swapNumberByteOrder = reader.Endianess == Endianess.Big;

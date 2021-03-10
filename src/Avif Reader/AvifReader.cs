@@ -442,10 +442,16 @@ namespace AvifFileType
                     if (firstTile)
                     {
                         firstTile = false;
-                        CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
-                                                    decodeInfo.expectedHeight,
-                                                    decodeInfo.chromaSubsampling,
-                                                    this.alphaGridInfo);
+
+                        // Skip the image grid validation if the image grid only has one tile.
+                        // Some writers may use an image grid to crop a single image.
+                        if (childImageIds.Count > 1)
+                        {
+                            CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
+                                                        decodeInfo.expectedHeight,
+                                                        decodeInfo.chromaSubsampling,
+                                                        this.alphaGridInfo);
+                        }
                     }
                 }
             }
@@ -479,10 +485,16 @@ namespace AvifFileType
                     if (firstTile)
                     {
                         firstTile = false;
-                        CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
-                                                    decodeInfo.expectedHeight,
-                                                    decodeInfo.chromaSubsampling,
-                                                    this.colorGridInfo);
+
+                        // Skip the image grid validation if the image grid only has one tile.
+                        // Some writers may use an image grid to crop a single image.
+                        if (childImageIds.Count > 1)
+                        {
+                            CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
+                                                        decodeInfo.expectedHeight,
+                                                        decodeInfo.chromaSubsampling,
+                                                        this.colorGridInfo);
+                        }
                     }
                 }
             }

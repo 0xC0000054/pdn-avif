@@ -15,6 +15,7 @@ using PaintDotNet.AppModel;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace AvifFileType
@@ -34,7 +35,8 @@ namespace AvifFileType
             YUVChromaSubsampling,
             ForumLink,
             GitHubLink,
-            PreserveExistingTileSize
+            PreserveExistingTileSize,
+            PremultipliedAlpha
         }
 
         /// <summary>
@@ -92,11 +94,20 @@ namespace AvifFileType
                 StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionSpeed, CompressionSpeed.Fast),
                 CreateChromaSubsampling(),
                 new BooleanProperty(PropertyNames.PreserveExistingTileSize, true),
+                new BooleanProperty(PropertyNames.PremultipliedAlpha, false),
                 new UriProperty(PropertyNames.ForumLink, new Uri("https://forums.getpaint.net/topic/116233-avif-filetype")),
                 new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif"))
             };
 
-            return new PropertyCollection(props);
+            List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>
+            {
+                new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.PremultipliedAlpha,
+                                                                 PropertyNames.Quality,
+                                                                 100,
+                                                                 false)
+            };
+
+            return new PropertyCollection(props, rules);
 
             StaticListChoiceProperty CreateChromaSubsampling()
             {
@@ -144,6 +155,10 @@ namespace AvifFileType
             preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
             preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("PreserveExistingTileSize_Description");
 
+            PropertyControlInfo premultipliedAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.PremultipliedAlpha);
+            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
+            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("PremultipliedAlpha_Description");
+
             PropertyControlInfo forumLinkPCI = configUI.FindControlForPropertyName(PropertyNames.ForumLink);
             forumLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ForumLink_DisplayName");
             forumLinkPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("ForumLink_Description");
@@ -165,12 +180,16 @@ namespace AvifFileType
             YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling).Value;
             bool preserveExistingTileSize = token.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize).Value;
 
+            // The premultiplied alpha conversion can cause the colors to drift, so it is disabled for lossless encoding.
+            bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha).Value && quality < 100;
+
             AvifFile.Save(input,
                           output,
                           quality,
                           compressionSpeed,
                           chromaSubsampling,
                           preserveExistingTileSize,
+                          premultipliedAlpha,
                           scratchSurface,
                           progressCallback,
                           this.arrayPoolService);

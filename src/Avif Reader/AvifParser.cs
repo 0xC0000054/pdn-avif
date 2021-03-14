@@ -161,6 +161,13 @@ namespace AvifFileType
             return false;
         }
 
+        public bool IsAlphaPremultiplied(uint primaryItemId, uint alphaItemId)
+        {
+            IItemReferenceEntry entry = GetMatchingReferences(alphaItemId, ReferenceTypes.PremultipliedAlphaImage).FirstOrDefault();
+
+            return entry != null && entry.FromItemId == primaryItemId;
+        }
+
         public AvifItemData ReadItemData(ItemLocationEntry entry)
         {
             if (entry is null)

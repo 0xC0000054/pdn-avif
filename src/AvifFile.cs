@@ -16,6 +16,7 @@ using AvifFileType.Interop;
 using PaintDotNet;
 using PaintDotNet.AppModel;
 using PaintDotNet.Imaging;
+using PaintDotNet.Rendering;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -75,6 +76,7 @@ namespace AvifFileType
                          CompressionSpeed compressionSpeed,
                          YUVChromaSubsampling chromaSubsampling,
                          bool preserveExistingTileSize,
+                         bool premultipliedAlpha,
                          Surface scratchSurface,
                          ProgressEventHandler progressCallback,
                          IArrayPoolService arrayPool)
@@ -153,6 +155,11 @@ namespace AvifFileType
                                                                           preserveExistingTileSize);
 
             bool hasTransparency = HasTransparency(scratchSurface);
+
+            if (hasTransparency && premultipliedAlpha)
+            {
+                scratchSurface.ConvertToPremultipliedAlpha();
+            }
 
             CompressedAV1ImageCollection colorImages = new CompressedAV1ImageCollection(imageGridMetadata?.TileCount ?? 1);
             CompressedAV1ImageCollection alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
@@ -239,6 +246,7 @@ namespace AvifFileType
 
                 AvifWriter writer = new AvifWriter(colorImages,
                                                    alphaImages,
+                                                   premultipliedAlpha,
                                                    metadata,
                                                    imageGridMetadata,
                                                    options.yuvFormat,

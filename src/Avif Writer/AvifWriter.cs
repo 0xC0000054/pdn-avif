@@ -33,6 +33,7 @@ namespace AvifFileType
 
         public AvifWriter(IReadOnlyList<CompressedAV1Image> colorImages,
                           IReadOnlyList<CompressedAV1Image> alphaImages,
+                          bool premultipliedAlpha,
                           AvifMetadata metadata,
                           ImageGridMetadata imageGridMetadata,
                           YUVChromaSubsampling chromaSubsampling,
@@ -42,7 +43,12 @@ namespace AvifFileType
                           uint progressTotal,
                           IArrayPoolService arrayPool)
         {
-            this.state = new AvifWriterState(colorImages, alphaImages, imageGridMetadata, metadata, arrayPool);
+            this.state = new AvifWriterState(colorImages,
+                                             alphaImages,
+                                             premultipliedAlpha,
+                                             imageGridMetadata,
+                                             metadata,
+                                             arrayPool);
             this.arrayPool = arrayPool;
             this.colorImageIsGrayscale = chromaSubsampling == YUVChromaSubsampling.Subsampling400;
             this.colorInformationBoxes = colorInformationBoxes ?? System.Array.Empty<ColorInformationBox>();

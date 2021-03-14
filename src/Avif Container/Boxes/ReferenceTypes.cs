@@ -17,5 +17,6 @@ namespace AvifFileType.AvifContainer
         public static readonly FourCC AuxiliaryImage = new FourCC('a', 'u', 'x', 'l');
         public static readonly FourCC ContentDescription = new FourCC('c', 'd', 's', 'c');
         public static readonly FourCC DerivedImage = new FourCC('d', 'i', 'm', 'g');
+        public static readonly FourCC PremultipliedAlphaImage = new FourCC('p', 'r', 'e', 'm');
     }
 }

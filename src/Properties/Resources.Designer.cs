@@ -160,6 +160,15 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Premultiplied Alpha.
+        /// </summary>
+        internal static string PremultipliedAlpha_Description {
+            get {
+                return ResourceManager.GetString("PremultipliedAlpha_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Preserve Existing Tile Size.
         /// </summary>
         internal static string PreserveExistingTileSize_Description {

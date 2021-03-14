@@ -237,6 +237,21 @@ namespace AvifFileType
             }
         }
 
+        private static unsafe void ConvertSurfaceFromPremultipliedAlpha(Surface surface)
+        {
+            for (int y = 0; y < surface.Height; y++)
+            {
+                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
+                ColorBgra* ptrEnd = ptr + surface.Width;
+
+                while (ptr < ptrEnd)
+                {
+                    *ptr = ptr->ConvertFromPremultipliedAlpha();
+                    ptr++;
+                }
+            }
+        }
+
         private void ApplyImageTransforms(ref Surface surface)
         {
             // The image transforms must be applied in the following order:
@@ -562,6 +577,14 @@ namespace AvifFileType
                 };
 
                 DecodeAlphaImage(this.alphaItemId, decodeInfo, fullSurface);
+            }
+
+            if (this.parser.IsAlphaPremultiplied(this.primaryItemId, this.alphaItemId))
+            {
+                // The ConvertSurfaceFromPremultipliedAlpha method calls ColorBgra.ConvertFromPremultipliedAlpha() in a
+                // loop due to the fact that SurfaceExtensions.ConvertFromPremultipliedAlpha() produces incorrect results
+                // for some images.
+                ConvertSurfaceFromPremultipliedAlpha(fullSurface);
             }
         }
 

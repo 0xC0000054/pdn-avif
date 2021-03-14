@@ -28,6 +28,7 @@ namespace AvifFileType
 
             public AvifWriterState(IReadOnlyList<CompressedAV1Image> colorImages,
                                    IReadOnlyList<CompressedAV1Image> alphaImages,
+                                   bool premultipliedAlpha,
                                    ImageGridMetadata imageGridMetadata,
                                    AvifMetadata metadata,
                                    IArrayPoolService arrayPool)
@@ -49,7 +50,7 @@ namespace AvifFileType
 
                 this.ImageGrid = imageGridMetadata;
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
-                Initialize(colorImages, alphaImages, imageGridMetadata, metadata, arrayPool);
+                Initialize(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata, metadata, arrayPool);
             }
 
             public uint AlphaItemId { get; private set; }
@@ -99,6 +100,7 @@ namespace AvifFileType
 
             private void Initialize(IReadOnlyList<CompressedAV1Image> colorImages,
                                     IReadOnlyList<CompressedAV1Image> alphaImages,
+                                    bool premultipliedAlpha,
                                     ImageGridMetadata imageGridMetadata,
                                     AvifMetadata metadata,
                                     IArrayPoolService arrayPool)
@@ -107,12 +109,12 @@ namespace AvifFileType
 
                 if (imageGridMetadata != null)
                 {
-                    result = InitializeFromImageGrid(colorImages, alphaImages, imageGridMetadata);
+                    result = InitializeFromImageGrid(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata);
                     this.ItemDataBox = CreateItemDataBox(imageGridMetadata, arrayPool);
                 }
                 else
                 {
-                    result = InitializeFromSingleImage(colorImages[0], alphaImages?[0]);
+                    result = InitializeFromSingleImage(colorImages[0], alphaImages?[0], premultipliedAlpha);
                     this.ItemDataBox = null;
                 }
 
@@ -150,6 +152,7 @@ namespace AvifFileType
 
             private ImageStateInfo InitializeFromImageGrid(IReadOnlyList<CompressedAV1Image> colorImages,
                                                            IReadOnlyList<CompressedAV1Image> alphaImages,
+                                                           bool premultipliedAlpha,
                                                            ImageGridMetadata imageGridMetadata)
             {
                 ulong mediaDataBoxContentSize = 0;
@@ -177,6 +180,14 @@ namespace AvifFileType
                         AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, null, alpha, true);
                         itemId++;
                         alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, colorItem.Id));
+
+                        if (premultipliedAlpha)
+                        {
+                            alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(colorItem.Id,
+                                                                                   ReferenceTypes.PremultipliedAlphaImage,
+                                                                                   alphaItem.Id));
+                        }
+
                         alphaImageIds.Add(alphaItem.Id);
                         mediaBoxAlphaItemIndexes.Add(this.items.Count);
                         this.items.Add(alphaItem);
@@ -211,6 +222,13 @@ namespace AvifFileType
                     alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.AuxiliaryImage, colorGridItem.Id));
                     alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.DerivedImage, alphaImageIds));
 
+                    if (premultipliedAlpha)
+                    {
+                        alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(colorGridItem.Id,
+                                                                                   ReferenceTypes.PremultipliedAlphaImage,
+                                                                                   alphaGridItem.Id));
+                    }
+
                     this.AlphaItemId = alphaGridItem.Id;
                     this.items.Add(alphaGridItem);
                 }
@@ -221,7 +239,7 @@ namespace AvifFileType
                 return new ImageStateInfo(mediaDataBoxContentSize, itemId);
             }
 
-            private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image alpha)
+            private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image alpha, bool premultipliedAlpha)
             {
                 ulong mediaDataBoxContentSize = color.Data.ByteLength;
                 uint itemId = FirstItemId;
@@ -240,6 +258,13 @@ namespace AvifFileType
                     AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, "Alpha", alpha, true);
                     itemId++;
                     alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, this.PrimaryItemId));
+                    if (premultipliedAlpha)
+                    {
+                        alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(this.PrimaryItemId,
+                                                                               ReferenceTypes.PremultipliedAlphaImage,
+                                                                               alphaItem.Id));
+                    }
+
                     this.AlphaItemId = alphaItem.Id;
 
                     mediaBoxAlphaItemIndexes.Add(this.items.Count);

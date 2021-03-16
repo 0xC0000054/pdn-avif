@@ -265,7 +265,12 @@ namespace AvifFileType
 
             if (gridDescriptor != null)
             {
-                IItemReferenceEntry derivedImageProperty = GetMatchingReferences(itemId, ReferenceTypes.DerivedImage).First();
+                IItemReferenceEntry derivedImageProperty = GetMatchingReferences(itemId, ReferenceTypes.DerivedImage).FirstOrDefault();
+
+                if (derivedImageProperty is null)
+                {
+                    ExceptionUtil.ThrowFormatException("The grid image does not have an associated derived image property.");
+                }
 
                 return new ImageGridInfo(derivedImageProperty.ToItemIds, gridDescriptor);
             }

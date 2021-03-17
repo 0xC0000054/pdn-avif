@@ -104,6 +104,10 @@ namespace AvifFileType
                 new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.PremultipliedAlpha,
                                                                  PropertyNames.Quality,
                                                                  100,
+                                                                 false),
+                new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.YUVChromaSubsampling,
+                                                                 PropertyNames.Quality,
+                                                                 100,
                                                                  false)
             };
 

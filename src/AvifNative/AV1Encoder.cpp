@@ -153,7 +153,7 @@ namespace
         {
             if (!initialized)
             {
-                throw codec_error("ConfigureEncoderOptions called on an invalid object.");
+                throw codec_init_error("ConfigureEncoderOptions called on an invalid object.");
             }
 
             throw_on_error(aom_codec_control(&codec, AOME_SET_CPUUSED, encodeOptions.cpuUsed));
@@ -255,7 +255,7 @@ namespace
         {
             status = EncoderStatus::OutOfMemory;
         }
-        catch (const codec_error&)
+        catch (const codec_init_error&)
         {
             status = EncoderStatus::CodecInitFailed;
         }

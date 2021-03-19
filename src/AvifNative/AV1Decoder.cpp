@@ -111,7 +111,7 @@ DecoderStatus DecodeColorImage(
     {
         status = DecoderStatus::OutOfMemory;
     }
-    catch (const codec_error&)
+    catch (const codec_init_error&)
     {
         status = DecoderStatus::CodecInitFailed;
     }
@@ -163,7 +163,7 @@ DecoderStatus DecodeAlphaImage(
     {
         status = DecoderStatus::OutOfMemory;
     }
-    catch (const codec_error&)
+    catch (const codec_init_error&)
     {
         status = DecoderStatus::CodecInitFailed;
     }

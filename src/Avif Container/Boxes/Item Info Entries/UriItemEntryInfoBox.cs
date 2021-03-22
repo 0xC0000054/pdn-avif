@@ -26,9 +26,6 @@ namespace AvifFileType.AvifContainer
             this.uri = reader.ReadBoxString();
         }
 
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"ItemId: { this.ItemId }, Name: \"{ this.Name }\", Uri: \"{ this.uri }\"";
-
         public UriItemEntryInfoBox(uint itemId, ushort itemProtectionIndex, string name, string uri)
             : base(itemId, itemProtectionIndex, ItemInfoEntryTypes.Uri, name)
         {
@@ -39,6 +36,9 @@ namespace AvifFileType.AvifContainer
 
             this.uri = new BoxString(uri);
         }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerDisplay => $"ItemId: { this.ItemId }, Name: \"{ this.Name }\", Uri: \"{ this.uri }\"";
 
         public override void Write(BigEndianBinaryWriter writer)
         {

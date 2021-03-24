@@ -175,7 +175,9 @@ namespace AvifFileType
                 byte[] writeBuffer = poolBuffer.Array;
 
                 byte* readPtr = null;
+#if NET47
                 System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     buffer.AcquirePointer(ref readPtr);

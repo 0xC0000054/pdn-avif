@@ -186,7 +186,9 @@ namespace AvifFileType
             byte[] array = new byte[length];
 
             byte* readPtr = null;
+#if NET47
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 this.buffer.AcquirePointer(ref readPtr);
@@ -211,7 +213,9 @@ namespace AvifFileType
         {
             byte* ptr = null;
             RuntimeHelpers.PrepareDelegate(action);
+#if NET47
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 this.buffer.AcquirePointer(ref ptr);

@@ -14,7 +14,9 @@ using AvifFileType.Interop;
 using PaintDotNet;
 using System;
 using System.Runtime.ExceptionServices;
+#if !NET47
 using System.Runtime.InteropServices;
+#endif
 
 namespace AvifFileType
 {

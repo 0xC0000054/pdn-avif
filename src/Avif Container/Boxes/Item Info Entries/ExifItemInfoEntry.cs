@@ -16,7 +16,7 @@ namespace AvifFileType.AvifContainer
         : ItemInfoEntryBox
     {
         public ExifItemInfoEntry(uint itemId)
-            : base(itemId, 0, ItemInfoEntryTypes.Exif, "Exif")
+            : base(itemId, hiddenItem: true, 0, ItemInfoEntryTypes.Exif, "Exif")
         {
         }
     }

@@ -19,6 +19,8 @@ namespace AvifFileType.AvifContainer
     internal class ItemInfoEntryBox
         : FullBox, IItemInfoEntry
     {
+        private const uint HiddenItemFlag = 1;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ItemInfoEntryBox"/> class.
         /// </summary>
@@ -55,7 +57,12 @@ namespace AvifFileType.AvifContainer
         }
 
         protected ItemInfoEntryBox(uint itemId, ushort itemProtectionIndex, FourCC itemType, string name)
-            : base((byte)(itemId > ushort.MaxValue ? 3 : 2), 0, BoxTypes.ItemInfoEntry)
+            : this(itemId, hiddenItem: false, itemProtectionIndex, itemType, name)
+        {
+        }
+
+        protected ItemInfoEntryBox(uint itemId, bool hiddenItem, ushort itemProtectionIndex, FourCC itemType, string name)
+            : base((byte)(itemId > ushort.MaxValue ? 3 : 2), hiddenItem ? HiddenItemFlag : 0, BoxTypes.ItemInfoEntry)
         {
             this.ItemId = itemId;
             this.ItemProtectionIndex = itemProtectionIndex;
@@ -63,7 +70,7 @@ namespace AvifFileType.AvifContainer
             this.Name = string.IsNullOrWhiteSpace(name) ? BoxString.Empty : new BoxString(name);
         }
 
-        public bool IsHidden => (this.Flags & 1) == 1;
+        public bool IsHidden => (this.Flags & HiddenItemFlag) == HiddenItemFlag;
 
         public uint ItemId { get; }
 

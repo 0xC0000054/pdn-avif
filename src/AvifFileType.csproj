@@ -15,12 +15,6 @@
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Data.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net47'">
-    <Compile Include=".Net Core\ArrayPool\ArrayPool.cs" />
-    <Compile Include=".Net Core\ArrayPool\DefaultArrayPool.cs" />
-    <Compile Include=".Net Core\ArrayPool\DefaultArrayPoolBucket.cs" />
-    <Compile Include=".Net Core\ArrayPool\Utilities.cs" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

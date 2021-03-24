@@ -140,6 +140,8 @@ namespace AvifFileType
             // Gray-scale images can also share the AV1ConfigBox and PixelInformationBox
             // between the color and alpha images.
             // This works because the color and alpha images are the same size and YUV format.
+            //
+            // For tiled images all boxes will be shared between the color and/or alpha image tiles.
             ushort imageSpatialExtentsAssociationIndex = 0;
             ushort pixelAspectRatioAssociationIndex = 0;
             ushort colorAv1ConfigAssociationIndex = 0;

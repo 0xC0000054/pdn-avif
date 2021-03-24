@@ -61,5 +61,9 @@ namespace AvifFileType.Interop
             UIntPtr compressedAlphaImageSize,
             [In, Out] DecodeInfo decodeInfo,
             [In] ref BitmapData fullImage);
+
+        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static extern bool MemoryBlocksAreEqual(IntPtr buffer1, IntPtr buffer2, UIntPtr length);
     }
 }

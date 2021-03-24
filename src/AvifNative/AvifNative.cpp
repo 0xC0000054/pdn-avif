@@ -151,3 +151,8 @@ EncoderStatus __stdcall CompressImage(
         compressedColorImage,
         compressedAlphaImage);
 }
+
+bool __stdcall MemoryBlocksAreEqual(const void* buffer1, const void* buffer2, size_t size)
+{
+    return std::memcmp(buffer1, buffer2, size) == 0;
+}

@@ -142,6 +142,11 @@ extern "C" {
         void** compressedColorImage,
         void** compressedAlphaImage);
 
+    __declspec(dllexport) bool __stdcall MemoryBlocksAreEqual(
+        const void* buffer1,
+        const void* buffer2,
+        size_t size);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

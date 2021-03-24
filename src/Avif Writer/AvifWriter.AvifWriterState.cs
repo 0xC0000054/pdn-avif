@@ -11,7 +11,9 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
+using AvifFileType.Interop;
 using PaintDotNet.AppModel;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -25,6 +27,8 @@ namespace AvifFileType
         private sealed class AvifWriterState
         {
             private readonly List<AvifWriterItem> items;
+            private readonly Dictionary<int, int> duplicateAlphaTiles;
+            private readonly Dictionary<int, int> duplicateColorTiles;
 
             public AvifWriterState(IReadOnlyList<CompressedAV1Image> colorImages,
                                    IReadOnlyList<CompressedAV1Image> alphaImages,
@@ -50,6 +54,15 @@ namespace AvifFileType
 
                 this.ImageGrid = imageGridMetadata;
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
+                this.duplicateAlphaTiles = new Dictionary<int, int>();
+                this.duplicateColorTiles = new Dictionary<int, int>();
+                DeduplicateColorTiles(colorImages);
+
+                if (alphaImages != null)
+                {
+                    DeduplicateAlphaTiles(alphaImages);
+                }
+
                 Initialize(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata, metadata, arrayPool);
             }
 
@@ -96,6 +109,106 @@ namespace AvifFileType
                 }
 
                 return new ItemDataBox(dataBoxBuffer);
+            }
+
+            private void DeduplicateAlphaTiles(IReadOnlyList<CompressedAV1Image> alphaImages)
+            {
+                if (alphaImages.Count == 1)
+                {
+                    return;
+                }
+
+                for (int i = 0; i < alphaImages.Count; i++)
+                {
+                    if (this.duplicateAlphaTiles.ContainsKey(i))
+                    {
+                        continue;
+                    }
+
+                    CompressedAV1Data firstImageData = alphaImages[i].Data;
+
+                    for (int j = i + 1; j < alphaImages.Count; j++)
+                    {
+                        CompressedAV1Data secondImageData = alphaImages[j].Data;
+
+                        if (firstImageData.ByteLength == secondImageData.ByteLength)
+                        {
+                            IPinnableBuffer firstPinnable = firstImageData;
+                            IPinnableBuffer secondPinnable = secondImageData;
+
+                            IntPtr firstBuffer = firstPinnable.Pin();
+                            try
+                            {
+                                IntPtr secondBuffer = secondPinnable.Pin();
+                                try
+                                {
+                                    if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
+                                    {
+                                        this.duplicateAlphaTiles.Add(j, i);
+                                    }
+                                }
+                                finally
+                                {
+                                    secondPinnable.Unpin();
+                                }
+                            }
+                            finally
+                            {
+                                firstPinnable.Unpin();
+                            }
+                        }
+                    }
+                }
+            }
+
+            private void DeduplicateColorTiles(IReadOnlyList<CompressedAV1Image> colorImages)
+            {
+                if (colorImages.Count == 1)
+                {
+                    return;
+                }
+
+                for (int i = 0; i < colorImages.Count; i++)
+                {
+                    if (this.duplicateColorTiles.ContainsKey(i))
+                    {
+                        continue;
+                    }
+
+                    CompressedAV1Data firstImageData = colorImages[i].Data;
+
+                    for (int j = i + 1; j < colorImages.Count; j++)
+                    {
+                        CompressedAV1Data secondImageData = colorImages[j].Data;
+
+                        if (firstImageData.ByteLength == secondImageData.ByteLength)
+                        {
+                            IPinnableBuffer firstPinnable = firstImageData;
+                            IPinnableBuffer secondPinnable = secondImageData;
+
+                            IntPtr firstBuffer = firstPinnable.Pin();
+                            try
+                            {
+                                IntPtr secondBuffer = secondPinnable.Pin();
+                                try
+                                {
+                                    if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
+                                    {
+                                        this.duplicateColorTiles.Add(j, i);
+                                    }
+                                }
+                                finally
+                                {
+                                    secondPinnable.Unpin();
+                                }
+                            }
+                            finally
+                            {
+                                firstPinnable.Unpin();
+                            }
+                        }
+                    }
+                }
             }
 
             private void Initialize(IReadOnlyList<CompressedAV1Image> colorImages,
@@ -166,18 +279,38 @@ namespace AvifFileType
 
                 for (int i = 0; i < colorImages.Count; i++)
                 {
+                    int duplicateImageIndex;
+                    int duplicateColorImageIndex = -1;
+
+                    if (this.duplicateColorTiles.TryGetValue(i, out duplicateImageIndex))
+                    {
+                        duplicateColorImageIndex = mediaDataBoxColorItemIndexes[duplicateImageIndex];
+                    }
+
                     CompressedAV1Image color = colorImages[i];
-                    AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, null, color, false);
+                    AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, null, color, false, duplicateColorImageIndex);
                     itemId++;
                     colorImageIds.Add(colorItem.Id);
+
                     mediaDataBoxColorItemIndexes.Add(this.items.Count);
                     this.items.Add(colorItem);
-                    mediaDataBoxContentSize += color.Data.ByteLength;
+
+                    if (duplicateColorImageIndex == -1)
+                    {
+                        mediaDataBoxContentSize += color.Data.ByteLength;
+                    }
 
                     if (alphaImages != null)
                     {
+                        int duplicateAlphaImageIndex = -1;
+
+                        if (this.duplicateAlphaTiles.TryGetValue(i, out duplicateImageIndex))
+                        {
+                            duplicateAlphaImageIndex = mediaBoxAlphaItemIndexes[duplicateImageIndex];
+                        }
+
                         CompressedAV1Image alpha = alphaImages[i];
-                        AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, null, alpha, true);
+                        AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, null, alpha, true, duplicateAlphaImageIndex);
                         itemId++;
                         alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, colorItem.Id));
 
@@ -191,7 +324,11 @@ namespace AvifFileType
                         alphaImageIds.Add(alphaItem.Id);
                         mediaBoxAlphaItemIndexes.Add(this.items.Count);
                         this.items.Add(alphaItem);
-                        mediaDataBoxContentSize += alpha.Data.ByteLength;
+
+                        if (duplicateAlphaImageIndex == -1)
+                        {
+                            mediaDataBoxContentSize += alpha.Data.ByteLength;
+                        }
                     }
                 }
 
@@ -247,7 +384,7 @@ namespace AvifFileType
                 List<int> mediaDataBoxColorItemIndexes = new List<int>(1);
                 List<int> mediaBoxAlphaItemIndexes = new List<int>(1);
 
-                AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, "Color", color, false);
+                AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, "Color", color, false, duplicateImageIndex: -1);
                 itemId++;
                 this.PrimaryItemId = colorItem.Id;
                 mediaDataBoxColorItemIndexes.Add(this.items.Count);
@@ -255,7 +392,7 @@ namespace AvifFileType
 
                 if (alpha != null)
                 {
-                    AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, "Alpha", alpha, true);
+                    AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, "Alpha", alpha, true, duplicateImageIndex: -1);
                     itemId++;
                     alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, this.PrimaryItemId));
                     if (premultipliedAlpha)

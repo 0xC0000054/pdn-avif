@@ -92,7 +92,7 @@ namespace AvifFileType.AvifContainer
 
         public ulong Index { get; }
 
-        public ulong Offset { get; }
+        public ulong Offset { get; private set; }
 
         public ulong Length { get; }
 
@@ -126,6 +126,8 @@ namespace AvifFileType.AvifContainer
                 }
 
                 writer.Position = oldPosition;
+
+                this.Offset = finalOffset;
             }
         }
 

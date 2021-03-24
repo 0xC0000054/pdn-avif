@@ -345,6 +345,34 @@ namespace AvifFileType
             }
         }
 
+        public static bool MemoryBlocksAreEqual(IntPtr buffer1, IntPtr buffer2, ulong length)
+        {
+            bool result;
+
+#if NET47
+            if (IntPtr.Size == 8)
+#else
+            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+#endif
+            {
+                result = AvifNative_64.MemoryBlocksAreEqual(buffer1, buffer2, new UIntPtr(length));
+            }
+#if NET47
+            else if (IntPtr.Size == 4)
+#else
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+#endif
+            {
+                result = AvifNative_86.MemoryBlocksAreEqual(buffer1, buffer2, new UIntPtr(length));
+            }
+            else
+            {
+                throw new PlatformNotSupportedException();
+            }
+
+            return result;
+        }
+
         private static void HandleError(EncoderStatus status, ExceptionDispatchInfo exceptionDispatchInfo)
         {
             if (exceptionDispatchInfo != null)

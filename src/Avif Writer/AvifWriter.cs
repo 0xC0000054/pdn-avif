@@ -297,18 +297,35 @@ namespace AvifFileType
                     continue;
                 }
 
-                // We only ever write items with a single extent.
-                item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
-
                 if (item.Image != null)
                 {
-                    item.Image.Data.Write(writer);
+                    if (item.DuplicateImageIndex >= 0)
+                    {
+                        // If the compressed AV1 image data is a duplicate of an image that has already been
+                        // written we can reduce the file size by only writing that image data once.
+
+                        AvifWriterItem existingItem = items[item.DuplicateImageIndex];
+
+                        // We only ever write items with a single extent.
+                        ulong existingItemOffset = existingItem.ItemLocation.Extents[0].Offset;
+                        item.ItemLocation.Extents[0].WriteFinalOffset(writer, existingItemOffset);
+                    }
+                    else
+                    {
+                        // We only ever write items with a single extent.
+                        item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
+
+                        item.Image.Data.Write(writer);
+                    }
 
                     this.progressDone++;
                     this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));
                 }
                 else
                 {
+                    // We only ever write items with a single extent.
+                    item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
+
                     writer.Write(item.ContentBytes);
                 }
             }

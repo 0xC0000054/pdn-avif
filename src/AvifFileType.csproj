@@ -1,36 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{84697781-F28E-4F08-A4B3-0716529F7010}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AvifFileType</RootNamespace>
-    <AssemblyName>AvifFileType</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <TargetFrameworks>net47;net50</TargetFrameworks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
@@ -43,166 +14,21 @@
     <Reference Include="PaintDotNet.Data">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Data.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Avif Container\Boxes\AlphaChannelNames.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\CICPColorPrimaries.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\CICPMatrixCoefficients.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\CICPTransferCharacteristics.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\ChromaSamplePosition.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\ConstructionMethod.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\ImageMirrorDirection.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\ImageRotation.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\SequenceLevel.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\SequenceProfile.cs" />
-    <Compile Include="Avif Container\Boxes\Enums\StronglyTypedEnumeration.cs" />
-    <Compile Include="Avif Container\Boxes\IItemInfoEntry.cs" />
-    <Compile Include="Avif Container\Boxes\IItemReferenceEntry.cs" />
-    <Compile Include="Avif Container\Boxes\Item Info Entries\ImageGridItemInfoEntryBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Info Entries\ItemInfoEntryFactory.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\ItemPropertyFactory.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\ItemPropertyFull.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\ItemProperty.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\Transform\CleanApertureBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\Transform\ImageMirrorBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\Transform\ImageRotateBox.cs" />
-    <Compile Include="Avif Container\Boxes\ItemDataBox.cs" />
-    <Compile Include="Avif Container\Boxes\Rational.cs" />
-    <Compile Include="Avif Container\ImageGridDescriptor.cs" />
-    <Compile Include="Avif Container\ImageGridInfo.cs" />
-    <Compile Include="Avif Reader\AvifItemData.cs" />
-    <Compile Include="Avif Reader\AvifReader.cs" />
-    <Compile Include="Avif Reader\AvifParser.cs" />
-    <Compile Include="Avif Reader\CICPSerializer.cs" />
-    <Compile Include="Avif Container\ImageGridMetadata.cs" />
-    <Compile Include="Avif Reader\ImageTransform.cs" />
-    <Compile Include="Avif Writer\AvifWriter.AvifWriterItem.cs" />
-    <Compile Include="Avif Writer\AvifWriter.AvifWriterState.cs" />
-    <Compile Include="Avif Writer\AvifWriter.cs" />
-    <Compile Include="Avif Container\AV1ConfigBoxBuilder.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\AuxiliaryTypePropertyBox.cs" />
-    <Compile Include="Avif Container\Boxes\AvifBrands.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\AlphaChannelBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\Color Information\ColorInformationBoxTypes.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\Color Information\IccProfileColorInformation.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\Color Information\NclxColorInformation.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\Color Information\ColorInformationBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\AV1ConfigBox.cs" />
-    <Compile Include="Avif Container\Boxes\Box.cs" />
-    <Compile Include="Avif Container\Boxes\BoxTypes.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\IItemProperty.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\ImageSpatialExtentsBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Info Entries\ExifItemInfoEntry.cs" />
-    <Compile Include="Avif Container\Boxes\Item Info Entries\ItemInfoEntryTypes.cs" />
-    <Compile Include="Avif Container\Boxes\ItemLocationExtent.cs" />
-    <Compile Include="Avif Container\Boxes\FileTypeBox.cs" />
-    <Compile Include="Avif Container\Boxes\FullBox.cs" />
-    <Compile Include="Avif Container\Boxes\HandlerBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Info Entries\AV01ItemInfoEntryBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Info Entries\MimeItemInfoEntryBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Info Entries\UriItemEntryInfoBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Info Entries\XmpItemInfoEntry.cs" />
-    <Compile Include="Avif Container\Boxes\ItemLocationEntry.cs" />
-    <Compile Include="Avif Container\Boxes\ItemInfoBox.cs" />
-    <Compile Include="Avif Container\Boxes\ItemInfoEntryBox.cs" />
-    <Compile Include="Avif Container\Boxes\ItemLocationBox.cs" />
-    <Compile Include="Avif Container\Boxes\ItemPropertiesBox.cs" />
-    <Compile Include="Avif Container\Boxes\ItemPropertyAssociationEntry.cs" />
-    <Compile Include="Avif Container\Boxes\ItemReferenceBox.cs" />
-    <Compile Include="Avif Container\Boxes\MediaDataBox.cs" />
-    <Compile Include="Avif Container\Boxes\BoxString.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\PixelAspectRatioBox.cs" />
-    <Compile Include="Avif Container\Boxes\Item Properties\PixelInformationBox.cs" />
-    <Compile Include="Avif Container\Boxes\MetaBox.cs" />
-    <Compile Include="Avif Container\Boxes\PrimaryItemBox.cs" />
-    <Compile Include="Avif Container\Boxes\ItemPropertyContainerBox.cs" />
-    <Compile Include="Avif Container\Boxes\ReferenceTypes.cs" />
-    <Compile Include="Avif Container\Boxes\ItemReferenceEntryBox.cs" />
-    <Compile Include="Avif Container\FourCC.cs" />
-    <Compile Include="Avif Container\Boxes\ItemPropertyAssociationBox.cs" />
-    <Compile Include="AvifFile.cs" />
-    <Compile Include="CompressedAV1Image.cs" />
-    <Compile Include="AvifMetadata.cs" />
-    <Compile Include="AvifNative.cs" />
-    <Compile Include="AvifFileTypeFactory.cs" />
-    <Compile Include="AvifFileType.cs" />
-    <Compile Include="CompressedAV1ImageCollection.cs" />
-    <Compile Include="CompressionSpeed.cs" />
-    <Compile Include="ExceptionUtil.cs" />
-    <Compile Include="Exif\EndianUtil.cs" />
-    <Compile Include="Exif\ExifColorSpace.cs" />
-    <Compile Include="Exif\ExifParser.cs" />
-    <Compile Include="Exif\ExifTagHelper.cs" />
-    <Compile Include="Exif\ExifValueCollection.cs" />
-    <Compile Include="Exif\ExifWriter.cs" />
-    <Compile Include="Exif\IFDEntry.cs" />
-    <Compile Include="Exif\MetadataEntry.cs" />
-    <Compile Include="Exif\MetadataHelpers.cs" />
-    <Compile Include="Exif\MetadataKey.cs" />
-    <Compile Include="Exif\MetadataKeys.cs" />
-    <Compile Include="Exif\MetadataSection.cs" />
-    <Compile Include="Exif\TagDataType.cs" />
-    <Compile Include="Exif\TagDataTypeUtil.cs" />
-    <Compile Include="Exif\TiffConstants.cs" />
-    <Compile Include="Interop\AvifNative_64.cs" />
-    <Compile Include="Interop\AvifNative_86.cs" />
-    <Compile Include="Interop\BitmapData.cs" />
-    <Compile Include="Interop\CICPColorData.cs" />
-    <Compile Include="Interop\CompressedAV1Data.cs" />
-    <Compile Include="Interop\CompressedAV1DataAllocator.cs" />
-    <Compile Include="Interop\DecodeInfo.cs" />
-    <Compile Include="Interop\DecoderStatus.cs" />
-    <Compile Include="Interop\EncoderOptions.cs" />
-    <Compile Include="Interop\EncoderStatus.cs" />
-    <Compile Include="Interop\IPinnableBuffer.cs" />
-    <Compile Include="Interop\ManagedCompressedAV1Data.cs" />
-    <Compile Include="Interop\ProgressContext.cs" />
-    <Compile Include="Interop\SafeProcessHeapBuffer.cs" />
-    <Compile Include="Interop\UnmanagedCompressedAV1Data.cs" />
-    <Compile Include="IO\BigEndianBinaryWriter.cs" />
-    <Compile Include="IO\EndianBinaryReader.cs" />
-    <Compile Include="IO\EndianBinaryReaderSegment.cs" />
-    <Compile Include="IO\Endianess.cs" />
-    <Compile Include="IO\StreamSegment.cs" />
-    <Compile Include="Localization\BuiltinStringResourceManager.cs" />
-    <Compile Include="Localization\IAvifStringResourceManager.cs" />
-    <Compile Include="Localization\PdnLocalizedStringResourceManager.cs" />
-    <Compile Include="PluginSupportInfo.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="StreamExtensions.cs" />
-    <Compile Include="YUVChromaSubsampling.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "D:\Program Files\paint.net\FileTypes" /y</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'=='net47'">
+    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;D:\Program Files\paint.net\FileTypes&quot; /y" />
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

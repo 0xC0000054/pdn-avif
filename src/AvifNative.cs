@@ -14,6 +14,7 @@ using AvifFileType.Interop;
 using PaintDotNet;
 using System;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 
 namespace AvifFileType
 {
@@ -46,7 +47,11 @@ namespace AvifFileType
                 CompressedAV1OutputAlloc outputAllocDelegate = new CompressedAV1OutputAlloc(allocator.Allocate);
                 EncoderStatus status = EncoderStatus.Ok;
 
+#if NET47
                 if (IntPtr.Size == 8)
+#else
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+#endif
                 {
                     status = AvifNative_64.CompressImage(ref bitmapData,
                                                          options,
@@ -56,7 +61,11 @@ namespace AvifFileType
                                                          out colorImage,
                                                          out alphaImage);
                 }
-                else
+#if NET47
+                else if (IntPtr.Size == 4)
+#else
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+#endif
                 {
                     status = AvifNative_86.CompressImage(ref bitmapData,
                                                          options,
@@ -65,6 +74,10 @@ namespace AvifFileType
                                                          outputAllocDelegate,
                                                          out colorImage,
                                                          out alphaImage);
+                }
+                else
+                {
+                    throw new PlatformNotSupportedException();
                 }
 
                 GC.KeepAlive(outputAllocDelegate);
@@ -107,7 +120,11 @@ namespace AvifFileType
                 CompressedAV1OutputAlloc outputAllocDelegate = new CompressedAV1OutputAlloc(allocator.Allocate);
                 EncoderStatus status = EncoderStatus.Ok;
 
+#if NET47
                 if (IntPtr.Size == 8)
+#else
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+#endif
                 {
                     status = AvifNative_64.CompressImage(ref bitmapData,
                                                          options,
@@ -117,7 +134,11 @@ namespace AvifFileType
                                                          out colorImage,
                                                          IntPtr.Zero);
                 }
-                else
+#if NET47
+                else if (IntPtr.Size == 4)
+#else
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+#endif
                 {
                     status = AvifNative_86.CompressImage(ref bitmapData,
                                                          options,
@@ -126,6 +147,10 @@ namespace AvifFileType
                                                          outputAllocDelegate,
                                                          out colorImage,
                                                          IntPtr.Zero);
+                }
+                else
+                {
+                    throw new PlatformNotSupportedException();
                 }
 
                 GC.KeepAlive(outputAllocDelegate);
@@ -181,7 +206,11 @@ namespace AvifFileType
                     {
                         CICPColorData colorData = colorConversionInfo.Value;
 
+#if NET47
                         if (IntPtr.Size == 8)
+#else
+                        if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+#endif
                         {
                             status = AvifNative_64.DecompressColorImage(ptr,
                                                                         colorImageSize,
@@ -189,18 +218,30 @@ namespace AvifFileType
                                                                         decodeInfo,
                                                                         ref bitmapData);
                         }
-                        else
+#if NET47
+                        else if (IntPtr.Size == 4)
+#else
+                        else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+#endif
                         {
                             status = AvifNative_86.DecompressColorImage(ptr,
                                                                         colorImageSize,
                                                                         ref colorData,
                                                                         decodeInfo,
                                                                         ref bitmapData);
+                        }
+                        else
+                        {
+                            throw new PlatformNotSupportedException();
                         }
                     }
                     else
                     {
+#if NET47
                         if (IntPtr.Size == 8)
+#else
+                        if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+#endif
                         {
                             status = AvifNative_64.DecompressColorImage(ptr,
                                                                         colorImageSize,
@@ -208,13 +249,21 @@ namespace AvifFileType
                                                                         decodeInfo,
                                                                         ref bitmapData);
                         }
-                        else
+#if NET47
+                        else if (IntPtr.Size == 4)
+#else
+                        else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+#endif
                         {
                             status = AvifNative_86.DecompressColorImage(ptr,
                                                                         colorImageSize,
                                                                         IntPtr.Zero,
                                                                         decodeInfo,
                                                                         ref bitmapData);
+                        }
+                        else
+                        {
+                            throw new PlatformNotSupportedException();
                         }
                     }
                 });
@@ -261,19 +310,31 @@ namespace AvifFileType
 
                         UIntPtr alphaImageSize = new UIntPtr(length);
 
+#if NET47
                         if (IntPtr.Size == 8)
+#else
+                        if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+#endif
                         {
                             status = AvifNative_64.DecompressAlphaImage(ptr,
                                                                         alphaImageSize,
                                                                         decodeInfo,
                                                                         ref bitmapData);
                         }
-                        else
+#if NET47
+                        else if (IntPtr.Size == 4)
+#else
+                        else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+#endif
                         {
                             status = AvifNative_86.DecompressAlphaImage(ptr,
                                                                         alphaImageSize,
                                                                         decodeInfo,
                                                                         ref bitmapData);
+                        }
+                        else
+                        {
+                            throw new PlatformNotSupportedException();
                         }
                     });
             }

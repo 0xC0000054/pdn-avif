@@ -244,9 +244,11 @@ namespace AvifFileType
                 propertyAssociationIndex++;
 
                 itemPropertiesBox.AddPropertyAssociation(this.state.PrimaryItemId, false, gridImageSpatialExtentsAssociationIndex);
+                itemPropertiesBox.AddPropertyAssociation(this.state.PrimaryItemId, true, colorPixelInformationAssociationIndex);
                 if (this.state.AlphaItemId != 0)
                 {
                     itemPropertiesBox.AddPropertyAssociation(this.state.AlphaItemId, false, gridImageSpatialExtentsAssociationIndex);
+                    itemPropertiesBox.AddPropertyAssociation(this.state.AlphaItemId, true, alphaPixelInformationAssociationIndex);
                     itemPropertiesBox.AddPropertyAssociation(this.state.AlphaItemId, true, alphaChannelAssociationIndex);
                 }
             }

@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -15,15 +15,15 @@
 #include "aom/aom_codec.h"
 #include <stdexcept>
 
-class codec_error : public std::runtime_error
+class codec_init_error : public std::runtime_error
 {
 public:
-    codec_error(const char* message) : std::runtime_error(message)
+    codec_init_error(const char* message) : std::runtime_error(message)
     {
         error = AOM_CODEC_ERROR;
     }
 
-    codec_error(aom_codec_err_t err) : std::runtime_error(aom_codec_err_to_string(err))
+    codec_init_error(aom_codec_err_t err) : std::runtime_error(aom_codec_err_to_string(err))
     {
         error = err;
     }
@@ -76,7 +76,7 @@ protected:
             }
             else
             {
-                throw codec_error(err);
+                throw codec_init_error(err);
             }
         }
     }

@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -57,7 +57,7 @@ namespace
         {
             threadCount = ClampThreadCount(options->maxThreads);
             quality = ConvertQualityToAOMRange(options->quality);
-            usage = AOM_USAGE_GOOD_QUALITY;
+            usage = AOM_USAGE_ALL_INTRA;
 
             switch (options->compressionSpeed)
             {
@@ -153,7 +153,7 @@ namespace
         {
             if (!initialized)
             {
-                throw codec_error("ConfigureEncoderOptions called on an invalid object.");
+                throw codec_init_error("ConfigureEncoderOptions called on an invalid object.");
             }
 
             throw_on_error(aom_codec_control(&codec, AOME_SET_CPUUSED, encodeOptions.cpuUsed));
@@ -255,7 +255,7 @@ namespace
         {
             status = EncoderStatus::OutOfMemory;
         }
-        catch (const codec_error&)
+        catch (const codec_init_error&)
         {
             status = EncoderStatus::CodecInitFailed;
         }
@@ -288,10 +288,8 @@ namespace
         aom_cfg.g_threads = encodeOptions.threadCount;
         aom_cfg.g_usage = encodeOptions.usage;
         aom_cfg.monochrome = frame->monochrome;
-        // Setting g_lag_in_frames to 1 when encoding a single frame
-        // reduces the number of frame buffers that libaom allocates.
-        // See https://github.com/AOMediaCodec/libavif/commit/3fcc555000fffc3172db4c19c412eea7fb1d46a3
-        aom_cfg.g_lag_in_frames = 1;
+        // Setting g_lag_in_frames to 0 is required when using the all intra encoding mode.
+        aom_cfg.g_lag_in_frames = 0;
 
         // Set the profile to use based on the frame format.
         // See Annex A.2 in the AV1 Specification:

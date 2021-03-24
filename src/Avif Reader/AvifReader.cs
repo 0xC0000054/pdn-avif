@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -33,18 +33,28 @@ namespace AvifFileType
         private readonly ImageMirrorBox imageMirrorBox;
         private readonly ImageGridInfo colorGridInfo;
         private readonly ImageGridInfo alphaGridInfo;
-        private readonly ColorInformationBox colorInfoBox;
+        private readonly IccProfileColorInformation iccProfileColorInformation;
+        private readonly NclxColorInformation nclxColorInformation;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AvifReader"/> class.
         /// </summary>
         /// <param name="parser">The parser.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
-        public AvifReader(Stream input, bool leaveOpen, IByteArrayPool arrayPool)
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="input"/> is null.
+        /// -or-
+        /// <paramref name="arrayPool"/> is null.
+        /// </exception>
+        public AvifReader(Stream input, bool leaveOpen, PaintDotNet.AppModel.IArrayPoolService arrayPool)
         {
             if (input is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(input));
+            }
+
+            if (arrayPool is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
             }
 
             // The parser is initialized first because it will throw an exception
@@ -52,7 +62,6 @@ namespace AvifFileType
             this.parser = new AvifParser(input, leaveOpen, arrayPool);
             this.primaryItemId = this.parser.GetPrimaryItemId();
             this.alphaItemId = this.parser.GetAlphaItemId(this.primaryItemId);
-            this.colorInfoBox = this.parser.TryGetColorInfoBox(this.primaryItemId);
             this.parser.GetTransformationProperties(this.primaryItemId,
                                                     out this.cleanApertureBox,
                                                     out this.imageRotateBox,
@@ -65,6 +74,30 @@ namespace AvifFileType
             else
             {
                 this.alphaGridInfo = null;
+            }
+
+            // The HEIF specification allows an image to have up to one color information box of each type (ICC and/or NCLX).
+            // See the HEIF specification Amendment 3, section 6.5.5.1.
+            foreach (ColorInformationBox box in this.parser.EnumerateColorInformationBoxes(this.primaryItemId))
+            {
+                if (box is IccProfileColorInformation icc)
+                {
+                    if (this.iccProfileColorInformation != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The primary image has more than one ICC color information box.");
+                    }
+
+                    this.iccProfileColorInformation = icc;
+                }
+                else if (box is NclxColorInformation nclx)
+                {
+                    if (this.nclxColorInformation != null)
+                    {
+                        ExceptionUtil.ThrowFormatException("The primary image has more than one NCLX color information box.");
+                    }
+
+                    this.nclxColorInformation = nclx;
+                }
             }
         }
 
@@ -123,7 +156,7 @@ namespace AvifFileType
             }
         }
 
-        public byte[] GetExifData()
+        public AvifItemData GetExifData()
         {
             VerifyNotDisposed();
 
@@ -131,39 +164,13 @@ namespace AvifFileType
 
             if (entry != null)
             {
-                ulong length = entry.TotalItemSize;
+                // The EXIF data block has a header consisting of a 4-byte unsigned integer that
+                // indicates the number of bytes that come before the start of the TIFF header.
+                // See ISO/IEC 23008-12:2017 section A.2.1.
 
-                // Ignore any EXIF blocks that are larger than 2GB.
-                if (length < int.MaxValue)
+                if (entry.TotalItemSize > sizeof(uint))
                 {
-                    using (AvifItemData itemData = this.parser.ReadItemData(entry))
-                    using (Stream stream = itemData.GetStream())
-                    {
-                        // The EXIF data block has a header that indicates the number of bytes
-                        // that come before the start of the TIFF header.
-                        // See ISO/IEC 23008-12:2017 section A.2.1.
-
-                        long tiffStartOffset = stream.TryReadUInt32BigEndian();
-
-                        if (tiffStartOffset != -1)
-                        {
-                            long dataLength = (long)length - tiffStartOffset - sizeof(uint);
-
-                            if (dataLength > 0)
-                            {
-                                if (tiffStartOffset != 0)
-                                {
-                                    stream.Position += tiffStartOffset;
-                                }
-
-                                byte[] bytes = new byte[dataLength];
-
-                                stream.ProperRead(bytes, 0, bytes.Length);
-
-                                return bytes;
-                            }
-                        }
-                    }
+                    return this.parser.ReadItemData(entry);
                 }
             }
 
@@ -172,14 +179,7 @@ namespace AvifFileType
 
         public byte[] GetICCProfile()
         {
-            byte[] iccProfileBytes = null;
-
-            if (this.colorInfoBox is IccProfileColorInformation iccProfile)
-            {
-                iccProfileBytes = iccProfile.GetProfileBytes();
-            }
-
-            return iccProfileBytes;
+            return this.iccProfileColorInformation?.GetProfileBytes();
         }
 
         public byte[] GetXmpData()
@@ -233,6 +233,21 @@ namespace AvifFileType
                     {
                         ExceptionUtil.ThrowFormatException("The tile and output image height must be an even number.");
                     }
+                }
+            }
+        }
+
+        private static unsafe void ConvertSurfaceFromPremultipliedAlpha(Surface surface)
+        {
+            for (int y = 0; y < surface.Height; y++)
+            {
+                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
+                ColorBgra* ptrEnd = ptr + surface.Width;
+
+                while (ptr < ptrEnd)
+                {
+                    *ptr = ptr->ConvertFromPremultipliedAlpha();
+                    ptr++;
                 }
             }
         }
@@ -442,10 +457,16 @@ namespace AvifFileType
                     if (firstTile)
                     {
                         firstTile = false;
-                        CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
-                                                    decodeInfo.expectedHeight,
-                                                    decodeInfo.chromaSubsampling,
-                                                    this.alphaGridInfo);
+
+                        // Skip the image grid validation if the image grid only has one tile.
+                        // Some writers may use an image grid to crop a single image.
+                        if (childImageIds.Count > 1)
+                        {
+                            CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
+                                                        decodeInfo.expectedHeight,
+                                                        decodeInfo.chromaSubsampling,
+                                                        this.alphaGridInfo);
+                        }
                     }
                 }
             }
@@ -479,10 +500,16 @@ namespace AvifFileType
                     if (firstTile)
                     {
                         firstTile = false;
-                        CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
-                                                    decodeInfo.expectedHeight,
-                                                    decodeInfo.chromaSubsampling,
-                                                    this.colorGridInfo);
+
+                        // Skip the image grid validation if the image grid only has one tile.
+                        // Some writers may use an image grid to crop a single image.
+                        if (childImageIds.Count > 1)
+                        {
+                            CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
+                                                        decodeInfo.expectedHeight,
+                                                        decodeInfo.chromaSubsampling,
+                                                        this.colorGridInfo);
+                        }
                     }
                 }
             }
@@ -551,19 +578,27 @@ namespace AvifFileType
 
                 DecodeAlphaImage(this.alphaItemId, decodeInfo, fullSurface);
             }
+
+            if (this.parser.IsAlphaPremultiplied(this.primaryItemId, this.alphaItemId))
+            {
+                // The ConvertSurfaceFromPremultipliedAlpha method calls ColorBgra.ConvertFromPremultipliedAlpha() in a
+                // loop due to the fact that SurfaceExtensions.ConvertFromPremultipliedAlpha() produces incorrect results
+                // for some images.
+                ConvertSurfaceFromPremultipliedAlpha(fullSurface);
+            }
         }
 
         private void ProcessColorImage(Surface fullSurface)
         {
             CICPColorData? colorConversionInfo = null;
-            if (this.colorInfoBox is NclxColorInformation nclxColorInformation)
+            if (this.nclxColorInformation != null)
             {
                 colorConversionInfo = new CICPColorData
                 {
-                    colorPrimaries = nclxColorInformation.ColorPrimaries,
-                    transferCharacteristics = nclxColorInformation.TransferCharacteristics,
-                    matrixCoefficients = nclxColorInformation.MatrixCoefficients,
-                    fullRange = nclxColorInformation.FullRange
+                    colorPrimaries = this.nclxColorInformation.ColorPrimaries,
+                    transferCharacteristics = this.nclxColorInformation.TransferCharacteristics,
+                    matrixCoefficients = this.nclxColorInformation.MatrixCoefficients,
+                    fullRange = this.nclxColorInformation.FullRange
                 };
             }
 

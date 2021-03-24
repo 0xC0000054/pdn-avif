@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -23,64 +23,66 @@ namespace AvifFileType.Exif
         /// <summary>
         /// Parses the EXIF data into a collection of properties.
         /// </summary>
-        /// <param name="exifBytes">The EXIF bytes.</param>
+        /// <param name="exif">The EXIF data.</param>
         /// <returns>
         /// A collection containing the EXIF properties.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="exifBytes"/> is null.
+        /// <paramref name="exif"/> is null.
         ///
         /// -or-
         ///
         /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        internal static ExifValueCollection Parse(byte[] exifBytes, IByteArrayPool arrayPool)
+        internal static ExifValueCollection Parse(AvifItemData exif, PaintDotNet.AppModel.IArrayPoolService arrayPool)
         {
-            if (exifBytes is null)
+            if (exif is null)
             {
-                throw new ArgumentNullException(nameof(exifBytes));
+                throw new ArgumentNullException(nameof(exif));
             }
 
-            List<MetadataEntry> metadataEntries = new List<MetadataEntry>();
+            ExifValueCollection metadataEntries = null;
 
-            MemoryStream stream = null;
-            try
+            StreamSegment stream = TryParseExifMetadataHeader(exif);
+
+            if (stream != null)
             {
-                stream = new MemoryStream(exifBytes);
-
-                Endianess? byteOrder = TryDetectTiffByteOrder(stream);
-
-                if (byteOrder.HasValue)
+                try
                 {
-                    using (EndianBinaryReader reader = new EndianBinaryReader(stream, byteOrder.Value, arrayPool))
+                    Endianess? byteOrder = TryDetectTiffByteOrder(stream);
+
+                    if (byteOrder.HasValue)
                     {
-                        stream = null;
-
-                        ushort signature = reader.ReadUInt16();
-
-                        if (signature == TiffConstants.Signature)
+                        using (EndianBinaryReader reader = new EndianBinaryReader(stream, byteOrder.Value, arrayPool))
                         {
-                            uint ifdOffset = reader.ReadUInt32();
+                            stream = null;
 
-                            List<ParserIFDEntry> entries = ParseDirectories(reader, ifdOffset);
+                            ushort signature = reader.ReadUInt16();
 
-                            metadataEntries.AddRange(ConvertIFDEntriesToMetadataEntries(reader, entries));
+                            if (signature == TiffConstants.Signature)
+                            {
+                                uint ifdOffset = reader.ReadUInt32();
+
+                                List<ParserIFDEntry> entries = ParseDirectories(reader, ifdOffset);
+
+                                metadataEntries = new ExifValueCollection(ConvertIFDEntriesToMetadataEntries(reader, entries));
+                            }
                         }
                     }
                 }
-            }
-            catch (EndOfStreamException)
-            {
-            }
-            finally
-            {
-                stream?.Dispose();
+                catch (EndOfStreamException)
+                {
+                }
+                finally
+                {
+                    stream?.Dispose();
+                }
             }
 
-            return new ExifValueCollection(metadataEntries);
+            return metadataEntries;
         }
 
-        private static ICollection<MetadataEntry> ConvertIFDEntriesToMetadataEntries(EndianBinaryReader reader, List<ParserIFDEntry> entries)
+        private static List<MetadataEntry> ConvertIFDEntriesToMetadataEntries(EndianBinaryReader reader, List<ParserIFDEntry> entries)
         {
             List<MetadataEntry> metadataEntries = new List<MetadataEntry>(entries.Count);
             bool swapNumberByteOrder = reader.Endianess == Endianess.Big;
@@ -340,6 +342,42 @@ namespace AvifFileType.Exif
             {
                 return null;
             }
+        }
+
+        private static StreamSegment TryParseExifMetadataHeader(AvifItemData data)
+        {
+            // The EXIF data block has a header consisting of a big-endian 4-byte unsigned integer
+            // that indicates the number of bytes that come before the start of the TIFF header.
+            // See ISO/IEC 23008-12:2017 section A.2.1.
+
+            StreamSegment stream = null;
+            Stream avifItemStream = null;
+
+            try
+            {
+                avifItemStream = data.GetStream();
+
+                long tiffStartOffset = avifItemStream.TryReadUInt32BigEndian();
+
+                if (tiffStartOffset != -1)
+                {
+                    long origin = avifItemStream.Position + tiffStartOffset;
+                    ulong length = data.Length - (ulong)tiffStartOffset - sizeof(uint);
+
+                    if (length > 0 && length <= long.MaxValue)
+                    {
+                        stream = new StreamSegment(avifItemStream, origin, (long)length);
+                        // The StreamSegment will take ownership of the existing stream.
+                        avifItemStream = null;
+                    }
+                }
+            }
+            finally
+            {
+                avifItemStream?.Dispose();
+            }
+
+            return stream;
         }
 
         private readonly struct ParserIFDEntry

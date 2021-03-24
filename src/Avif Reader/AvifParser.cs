@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -11,6 +11,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
+using PaintDotNet.AppModel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,9 +36,9 @@ namespace AvifFileType
         private MetaBox metaBox;
         private EndianBinaryReader reader;
         private readonly ulong fileLength;
-        private readonly IByteArrayPool arrayPool;
+        private readonly IArrayPoolService arrayPool;
 
-        public AvifParser(Stream stream, bool leaveOpen, IByteArrayPool arrayPool)
+        public AvifParser(Stream stream, bool leaveOpen, IArrayPoolService arrayPool)
         {
             if (stream is null)
             {
@@ -56,6 +57,25 @@ namespace AvifFileType
             {
                 this.reader.Dispose();
                 this.reader = null;
+            }
+        }
+
+        public IEnumerable<ColorInformationBox> EnumerateColorInformationBoxes(uint itemId)
+        {
+            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
+            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+
+            if (items != null)
+            {
+                for (int i = 0; i < items.Count; i++)
+                {
+                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
+
+                    if (property is ColorInformationBox colorInformationBox)
+                    {
+                        yield return colorInformationBox;
+                    }
+                }
             }
         }
 
@@ -141,6 +161,13 @@ namespace AvifFileType
             return false;
         }
 
+        public bool IsAlphaPremultiplied(uint primaryItemId, uint alphaItemId)
+        {
+            IItemReferenceEntry entry = GetMatchingReferences(alphaItemId, ReferenceTypes.PremultipliedAlphaImage).FirstOrDefault();
+
+            return entry != null && entry.FromItemId == primaryItemId;
+        }
+
         public AvifItemData ReadItemData(ItemLocationEntry entry)
         {
             if (entry is null)
@@ -217,11 +244,6 @@ namespace AvifFileType
             return null;
         }
 
-        public ColorInformationBox TryGetColorInfoBox(uint itemId)
-        {
-            return TryGetAssociatedItemProperty<ColorInformationBox>(itemId);
-        }
-
         public ItemLocationEntry TryGetExifLocation(uint itemId)
         {
             foreach (IItemReferenceEntry item in GetMatchingReferences(itemId, ReferenceTypes.ContentDescription))
@@ -243,7 +265,12 @@ namespace AvifFileType
 
             if (gridDescriptor != null)
             {
-                IItemReferenceEntry derivedImageProperty = GetMatchingReferences(itemId, ReferenceTypes.DerivedImage).First();
+                IItemReferenceEntry derivedImageProperty = GetMatchingReferences(itemId, ReferenceTypes.DerivedImage).FirstOrDefault();
+
+                if (derivedImageProperty is null)
+                {
+                    ExceptionUtil.ThrowFormatException("The grid image does not have an associated derived image property.");
+                }
 
                 return new ImageGridInfo(derivedImageProperty.ToItemIds, gridDescriptor);
             }

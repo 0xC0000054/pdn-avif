@@ -29,7 +29,7 @@ See [License.txt](License.txt) for more information.
 ## Prerequisites
 
 * Visual Studio 2019
-* Paint.NET 4.2.14 or later
+* Paint.NET 4.2.15 or later
 
 ## Building the plugin
 
@@ -40,6 +40,6 @@ See [License.txt](License.txt) for more information.
 
 ## 3rd Party Code
 
-This project uses the following libraries. (the required header and library files are located in the `src/deps/` sub-folders).
+This project uses the following libraries. (the required header and library files are located in the `3rd-party` sub-folders).
 
-* [aom](https://aomedia.googlesource.com/aom/) (v2.0.0 tag)
+* [aom](https://aomedia.googlesource.com/aom/) (v3.0.0 tag)

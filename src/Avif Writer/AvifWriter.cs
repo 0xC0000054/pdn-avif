@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -12,6 +12,7 @@
 
 using AvifFileType.AvifContainer;
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using System.Collections.Generic;
 using System.IO;
 
@@ -22,9 +23,9 @@ namespace AvifFileType
         private readonly AvifWriterState state;
         private readonly FileTypeBox fileTypeBox;
         private readonly MetaBox metaBox;
-        private readonly ColorInformationBox colorInformationBox;
+        private readonly IReadOnlyList<ColorInformationBox> colorInformationBoxes;
         private readonly bool colorImageIsGrayscale;
-        private readonly IByteArrayPool arrayPool;
+        private readonly IArrayPoolService arrayPool;
 
         private readonly ProgressEventHandler progressCallback;
         private uint progressDone;
@@ -32,19 +33,25 @@ namespace AvifFileType
 
         public AvifWriter(IReadOnlyList<CompressedAV1Image> colorImages,
                           IReadOnlyList<CompressedAV1Image> alphaImages,
+                          bool premultipliedAlpha,
                           AvifMetadata metadata,
                           ImageGridMetadata imageGridMetadata,
                           YUVChromaSubsampling chromaSubsampling,
-                          ColorInformationBox colorInformationBox,
+                          IReadOnlyList<ColorInformationBox> colorInformationBoxes,
                           ProgressEventHandler progressEventHandler,
                           uint progressDone,
                           uint progressTotal,
-                          IByteArrayPool arrayPool)
+                          IArrayPoolService arrayPool)
         {
-            this.state = new AvifWriterState(colorImages, alphaImages, imageGridMetadata, metadata, arrayPool);
+            this.state = new AvifWriterState(colorImages,
+                                             alphaImages,
+                                             premultipliedAlpha,
+                                             imageGridMetadata,
+                                             metadata,
+                                             arrayPool);
             this.arrayPool = arrayPool;
             this.colorImageIsGrayscale = chromaSubsampling == YUVChromaSubsampling.Subsampling400;
-            this.colorInformationBox = colorInformationBox;
+            this.colorInformationBoxes = colorInformationBoxes ?? System.Array.Empty<ColorInformationBox>();
             this.progressCallback = progressEventHandler;
             this.progressDone = progressDone;
             this.progressTotal = progressTotal;
@@ -65,32 +72,25 @@ namespace AvifFileType
 
                 new MediaDataBox(this.state.MediaDataBoxContentSize).Write(writer);
 
-                IReadOnlyList<AvifWriterItem> items = this.state.Items;
+                // The media data box items are written in the following order:
+                // 1. EXIF and/or XMP meta data
+                // 2. Alpha images (if present)
+                // 3. Color images
+                //
+                // The meta data is written first to improve efficiency for readers that want to use it
+                // without reading the image data.
+                // The alpha image data is written before the color image data to improve the user experience
+                // for web browsers and other applications that may display an AVIF image as it is being
+                // streamed over a network.
+                // See the following link for a discussion on alpha image data being written before color
+                // image data: https://github.com/AOMediaCodec/libavif/issues/287
 
-                for (int i = 0; i < items.Count; i++)
+                WriteMediaDataBoxItems(writer, this.state.MediaDataBoxMetadataItemIndexes);
+                if (this.state.AlphaItemId != 0)
                 {
-                    AvifWriterItem item = items[i];
-
-                    if (item.Image is null && item.ContentBytes is null)
-                    {
-                        continue;
-                    }
-
-                    // We only ever write items with a single extent.
-                    item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
-
-                    if (item.Image != null)
-                    {
-                        item.Image.Data.Write(writer);
-
-                        this.progressDone++;
-                        this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));
-                    }
-                    else
-                    {
-                        writer.Write(item.ContentBytes);
-                    }
+                    WriteMediaDataBoxItems(writer, this.state.MediaDataBoxAlphaItemIndexes);
                 }
+                WriteMediaDataBoxItems(writer, this.state.MediaDataBoxColorItemIndexes);
             }
         }
 
@@ -192,7 +192,6 @@ namespace AvifFileType
                         propertyAssociationIndex++;
                     }
 
-
                     if (colorPixelInformationAssociationIndex == 0 || item.IsAlphaImage && alphaPixelInformationAssociationIndex == 0)
                     {
                         itemPropertiesBox.AddProperty(new PixelInformationBox(item.Image.Format));
@@ -213,7 +212,6 @@ namespace AvifFileType
                         }
                         propertyAssociationIndex++;
                     }
-
 
                     if (item.IsAlphaImage)
                     {
@@ -251,10 +249,14 @@ namespace AvifFileType
                 }
             }
 
-            if (this.colorInformationBox != null)
+            if (this.colorInformationBoxes.Count > 0)
             {
-                itemPropertiesBox.AddProperty(this.colorInformationBox);
-                itemPropertiesBox.AddPropertyAssociation(this.state.PrimaryItemId, true, propertyAssociationIndex);
+                for (int i = 0; i < this.colorInformationBoxes.Count; i++)
+                {
+                    itemPropertiesBox.AddProperty(this.colorInformationBoxes[i]);
+                    itemPropertiesBox.AddPropertyAssociation(this.state.PrimaryItemId, true, propertyAssociationIndex);
+                    propertyAssociationIndex++;
+                }
             }
         }
 
@@ -279,6 +281,37 @@ namespace AvifFileType
             PopulateItemLocations();
             PopulateItemProperties();
             PopulateItemReferences();
+        }
+
+        private void WriteMediaDataBoxItems(BigEndianBinaryWriter writer, IReadOnlyList<int> itemIndexes)
+        {
+            IReadOnlyList<AvifWriterItem> items = this.state.Items;
+
+            for (int i = 0; i < itemIndexes.Count; i++)
+            {
+                int index = itemIndexes[i];
+                AvifWriterItem item = items[index];
+
+                if (item.Image is null && item.ContentBytes is null)
+                {
+                    continue;
+                }
+
+                // We only ever write items with a single extent.
+                item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
+
+                if (item.Image != null)
+                {
+                    item.Image.Data.Write(writer);
+
+                    this.progressDone++;
+                    this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));
+                }
+                else
+                {
+                    writer.Write(item.ContentBytes);
+                }
+            }
         }
     }
 }

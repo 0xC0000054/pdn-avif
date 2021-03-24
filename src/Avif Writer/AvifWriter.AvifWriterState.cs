@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -11,6 +11,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
+using PaintDotNet.AppModel;
 using System.Collections.Generic;
 using System.IO;
 
@@ -27,9 +28,10 @@ namespace AvifFileType
 
             public AvifWriterState(IReadOnlyList<CompressedAV1Image> colorImages,
                                    IReadOnlyList<CompressedAV1Image> alphaImages,
+                                   bool premultipliedAlpha,
                                    ImageGridMetadata imageGridMetadata,
                                    AvifMetadata metadata,
-                                   IByteArrayPool arrayPool)
+                                   IArrayPoolService arrayPool)
             {
                 if (colorImages is null)
                 {
@@ -48,7 +50,7 @@ namespace AvifFileType
 
                 this.ImageGrid = imageGridMetadata;
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
-                Initialize(colorImages, alphaImages, imageGridMetadata, metadata, arrayPool);
+                Initialize(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata, metadata, arrayPool);
             }
 
             public uint AlphaItemId { get; private set; }
@@ -59,11 +61,17 @@ namespace AvifFileType
 
             public IReadOnlyList<AvifWriterItem> Items => this.items;
 
+            public IReadOnlyList<int> MediaDataBoxAlphaItemIndexes { get; private set; }
+
+            public IReadOnlyList<int> MediaDataBoxColorItemIndexes { get; private set; }
+
             public ulong MediaDataBoxContentSize { get; private set; }
+
+            public IReadOnlyList<int> MediaDataBoxMetadataItemIndexes { get; private set; }
 
             public uint PrimaryItemId { get; private set; }
 
-            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata, IByteArrayPool arrayPool)
+            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata, IArrayPoolService arrayPool)
             {
                 ImageGridDescriptor imageGridDescriptor = new ImageGridDescriptor(imageGridMetadata);
 
@@ -92,25 +100,28 @@ namespace AvifFileType
 
             private void Initialize(IReadOnlyList<CompressedAV1Image> colorImages,
                                     IReadOnlyList<CompressedAV1Image> alphaImages,
+                                    bool premultipliedAlpha,
                                     ImageGridMetadata imageGridMetadata,
                                     AvifMetadata metadata,
-                                    IByteArrayPool arrayPool)
+                                    IArrayPoolService arrayPool)
             {
                 ImageStateInfo result;
 
                 if (imageGridMetadata != null)
                 {
-                    result = InitializeFromImageGrid(colorImages, alphaImages, imageGridMetadata);
+                    result = InitializeFromImageGrid(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata);
                     this.ItemDataBox = CreateItemDataBox(imageGridMetadata, arrayPool);
                 }
                 else
                 {
-                    result = InitializeFromSingleImage(colorImages[0], alphaImages?[0]);
+                    result = InitializeFromSingleImage(colorImages[0], alphaImages?[0], premultipliedAlpha);
                     this.ItemDataBox = null;
                 }
 
                 uint itemId = result.NextId;
                 ulong mediaDataBoxContentSize = result.MediaDataBoxContentSize;
+
+                List<int> mediaDataBoxMetadataItemIndexes = new List<int>(2);
 
                 byte[] exif = metadata.GetExifBytesReadOnly();
                 if (exif != null && exif.Length > 0)
@@ -119,6 +130,7 @@ namespace AvifFileType
                     itemId++;
                     exifItem.ItemReferences.Add(new ItemReferenceEntryBox(exifItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId));
 
+                    mediaDataBoxMetadataItemIndexes.Add(this.items.Count);
                     this.items.Add(exifItem);
                     mediaDataBoxContentSize += (ulong)exifItem.ContentBytes.Length;
                 }
@@ -129,15 +141,18 @@ namespace AvifFileType
                     AvifWriterItem xmpItem = AvifWriterItem.CreateFromXmp(itemId, xmp);
                     xmpItem.ItemReferences.Add(new ItemReferenceEntryBox(xmpItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId));
 
+                    mediaDataBoxMetadataItemIndexes.Add(this.items.Count);
                     this.items.Add(xmpItem);
                     mediaDataBoxContentSize += (ulong)xmpItem.ContentBytes.Length;
                 }
 
                 this.MediaDataBoxContentSize = mediaDataBoxContentSize;
+                this.MediaDataBoxMetadataItemIndexes = mediaDataBoxMetadataItemIndexes;
             }
 
             private ImageStateInfo InitializeFromImageGrid(IReadOnlyList<CompressedAV1Image> colorImages,
                                                            IReadOnlyList<CompressedAV1Image> alphaImages,
+                                                           bool premultipliedAlpha,
                                                            ImageGridMetadata imageGridMetadata)
             {
                 ulong mediaDataBoxContentSize = 0;
@@ -146,12 +161,16 @@ namespace AvifFileType
                 List<uint> colorImageIds = new List<uint>(colorImages.Count);
                 List<uint> alphaImageIds = alphaImages != null ? new List<uint>(alphaImages.Count) : null;
 
+                List<int> mediaDataBoxColorItemIndexes = new List<int>(colorImages.Count);
+                List<int> mediaBoxAlphaItemIndexes = new List<int>(alphaImages != null ? alphaImages.Count : 0);
+
                 for (int i = 0; i < colorImages.Count; i++)
                 {
                     CompressedAV1Image color = colorImages[i];
                     AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, null, color, false);
                     itemId++;
                     colorImageIds.Add(colorItem.Id);
+                    mediaDataBoxColorItemIndexes.Add(this.items.Count);
                     this.items.Add(colorItem);
                     mediaDataBoxContentSize += color.Data.ByteLength;
 
@@ -161,8 +180,16 @@ namespace AvifFileType
                         AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, null, alpha, true);
                         itemId++;
                         alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, colorItem.Id));
-                        alphaImageIds.Add(alphaItem.Id);
 
+                        if (premultipliedAlpha)
+                        {
+                            alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(colorItem.Id,
+                                                                                   ReferenceTypes.PremultipliedAlphaImage,
+                                                                                   alphaItem.Id));
+                        }
+
+                        alphaImageIds.Add(alphaItem.Id);
+                        mediaBoxAlphaItemIndexes.Add(this.items.Count);
                         this.items.Add(alphaItem);
                         mediaDataBoxContentSize += alpha.Data.ByteLength;
                     }
@@ -179,6 +206,7 @@ namespace AvifFileType
                     gridDescriptorLength = ImageGridDescriptor.SmallDescriptorLength;
                 }
 
+                // The grid items do not have any data to write in the media data box.
                 AvifWriterItem colorGridItem = AvifWriterItem.CreateFromImageGrid(itemId, "Color", 0, gridDescriptorLength);
                 itemId++;
                 colorGridItem.ItemReferences.Add(new ItemReferenceEntryBox(colorGridItem.Id, ReferenceTypes.DerivedImage, colorImageIds));
@@ -194,21 +222,35 @@ namespace AvifFileType
                     alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.AuxiliaryImage, colorGridItem.Id));
                     alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.DerivedImage, alphaImageIds));
 
+                    if (premultipliedAlpha)
+                    {
+                        alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(colorGridItem.Id,
+                                                                                   ReferenceTypes.PremultipliedAlphaImage,
+                                                                                   alphaGridItem.Id));
+                    }
+
                     this.AlphaItemId = alphaGridItem.Id;
                     this.items.Add(alphaGridItem);
                 }
 
+                this.MediaDataBoxAlphaItemIndexes = mediaBoxAlphaItemIndexes;
+                this.MediaDataBoxColorItemIndexes = mediaDataBoxColorItemIndexes;
+
                 return new ImageStateInfo(mediaDataBoxContentSize, itemId);
             }
 
-            private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image alpha)
+            private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image alpha, bool premultipliedAlpha)
             {
                 ulong mediaDataBoxContentSize = color.Data.ByteLength;
                 uint itemId = FirstItemId;
 
+                List<int> mediaDataBoxColorItemIndexes = new List<int>(1);
+                List<int> mediaBoxAlphaItemIndexes = new List<int>(1);
+
                 AvifWriterItem colorItem = AvifWriterItem.CreateFromImage(itemId, "Color", color, false);
                 itemId++;
                 this.PrimaryItemId = colorItem.Id;
+                mediaDataBoxColorItemIndexes.Add(this.items.Count);
                 this.items.Add(colorItem);
 
                 if (alpha != null)
@@ -216,11 +258,22 @@ namespace AvifFileType
                     AvifWriterItem alphaItem = AvifWriterItem.CreateFromImage(itemId, "Alpha", alpha, true);
                     itemId++;
                     alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaItem.Id, ReferenceTypes.AuxiliaryImage, this.PrimaryItemId));
+                    if (premultipliedAlpha)
+                    {
+                        alphaItem.ItemReferences.Add(new ItemReferenceEntryBox(this.PrimaryItemId,
+                                                                               ReferenceTypes.PremultipliedAlphaImage,
+                                                                               alphaItem.Id));
+                    }
+
                     this.AlphaItemId = alphaItem.Id;
 
+                    mediaBoxAlphaItemIndexes.Add(this.items.Count);
                     this.items.Add(alphaItem);
                     mediaDataBoxContentSize += alpha.Data.ByteLength;
                 }
+
+                this.MediaDataBoxAlphaItemIndexes = mediaBoxAlphaItemIndexes;
+                this.MediaDataBoxColorItemIndexes = mediaDataBoxColorItemIndexes;
 
                 return new ImageStateInfo(mediaDataBoxContentSize, itemId);
             }
@@ -267,7 +320,6 @@ namespace AvifFileType
                     this.MediaDataBoxContentSize = mediaDataBoxContentSize;
                     this.NextId = nextId;
                 }
-
 
                 public ulong MediaDataBoxContentSize { get; }
 

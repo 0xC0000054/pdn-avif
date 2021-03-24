@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -11,9 +11,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace AvifFileType
@@ -22,9 +24,8 @@ namespace AvifFileType
     public sealed class AvifFileTypePlugin
         : PropertyBasedFileType
     {
-        private readonly int? maxEncoderThreadsOverride;
+        private readonly IArrayPoolService arrayPoolService;
         private readonly IAvifStringResourceManager strings;
-        private readonly Lazy<IByteArrayPool> byteArrayPool;
 
         // Names of the properties
         private enum PropertyNames
@@ -34,15 +35,8 @@ namespace AvifFileType
             YUVChromaSubsampling,
             ForumLink,
             GitHubLink,
-            PreserveExistingTileSize
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
-        /// </summary>
-        public AvifFileTypePlugin()
-            : this(null, null)
-        {
+            PreserveExistingTileSize,
+            PremultipliedAlpha
         }
 
         /// <summary>
@@ -50,26 +44,7 @@ namespace AvifFileType
         /// </summary>
         /// <param name="host">The host.</param>
         public AvifFileTypePlugin(IFileTypeHost host)
-            : this(host, null)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
-        /// </summary>
-        /// <param name="maxEncoderThreads">The maximum number of encoder threads.</param>
-        public AvifFileTypePlugin(int maxEncoderThreads)
-            : this(null, maxEncoderThreads)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AvifFileTypePlugin"/> class.
-        /// </summary>
-        /// <param name="host">The host.</param>
-        /// <param name="maxEncoderThreads">The maximum number of encoder threads.</param>
-        public AvifFileTypePlugin(IFileTypeHost host, int? maxEncoderThreads)
-            : base(
+             : base(
                 "AV1 (AVIF)",
                 new FileTypeOptions
                 {
@@ -79,6 +54,7 @@ namespace AvifFileType
                     SupportsLayers = false
                 })
         {
+            this.arrayPoolService = host?.Services.GetService<IArrayPoolService>();
             PaintDotNet.Avif.IAvifFileTypeStrings avifFileTypeStrings = host?.Services.GetService<PaintDotNet.Avif.IAvifFileTypeStrings>();
 
             if (avifFileTypeStrings != null)
@@ -89,8 +65,6 @@ namespace AvifFileType
             {
                 this.strings = new BuiltinStringResourceManager();
             }
-            this.maxEncoderThreadsOverride = maxEncoderThreads;
-            this.byteArrayPool = new Lazy<IByteArrayPool>(() => new ByteArrayPool());
         }
 
         /// <summary>
@@ -120,11 +94,24 @@ namespace AvifFileType
                 StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionSpeed, CompressionSpeed.Fast),
                 CreateChromaSubsampling(),
                 new BooleanProperty(PropertyNames.PreserveExistingTileSize, true),
+                new BooleanProperty(PropertyNames.PremultipliedAlpha, false),
                 new UriProperty(PropertyNames.ForumLink, new Uri("https://forums.getpaint.net/topic/116233-avif-filetype")),
                 new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif"))
             };
 
-            return new PropertyCollection(props);
+            List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>
+            {
+                new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.PremultipliedAlpha,
+                                                                 PropertyNames.Quality,
+                                                                 100,
+                                                                 false),
+                new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.YUVChromaSubsampling,
+                                                                 PropertyNames.Quality,
+                                                                 100,
+                                                                 false)
+            };
+
+            return new PropertyCollection(props, rules);
 
             StaticListChoiceProperty CreateChromaSubsampling()
             {
@@ -172,6 +159,10 @@ namespace AvifFileType
             preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
             preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("PreserveExistingTileSize_Description");
 
+            PropertyControlInfo premultipliedAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.PremultipliedAlpha);
+            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
+            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("PremultipliedAlpha_Description");
+
             PropertyControlInfo forumLinkPCI = configUI.FindControlForPropertyName(PropertyNames.ForumLink);
             forumLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ForumLink_DisplayName");
             forumLinkPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("ForumLink_Description");
@@ -193,16 +184,19 @@ namespace AvifFileType
             YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling).Value;
             bool preserveExistingTileSize = token.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize).Value;
 
+            // The premultiplied alpha conversion can cause the colors to drift, so it is disabled for lossless encoding.
+            bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha).Value && quality < 100;
+
             AvifFile.Save(input,
                           output,
                           quality,
                           compressionSpeed,
                           chromaSubsampling,
                           preserveExistingTileSize,
-                          this.maxEncoderThreadsOverride,
+                          premultipliedAlpha,
                           scratchSurface,
                           progressCallback,
-                          this.byteArrayPool.Value);
+                          this.arrayPoolService);
         }
 
         /// <summary>
@@ -210,7 +204,7 @@ namespace AvifFileType
         /// </summary>
         protected override Document OnLoad(Stream input)
         {
-            return AvifFile.Load(input, this.byteArrayPool.Value);
+            return AvifFile.Load(input, this.arrayPoolService);
         }
     }
 }

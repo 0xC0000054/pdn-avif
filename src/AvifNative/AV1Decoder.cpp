@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -111,7 +111,7 @@ DecoderStatus DecodeColorImage(
     {
         status = DecoderStatus::OutOfMemory;
     }
-    catch (const codec_error&)
+    catch (const codec_init_error&)
     {
         status = DecoderStatus::CodecInitFailed;
     }
@@ -163,7 +163,7 @@ DecoderStatus DecodeAlphaImage(
     {
         status = DecoderStatus::OutOfMemory;
     }
-    catch (const codec_error&)
+    catch (const codec_init_error&)
     {
         status = DecoderStatus::CodecInitFailed;
     }

@@ -150,6 +150,9 @@
   <data name="ForumLink_DisplayName" xml:space="preserve">
     <value>More Info</value>
   </data>
+  <data name="PremultipliedAlpha_Description" xml:space="preserve">
+    <value>Premultiplied Alpha</value>
+  </data>
   <data name="PreserveExistingTileSize_Description" xml:space="preserve">
     <value>Preserve Existing Tile Size</value>
   </data>

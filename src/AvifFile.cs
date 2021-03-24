@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020 Nicholas Hayes
+// Copyright (c) 2020, 2021 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -14,7 +14,9 @@ using AvifFileType.AvifContainer;
 using AvifFileType.Exif;
 using AvifFileType.Interop;
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using PaintDotNet.Imaging;
+using PaintDotNet.Rendering;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -31,8 +33,13 @@ namespace AvifFileType
         // allow the data to be read from existing PDN files.
         private const string NclxMetadataName = "AvifNclxData";
 
-        public static Document Load(Stream input, IByteArrayPool arrayPool)
+        public static Document Load(Stream input, IArrayPoolService arrayPool)
         {
+            if (arrayPool is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
+            }
+
             Document doc = null;
 
             using (AvifReader reader = new AvifReader(input, leaveOpen: true, arrayPool))
@@ -69,11 +76,16 @@ namespace AvifFileType
                          CompressionSpeed compressionSpeed,
                          YUVChromaSubsampling chromaSubsampling,
                          bool preserveExistingTileSize,
-                         int? maxEncoderThreadsOverride,
+                         bool premultipliedAlpha,
                          Surface scratchSurface,
                          ProgressEventHandler progressCallback,
-                         IByteArrayPool arrayPool)
+                         IArrayPoolService arrayPool)
         {
+            if (arrayPool is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
+            }
+
             using (RenderArgs args = new RenderArgs(scratchSurface))
             {
                 document.Render(args, true);
@@ -89,7 +101,7 @@ namespace AvifFileType
                 // YUV 4:0:0 is always used for gray-scale images because it
                 // produces the smallest file size with no quality loss.
                 yuvFormat = grayscale ? YUVChromaSubsampling.Subsampling400 : chromaSubsampling,
-                maxThreads = maxEncoderThreadsOverride ?? Environment.ProcessorCount
+                maxThreads = Environment.ProcessorCount
             };
 
             // Use BT.709 with sRGB transfer characteristics as the default.
@@ -143,6 +155,11 @@ namespace AvifFileType
                                                                           preserveExistingTileSize);
 
             bool hasTransparency = HasTransparency(scratchSurface);
+
+            if (hasTransparency && premultipliedAlpha)
+            {
+                scratchSurface.ConvertToPremultipliedAlpha();
+            }
 
             CompressedAV1ImageCollection colorImages = new CompressedAV1ImageCollection(imageGridMetadata?.TileCount ?? 1);
             CompressedAV1ImageCollection alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
@@ -214,28 +231,26 @@ namespace AvifFileType
                     }
                 }
 
-
-                ColorInformationBox colorInformationBox;
+                List<ColorInformationBox> colorInformationBoxes = new List<ColorInformationBox>(2);
 
                 byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
                 if (iccProfileBytes != null && iccProfileBytes.Length > 0)
                 {
-                    colorInformationBox = new IccProfileColorInformation(iccProfileBytes);
+                    colorInformationBoxes.Add(new IccProfileColorInformation(iccProfileBytes));
                 }
-                else
-                {
-                    colorInformationBox = new NclxColorInformation(colorConversionInfo.colorPrimaries,
+
+                colorInformationBoxes.Add(new NclxColorInformation(colorConversionInfo.colorPrimaries,
                                                                    colorConversionInfo.transferCharacteristics,
                                                                    colorConversionInfo.matrixCoefficients,
-                                                                   colorConversionInfo.fullRange);
-                }
+                                                                   colorConversionInfo.fullRange));
 
                 AvifWriter writer = new AvifWriter(colorImages,
                                                    alphaImages,
+                                                   premultipliedAlpha,
                                                    metadata,
                                                    imageGridMetadata,
                                                    options.yuvFormat,
-                                                   colorInformationBox,
+                                                   colorInformationBoxes,
                                                    progressCallback,
                                                    progressDone,
                                                    progressTotal,
@@ -262,26 +277,33 @@ namespace AvifFileType
             }
         }
 
-        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader, IByteArrayPool arrayPool)
+        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader, IArrayPoolService arrayPool)
         {
-            byte[] exifBytes = reader.GetExifData();
+            AvifItemData exif = reader.GetExifData();
 
-            if (exifBytes != null)
+            if (exif != null)
             {
-                ExifValueCollection exifValues = ExifParser.Parse(exifBytes, arrayPool);
-
-                if (exifValues != null)
+                try
                 {
-                    exifValues.Remove(MetadataKeys.Image.InterColorProfile);
-                    // The HEIF specification states that the EXIF orientation tag is only
-                    // informational and should not be used to rotate the image.
-                    // See https://github.com/strukturag/libheif/issues/227#issuecomment-642165942
-                    exifValues.Remove(MetadataKeys.Image.Orientation);
+                    ExifValueCollection exifValues = ExifParser.Parse(exif, arrayPool);
 
-                    foreach (MetadataEntry entry in exifValues)
+                    if (exifValues != null)
                     {
-                        doc.Metadata.AddExifPropertyItem(entry.CreateExifPropertyItem());
+                        exifValues.Remove(MetadataKeys.Image.InterColorProfile);
+                        // The HEIF specification states that the EXIF orientation tag is only
+                        // informational and should not be used to rotate the image.
+                        // See https://github.com/strukturag/libheif/issues/227#issuecomment-642165942
+                        exifValues.Remove(MetadataKeys.Image.Orientation);
+
+                        foreach (MetadataEntry entry in exifValues)
+                        {
+                            doc.Metadata.AddExifPropertyItem(entry.CreateExifPropertyItem());
+                        }
                     }
+                }
+                finally
+                {
+                    exif.Dispose();
                 }
             }
 

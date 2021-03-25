@@ -126,23 +126,23 @@ namespace AvifFileType
                     }
 
                     CompressedAV1Data firstImageData = alphaImages[i].Data;
+                    IPinnableBuffer firstPinnable = firstImageData;
 
-                    for (int j = i + 1; j < alphaImages.Count; j++)
+                    Lazy<IntPtr> firstBuffer = new Lazy<IntPtr>(() => firstPinnable.Pin());
+                    try
                     {
-                        CompressedAV1Data secondImageData = alphaImages[j].Data;
-
-                        if (firstImageData.ByteLength == secondImageData.ByteLength)
+                        for (int j = i + 1; j < alphaImages.Count; j++)
                         {
-                            IPinnableBuffer firstPinnable = firstImageData;
-                            IPinnableBuffer secondPinnable = secondImageData;
+                            CompressedAV1Data secondImageData = alphaImages[j].Data;
 
-                            IntPtr firstBuffer = firstPinnable.Pin();
-                            try
+                            if (firstImageData.ByteLength == secondImageData.ByteLength)
                             {
+                                IPinnableBuffer secondPinnable = secondImageData;
+
                                 IntPtr secondBuffer = secondPinnable.Pin();
                                 try
                                 {
-                                    if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
+                                    if (AvifNative.MemoryBlocksAreEqual(firstBuffer.Value, secondBuffer, firstImageData.ByteLength))
                                     {
                                         this.duplicateAlphaTiles.Add(j, i);
                                     }
@@ -152,10 +152,13 @@ namespace AvifFileType
                                     secondPinnable.Unpin();
                                 }
                             }
-                            finally
-                            {
-                                firstPinnable.Unpin();
-                            }
+                        }
+                    }
+                    finally
+                    {
+                        if (firstBuffer.IsValueCreated)
+                        {
+                            firstPinnable.Unpin();
                         }
                     }
                 }
@@ -176,23 +179,23 @@ namespace AvifFileType
                     }
 
                     CompressedAV1Data firstImageData = colorImages[i].Data;
+                    IPinnableBuffer firstPinnable = firstImageData;
 
-                    for (int j = i + 1; j < colorImages.Count; j++)
+                    Lazy<IntPtr> firstBuffer = new Lazy<IntPtr>(() => firstPinnable.Pin());
+                    try
                     {
-                        CompressedAV1Data secondImageData = colorImages[j].Data;
-
-                        if (firstImageData.ByteLength == secondImageData.ByteLength)
+                        for (int j = i + 1; j < colorImages.Count; j++)
                         {
-                            IPinnableBuffer firstPinnable = firstImageData;
-                            IPinnableBuffer secondPinnable = secondImageData;
+                            CompressedAV1Data secondImageData = colorImages[j].Data;
 
-                            IntPtr firstBuffer = firstPinnable.Pin();
-                            try
+                            if (firstImageData.ByteLength == secondImageData.ByteLength)
                             {
+                                IPinnableBuffer secondPinnable = secondImageData;
+
                                 IntPtr secondBuffer = secondPinnable.Pin();
                                 try
                                 {
-                                    if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
+                                    if (AvifNative.MemoryBlocksAreEqual(firstBuffer.Value, secondBuffer, firstImageData.ByteLength))
                                     {
                                         this.duplicateColorTiles.Add(j, i);
                                     }
@@ -202,10 +205,13 @@ namespace AvifFileType
                                     secondPinnable.Unpin();
                                 }
                             }
-                            finally
-                            {
-                                firstPinnable.Unpin();
-                            }
+                        }
+                    }
+                    finally
+                    {
+                        if (firstBuffer.IsValueCreated)
+                        {
+                            firstPinnable.Unpin();
                         }
                     }
                 }

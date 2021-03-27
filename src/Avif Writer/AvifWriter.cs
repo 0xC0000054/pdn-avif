@@ -33,6 +33,7 @@ namespace AvifFileType
 
         public AvifWriter(IReadOnlyList<CompressedAV1Image> colorImages,
                           IReadOnlyList<CompressedAV1Image> alphaImages,
+                          HomogeneousTileInfo homogeneousTiles,
                           bool premultipliedAlpha,
                           AvifMetadata metadata,
                           ImageGridMetadata imageGridMetadata,
@@ -45,6 +46,7 @@ namespace AvifFileType
         {
             this.state = new AvifWriterState(colorImages,
                                              alphaImages,
+                                             homogeneousTiles,
                                              premultipliedAlpha,
                                              imageGridMetadata,
                                              metadata,

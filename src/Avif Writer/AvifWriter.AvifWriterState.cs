@@ -32,6 +32,7 @@ namespace AvifFileType
 
             public AvifWriterState(IReadOnlyList<CompressedAV1Image> colorImages,
                                    IReadOnlyList<CompressedAV1Image> alphaImages,
+                                   HomogeneousTileInfo homogeneousTiles,
                                    bool premultipliedAlpha,
                                    ImageGridMetadata imageGridMetadata,
                                    AvifMetadata metadata,
@@ -56,11 +57,11 @@ namespace AvifFileType
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
                 this.duplicateAlphaTiles = new Dictionary<int, int>();
                 this.duplicateColorTiles = new Dictionary<int, int>();
-                DeduplicateColorTiles(colorImages);
+                DeduplicateColorTiles(colorImages, homogeneousTiles);
 
                 if (alphaImages != null)
                 {
-                    DeduplicateAlphaTiles(alphaImages);
+                    DeduplicateAlphaTiles(alphaImages, homogeneousTiles);
                 }
 
                 Initialize(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata, metadata, arrayPool);
@@ -111,15 +112,30 @@ namespace AvifFileType
                 return new ItemDataBox(dataBoxBuffer);
             }
 
-            private void DeduplicateAlphaTiles(IReadOnlyList<CompressedAV1Image> alphaImages)
+            private void DeduplicateAlphaTiles(IReadOnlyList<CompressedAV1Image> alphaImages, HomogeneousTileInfo homogeneousTiles)
             {
                 if (alphaImages.Count == 1)
                 {
                     return;
                 }
 
+                foreach (KeyValuePair<int, int> item in homogeneousTiles.DuplicateTileMap)
+                {
+                    this.duplicateAlphaTiles.Add(item.Key, item.Value);
+                }
+
+                if (alphaImages.Count == homogeneousTiles.HomogeneousTiles.Count)
+                {
+                    return;
+                }
+
                 for (int i = 0; i < alphaImages.Count; i++)
                 {
+                    if (homogeneousTiles.HomogeneousTiles.Contains(i))
+                    {
+                        continue;
+                    }
+
                     if (this.duplicateAlphaTiles.ContainsKey(i))
                     {
                         continue;
@@ -173,15 +189,30 @@ namespace AvifFileType
                 }
             }
 
-            private void DeduplicateColorTiles(IReadOnlyList<CompressedAV1Image> colorImages)
+            private void DeduplicateColorTiles(IReadOnlyList<CompressedAV1Image> colorImages, HomogeneousTileInfo homogeneousTiles)
             {
                 if (colorImages.Count == 1)
                 {
                     return;
                 }
 
+                foreach (KeyValuePair<int, int> item in homogeneousTiles.DuplicateTileMap)
+                {
+                    this.duplicateColorTiles.Add(item.Key, item.Value);
+                }
+
+                if (colorImages.Count == homogeneousTiles.HomogeneousTiles.Count)
+                {
+                    return;
+                }
+
                 for (int i = 0; i < colorImages.Count; i++)
                 {
+                    if (homogeneousTiles.HomogeneousTiles.Contains(i))
+                    {
+                        continue;
+                    }
+
                     if (this.duplicateColorTiles.ContainsKey(i))
                     {
                         continue;

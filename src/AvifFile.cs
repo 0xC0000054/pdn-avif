@@ -182,52 +182,72 @@ namespace AvifFileType
             try
             {
                 Rectangle[] windowRectangles = GetTileWindowRectangles(imageGridMetadata, document);
+                HomogeneousTileInfo homogeneousTileInfo = GetHomogeneousTileInfo(scratchSurface, windowRectangles);
+                uint compressionProgressDelta = hasTransparency ? 4U : 3U;
 
                 for (int i = 0; i < colorImages.Capacity; i++)
                 {
-                    CompressedAV1Image color = null;
-                    CompressedAV1Image alpha = null;
-
-                    try
+                    // Homogeneous (single color) tiles will be compressed once and any subsequent tiles will reuse
+                    // the compressed data from the first tile.
+                    // This can significantly reduce the compression time for images that contain large areas of a
+                    // single color.
+                    if (homogeneousTileInfo.DuplicateTileMap.TryGetValue(i, out int duplicateTileIndex))
                     {
-                        Rectangle windowRect = windowRectangles[i];
-                        using (Surface window = scratchSurface.CreateWindow(windowRect))
+                        colorImages.Add(colorImages[duplicateTileIndex]);
+                        if (alphaImages != null)
                         {
+                            alphaImages.Add(alphaImages[duplicateTileIndex]);
+                        }
+
+                        progressDone += compressionProgressDelta;
+                        progressCallback?.Invoke(null, new ProgressEventArgs(((double)progressDone / progressTotal) * 100.0, true));
+                    }
+                    else
+                    {
+                        CompressedAV1Image color = null;
+                        CompressedAV1Image alpha = null;
+
+                        try
+                        {
+                            Rectangle windowRect = windowRectangles[i];
+                            using (Surface window = scratchSurface.CreateWindow(windowRect))
+                            {
+                                if (hasTransparency)
+                                {
+                                    AvifNative.CompressWithTransparency(window,
+                                                                        options,
+                                                                        ReportCompressionProgress,
+                                                                        ref progressDone,
+                                                                        progressTotal,
+                                                                        colorConversionInfo,
+                                                                        out color,
+                                                                        out alpha);
+                                }
+                                else
+                                {
+                                    AvifNative.CompressWithoutTransparency(window,
+                                                                           options,
+                                                                           ReportCompressionProgress,
+                                                                           ref progressDone,
+                                                                           progressTotal,
+                                                                           colorConversionInfo,
+                                                                           out color);
+                                }
+                            }
+
+                            colorImages.Add(color);
+                            color = null;
                             if (hasTransparency)
                             {
-                                AvifNative.CompressWithTransparency(window,
-                                                                    options,
-                                                                    ReportCompressionProgress,
-                                                                    ref progressDone,
-                                                                    progressTotal,
-                                                                    colorConversionInfo,
-                                                                    out color,
-                                                                    out alpha);
-                            }
-                            else
-                            {
-                                AvifNative.CompressWithoutTransparency(window,
-                                                                       options,
-                                                                       ReportCompressionProgress,
-                                                                       ref progressDone,
-                                                                       progressTotal,
-                                                                       colorConversionInfo,
-                                                                       out color);
+                                alphaImages.Add(alpha);
+                                alpha = null;
                             }
                         }
-
-                        colorImages.Add(color);
-                        color = null;
-                        if (hasTransparency)
+                        finally
                         {
-                            alphaImages.Add(alpha);
-                            alpha = null;
+                            color?.Dispose();
+                            alpha?.Dispose();
                         }
-                    }
-                    finally
-                    {
-                        color?.Dispose();
-                        alpha?.Dispose();
                     }
                 }
 
@@ -246,6 +266,7 @@ namespace AvifFileType
 
                 AvifWriter writer = new AvifWriter(colorImages,
                                                    alphaImages,
+                                                   homogeneousTileInfo,
                                                    premultipliedAlpha,
                                                    metadata,
                                                    imageGridMetadata,
@@ -438,6 +459,36 @@ namespace AvifFileType
             return items;
         }
 
+        private static HomogeneousTileInfo GetHomogeneousTileInfo(Surface surface, Rectangle[] tileRects)
+        {
+            Dictionary<int, int> duplicateTileMap = new Dictionary<int, int>();
+            HashSet<int> homogeneousTiles = new HashSet<int>();
+
+            if (tileRects.Length > 1)
+            {
+                Dictionary<uint, int> homogeneousTileCache = new Dictionary<uint, int>();
+
+                for (int i = 0; i < tileRects.Length; i++)
+                {
+                    if (IsHomogeneousTile(surface, tileRects[i], out uint firstPixelBgra))
+                    {
+                        homogeneousTiles.Add(i);
+
+                        if (homogeneousTileCache.TryGetValue(firstPixelBgra, out int duplicateTileIndex))
+                        {
+                            duplicateTileMap.Add(i, duplicateTileIndex);
+                        }
+                        else
+                        {
+                            homogeneousTileCache.Add(firstPixelBgra, i);
+                        }
+                    }
+                }
+            }
+
+            return new HomogeneousTileInfo(duplicateTileMap, homogeneousTiles);
+        }
+
         private static Rectangle[] GetTileWindowRectangles(ImageGridMetadata imageGridMetadata, Document document)
         {
             Rectangle[] rects;
@@ -486,6 +537,28 @@ namespace AvifFileType
                     {
                         return false;
                     }
+                    ptr++;
+                }
+            }
+
+            return true;
+        }
+
+        private static unsafe bool IsHomogeneousTile(Surface surface, Rectangle roi, out uint firstPixelBgra)
+        {
+            firstPixelBgra = surface[roi.Left, roi.Top].Bgra;
+
+            for (int y = roi.Top; y < roi.Bottom; y++)
+            {
+                ColorBgra* ptr = surface.GetPointAddressUnchecked(roi.Left, y);
+
+                for (int x = roi.Left; x < roi.Right; x++)
+                {
+                    if (ptr->Bgra != firstPixelBgra)
+                    {
+                        return false;
+                    }
+
                     ptr++;
                 }
             }

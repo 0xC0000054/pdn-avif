@@ -133,6 +133,11 @@ namespace AvifFileType
                     {
                         for (int j = i + 1; j < alphaImages.Count; j++)
                         {
+                            if (this.duplicateAlphaTiles.ContainsKey(j))
+                            {
+                                continue;
+                            }
+
                             CompressedAV1Data secondImageData = alphaImages[j].Data;
 
                             if (firstImageData.ByteLength == secondImageData.ByteLength)
@@ -190,6 +195,11 @@ namespace AvifFileType
                     {
                         for (int j = i + 1; j < colorImages.Count; j++)
                         {
+                            if (this.duplicateColorTiles.ContainsKey(j))
+                            {
+                                continue;
+                            }
+
                             CompressedAV1Data secondImageData = colorImages[j].Data;
 
                             if (firstImageData.ByteLength == secondImageData.ByteLength)

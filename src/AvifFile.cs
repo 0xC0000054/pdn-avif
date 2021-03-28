@@ -524,6 +524,27 @@ namespace AvifFileType
             return rects;
         }
 
+        private static unsafe bool HasTransparency(Surface surface)
+        {
+            for (int y = 0; y < surface.Height; y++)
+            {
+                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
+                ColorBgra* ptrEnd = ptr + surface.Width;
+
+                while (ptr < ptrEnd)
+                {
+                    if (ptr->A < 255)
+                    {
+                        return true;
+                    }
+
+                    ptr++;
+                }
+            }
+
+            return false;
+        }
+
         private static unsafe bool IsGrayscaleImage(Surface surface)
         {
             for (int y = 0; y < surface.Height; y++)
@@ -564,27 +585,6 @@ namespace AvifFileType
             }
 
             return true;
-        }
-
-        private static unsafe bool HasTransparency(Surface surface)
-        {
-            for (int y = 0; y < surface.Height; y++)
-            {
-                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
-                ColorBgra* ptrEnd = ptr + surface.Width;
-
-                while (ptr < ptrEnd)
-                {
-                    if (ptr->A < 255)
-                    {
-                        return true;
-                    }
-
-                    ptr++;
-                }
-            }
-
-            return false;
         }
 
         private static ImageGridMetadata TryCalculateBestTileSize(

@@ -12,6 +12,7 @@
 
 using AvifFileType.AvifContainer;
 using AvifFileType.Interop;
+using PaintDotNet;
 using PaintDotNet.AppModel;
 using System;
 using System.Collections.Generic;
@@ -57,11 +58,11 @@ namespace AvifFileType
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
                 this.duplicateAlphaTiles = new Dictionary<int, int>();
                 this.duplicateColorTiles = new Dictionary<int, int>();
-                DeduplicateColorTiles(colorImages, homogeneousTiles);
+                DeduplicateColorTiles(colorImages, homogeneousTiles, arrayPool);
 
                 if (alphaImages != null)
                 {
-                    DeduplicateAlphaTiles(alphaImages, homogeneousTiles);
+                    DeduplicateAlphaTiles(alphaImages, homogeneousTiles, arrayPool);
                 }
 
                 Initialize(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata, metadata, arrayPool);
@@ -112,7 +113,10 @@ namespace AvifFileType
                 return new ItemDataBox(dataBoxBuffer);
             }
 
-            private void DeduplicateAlphaTiles(IReadOnlyList<CompressedAV1Image> alphaImages, HomogeneousTileInfo homogeneousTiles)
+            private void DeduplicateAlphaTiles(
+                IReadOnlyList<CompressedAV1Image> alphaImages,
+                HomogeneousTileInfo homogeneousTiles,
+                IArrayPoolService arrayPool)
             {
                 if (alphaImages.Count == 1)
                 {
@@ -129,67 +133,72 @@ namespace AvifFileType
                     return;
                 }
 
-                for (int i = 0; i < alphaImages.Count; i++)
+                using (IArrayPoolBuffer<int> duplicateTileSearchSpace = GetDuplicateTileSearchSpace(alphaImages, homogeneousTiles, arrayPool))
                 {
-                    if (homogeneousTiles.HomogeneousTiles.Contains(i))
+                    for (int i = 0; i < duplicateTileSearchSpace.Count; i++)
                     {
-                        continue;
-                    }
+                        int firstTileIndex = duplicateTileSearchSpace[i];
 
-                    if (this.duplicateAlphaTiles.ContainsKey(i))
-                    {
-                        continue;
-                    }
-
-                    CompressedAV1Data firstImageData = alphaImages[i].Data;
-                    IPinnableBuffer firstPinnable = firstImageData;
-
-                    IntPtr firstBuffer = IntPtr.Zero;
-                    try
-                    {
-                        for (int j = i + 1; j < alphaImages.Count; j++)
+                        if (this.duplicateAlphaTiles.ContainsKey(firstTileIndex))
                         {
-                            if (this.duplicateAlphaTiles.ContainsKey(j))
+                            continue;
+                        }
+
+                        CompressedAV1Data firstImageData = alphaImages[firstTileIndex].Data;
+                        IPinnableBuffer firstPinnable = firstImageData;
+
+                        IntPtr firstBuffer = IntPtr.Zero;
+                        try
+                        {
+                            for (int j = i + 1; j < duplicateTileSearchSpace.Count; j++)
                             {
-                                continue;
-                            }
+                                int secondTileIndex = duplicateTileSearchSpace[j];
 
-                            CompressedAV1Data secondImageData = alphaImages[j].Data;
-
-                            if (firstImageData.ByteLength == secondImageData.ByteLength)
-                            {
-                                IPinnableBuffer secondPinnable = secondImageData;
-
-                                if (firstBuffer == IntPtr.Zero)
+                                if (this.duplicateAlphaTiles.ContainsKey(secondTileIndex))
                                 {
-                                    firstBuffer = firstPinnable.Pin();
+                                    continue;
                                 }
-                                IntPtr secondBuffer = secondPinnable.Pin();
-                                try
+
+                                CompressedAV1Data secondImageData = alphaImages[secondTileIndex].Data;
+
+                                if (firstImageData.ByteLength == secondImageData.ByteLength)
                                 {
-                                    if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
+                                    IPinnableBuffer secondPinnable = secondImageData;
+
+                                    if (firstBuffer == IntPtr.Zero)
                                     {
-                                        this.duplicateAlphaTiles.Add(j, i);
+                                        firstBuffer = firstPinnable.Pin();
                                     }
-                                }
-                                finally
-                                {
-                                    secondPinnable.Unpin();
+                                    IntPtr secondBuffer = secondPinnable.Pin();
+                                    try
+                                    {
+                                        if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
+                                        {
+                                            this.duplicateAlphaTiles.Add(secondTileIndex, firstTileIndex);
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        secondPinnable.Unpin();
+                                    }
                                 }
                             }
                         }
-                    }
-                    finally
-                    {
-                        if (firstBuffer != IntPtr.Zero)
+                        finally
                         {
-                            firstPinnable.Unpin();
+                            if (firstBuffer != IntPtr.Zero)
+                            {
+                                firstPinnable.Unpin();
+                            }
                         }
                     }
                 }
             }
 
-            private void DeduplicateColorTiles(IReadOnlyList<CompressedAV1Image> colorImages, HomogeneousTileInfo homogeneousTiles)
+            private void DeduplicateColorTiles(
+                IReadOnlyList<CompressedAV1Image> colorImages,
+                HomogeneousTileInfo homogeneousTiles,
+                IArrayPoolService arrayPool)
             {
                 if (colorImages.Count == 1)
                 {
@@ -206,64 +215,87 @@ namespace AvifFileType
                     return;
                 }
 
-                for (int i = 0; i < colorImages.Count; i++)
+                using (IArrayPoolBuffer<int> duplicateTileSearchSpace = GetDuplicateTileSearchSpace(colorImages, homogeneousTiles, arrayPool))
                 {
-                    if (homogeneousTiles.HomogeneousTiles.Contains(i))
+                    for (int i = 0; i < duplicateTileSearchSpace.Count; i++)
                     {
-                        continue;
-                    }
+                        int firstTileIndex = duplicateTileSearchSpace[i];
 
-                    if (this.duplicateColorTiles.ContainsKey(i))
-                    {
-                        continue;
-                    }
-
-                    CompressedAV1Data firstImageData = colorImages[i].Data;
-                    IPinnableBuffer firstPinnable = firstImageData;
-
-                    IntPtr firstBuffer = IntPtr.Zero;
-                    try
-                    {
-                        for (int j = i + 1; j < colorImages.Count; j++)
+                        if (this.duplicateColorTiles.ContainsKey(firstTileIndex))
                         {
-                            if (this.duplicateColorTiles.ContainsKey(j))
+                            continue;
+                        }
+
+                        CompressedAV1Data firstImageData = colorImages[firstTileIndex].Data;
+                        IPinnableBuffer firstPinnable = firstImageData;
+
+                        IntPtr firstBuffer = IntPtr.Zero;
+                        try
+                        {
+                            for (int j = i + 1; j < duplicateTileSearchSpace.Count; j++)
                             {
-                                continue;
-                            }
+                                int secondTileIndex = duplicateTileSearchSpace[j];
 
-                            CompressedAV1Data secondImageData = colorImages[j].Data;
-
-                            if (firstImageData.ByteLength == secondImageData.ByteLength)
-                            {
-                                IPinnableBuffer secondPinnable = secondImageData;
-
-                                if (firstBuffer == IntPtr.Zero)
+                                if (this.duplicateColorTiles.ContainsKey(secondTileIndex))
                                 {
-                                    firstBuffer = firstPinnable.Pin();
+                                    continue;
                                 }
-                                IntPtr secondBuffer = secondPinnable.Pin();
-                                try
+
+                                CompressedAV1Data secondImageData = colorImages[secondTileIndex].Data;
+
+                                if (firstImageData.ByteLength == secondImageData.ByteLength)
                                 {
-                                    if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
+                                    IPinnableBuffer secondPinnable = secondImageData;
+
+                                    if (firstBuffer == IntPtr.Zero)
                                     {
-                                        this.duplicateColorTiles.Add(j, i);
+                                        firstBuffer = firstPinnable.Pin();
                                     }
-                                }
-                                finally
-                                {
-                                    secondPinnable.Unpin();
+                                    IntPtr secondBuffer = secondPinnable.Pin();
+                                    try
+                                    {
+                                        if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
+                                        {
+                                            this.duplicateColorTiles.Add(secondTileIndex, firstTileIndex);
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        secondPinnable.Unpin();
+                                    }
                                 }
                             }
                         }
-                    }
-                    finally
-                    {
-                        if (firstBuffer != IntPtr.Zero)
+                        finally
                         {
-                            firstPinnable.Unpin();
+                            if (firstBuffer != IntPtr.Zero)
+                            {
+                                firstPinnable.Unpin();
+                            }
                         }
                     }
                 }
+            }
+
+            private static IArrayPoolBuffer<int> GetDuplicateTileSearchSpace(IReadOnlyList<CompressedAV1Image> images,
+                                                                             HomogeneousTileInfo homogeneousTiles,
+                                                                             IArrayPoolService arrayPool)
+            {
+                IArrayPoolBuffer<int> buffer = arrayPool.Rent<int>(images.Count - homogeneousTiles.HomogeneousTiles.Count);
+
+                int[] searchSpace = buffer.Array;
+                int index = 0;
+
+                for (int i = 0; i < images.Count; i++)
+                {
+                    if (!homogeneousTiles.HomogeneousTiles.Contains(i))
+                    {
+                        searchSpace[index] = i;
+                        index++;
+                    }
+                }
+
+                return buffer;
             }
 
             private void Initialize(IReadOnlyList<CompressedAV1Image> colorImages,

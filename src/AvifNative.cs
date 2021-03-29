@@ -22,14 +22,12 @@ namespace AvifFileType
 {
     internal static class AvifNative
     {
-        public static void CompressWithTransparency(Surface surface,
-                                                    EncoderOptions options,
-                                                    AvifProgressCallback avifProgress,
-                                                    ref uint progressDone,
-                                                    uint progressTotal,
-                                                    CICPColorData colorInfo,
-                                                    out CompressedAV1Image color,
-                                                    out CompressedAV1Image alpha)
+        public static void CompressAlphaImage(Surface surface,
+                                              EncoderOptions options,
+                                              AvifProgressCallback avifProgress,
+                                              ref uint progressDone,
+                                              uint progressTotal,
+                                              out CompressedAV1Image alpha)
         {
             BitmapData bitmapData = new BitmapData
             {
@@ -41,9 +39,8 @@ namespace AvifFileType
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
 
-            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(2))
+            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1))
             {
-                IntPtr colorImage;
                 IntPtr alphaImage;
 
                 CompressedAV1OutputAlloc outputAllocDelegate = new CompressedAV1OutputAlloc(allocator.Allocate);
@@ -55,13 +52,11 @@ namespace AvifFileType
                 if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
 #endif
                 {
-                    status = AvifNative_64.CompressImage(ref bitmapData,
-                                                         options,
-                                                         progressContext,
-                                                         ref colorInfo,
-                                                         outputAllocDelegate,
-                                                         out colorImage,
-                                                         out alphaImage);
+                    status = AvifNative_64.CompressAlphaImage(ref bitmapData,
+                                                              options,
+                                                              progressContext,
+                                                              outputAllocDelegate,
+                                                              out alphaImage);
                 }
 #if NET47
                 else if (IntPtr.Size == 4)
@@ -69,13 +64,11 @@ namespace AvifFileType
                 else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
 #endif
                 {
-                    status = AvifNative_86.CompressImage(ref bitmapData,
-                                                         options,
-                                                         progressContext,
-                                                         ref colorInfo,
-                                                         outputAllocDelegate,
-                                                         out colorImage,
-                                                         out alphaImage);
+                    status = AvifNative_86.CompressAlphaImage(ref bitmapData,
+                                                              options,
+                                                              progressContext,
+                                                              outputAllocDelegate,
+                                                              out alphaImage);
                 }
                 else
                 {
@@ -89,7 +82,6 @@ namespace AvifFileType
                     HandleError(status, allocator.ExceptionInfo);
                 }
 
-                color = new CompressedAV1Image(allocator.GetCompressedAV1Data(colorImage), surface.Width, surface.Height, options.yuvFormat);
                 alpha = new CompressedAV1Image(allocator.GetCompressedAV1Data(alphaImage), surface.Width, surface.Height, YUVChromaSubsampling.Subsampling400);
             }
 
@@ -97,13 +89,13 @@ namespace AvifFileType
             GC.KeepAlive(avifProgress);
         }
 
-        public static void CompressWithoutTransparency(Surface surface,
-                                                       EncoderOptions options,
-                                                       AvifProgressCallback avifProgress,
-                                                       ref uint progressDone,
-                                                       uint progressTotal,
-                                                       CICPColorData colorInfo,
-                                                       out CompressedAV1Image color)
+        public static void CompressColorImage(Surface surface,
+                                              EncoderOptions options,
+                                              AvifProgressCallback avifProgress,
+                                              ref uint progressDone,
+                                              uint progressTotal,
+                                              CICPColorData colorInfo,
+                                              out CompressedAV1Image color)
         {
             BitmapData bitmapData = new BitmapData
             {
@@ -128,13 +120,12 @@ namespace AvifFileType
                 if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
 #endif
                 {
-                    status = AvifNative_64.CompressImage(ref bitmapData,
-                                                         options,
-                                                         progressContext,
-                                                         ref colorInfo,
-                                                         outputAllocDelegate,
-                                                         out colorImage,
-                                                         IntPtr.Zero);
+                    status = AvifNative_64.CompressColorImage(ref bitmapData,
+                                                              options,
+                                                              progressContext,
+                                                              ref colorInfo,
+                                                              outputAllocDelegate,
+                                                              out colorImage);
                 }
 #if NET47
                 else if (IntPtr.Size == 4)
@@ -142,13 +133,12 @@ namespace AvifFileType
                 else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
 #endif
                 {
-                    status = AvifNative_86.CompressImage(ref bitmapData,
-                                                         options,
-                                                         progressContext,
-                                                         ref colorInfo,
-                                                         outputAllocDelegate,
-                                                         out colorImage,
-                                                         IntPtr.Zero);
+                    status = AvifNative_86.CompressColorImage(ref bitmapData,
+                                                              options,
+                                                              progressContext,
+                                                              ref colorInfo,
+                                                              outputAllocDelegate,
+                                                              out colorImage);
                 }
                 else
                 {

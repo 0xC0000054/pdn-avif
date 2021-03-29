@@ -20,24 +20,21 @@ namespace AvifFileType.Interop
         private const string DllName = "AvifNative_x64.dll";
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static unsafe extern EncoderStatus CompressImage(
+        internal static extern unsafe EncoderStatus CompressColorImage(
             [In] ref BitmapData image,
             EncoderOptions options,
             [In, Out] ProgressContext progressContext,
             [In] ref CICPColorData colorInfo,
             [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
-            out IntPtr colorImage,
-            out IntPtr alphaImage);
+            out IntPtr colorImage);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static unsafe extern EncoderStatus CompressImage(
+        internal static extern unsafe EncoderStatus CompressAlphaImage(
             [In] ref BitmapData image,
             EncoderOptions options,
             [In, Out] ProgressContext progressContext,
-            [In] ref CICPColorData colorInfo,
             [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
-            out IntPtr colorImage,
-            IntPtr alphaImage_MustBeZero);
+            out IntPtr alphaImage);
 
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
         internal static extern unsafe DecoderStatus DecompressColorImage(

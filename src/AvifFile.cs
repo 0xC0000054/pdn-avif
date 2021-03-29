@@ -165,15 +165,15 @@ namespace AvifFileType
             CompressedAV1ImageCollection alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
 
             // Progress is reported at the following stages:
-            // 1. Before converting the image to the YUV color space
-            // 2. Before compressing the color image
-            // 3. After compressing the color image
+            // 1. Before compressing the color image
+            // 2. After compressing the color image
+            // 3. Before compressing the alpha image (if present)
             // 4. After compressing the alpha image (if present)
             // 5. After writing the color image to the file
             // 6. After writing the alpha image to the file (if present)
 
             uint progressDone = 0;
-            uint progressTotal = hasTransparency ? 6U : 4U;
+            uint progressTotal = hasTransparency ? 6U : 3U;
             if (colorImages.Capacity > 1)
             {
                 progressTotal *= (uint)colorImages.Capacity;
@@ -182,8 +182,7 @@ namespace AvifFileType
             try
             {
                 Rectangle[] windowRectangles = GetTileWindowRectangles(imageGridMetadata, document);
-                HomogeneousTileInfo homogeneousTileInfo = GetHomogeneousTileInfo(scratchSurface, windowRectangles);
-                uint compressionProgressDelta = hasTransparency ? 4U : 3U;
+                HomogeneousTileInfo homogeneousTileInfo = GetHomogeneousTileInfo(scratchSurface, windowRectangles, hasTransparency);
 
                 for (int i = 0; i < colorImages.Capacity; i++)
                 {
@@ -191,62 +190,73 @@ namespace AvifFileType
                     // the compressed data from the first tile.
                     // This can significantly reduce the compression time for images that contain large areas of a
                     // single color.
-                    if (homogeneousTileInfo.DuplicateTileMap.TryGetValue(i, out int duplicateTileIndex))
+                    if (homogeneousTileInfo.DuplicateColorTileMap.TryGetValue(i, out int duplicateTileIndex))
                     {
                         colorImages.Add(colorImages[duplicateTileIndex]);
-                        if (alphaImages != null)
-                        {
-                            alphaImages.Add(alphaImages[duplicateTileIndex]);
-                        }
 
-                        progressDone += compressionProgressDelta;
+                        progressDone += 2U;
                         progressCallback?.Invoke(null, new ProgressEventArgs(((double)progressDone / progressTotal) * 100.0, true));
                     }
                     else
                     {
                         CompressedAV1Image color = null;
-                        CompressedAV1Image alpha = null;
 
                         try
                         {
                             Rectangle windowRect = windowRectangles[i];
                             using (Surface window = scratchSurface.CreateWindow(windowRect))
                             {
-                                if (hasTransparency)
-                                {
-                                    AvifNative.CompressWithTransparency(window,
-                                                                        options,
-                                                                        ReportCompressionProgress,
-                                                                        ref progressDone,
-                                                                        progressTotal,
-                                                                        colorConversionInfo,
-                                                                        out color,
-                                                                        out alpha);
-                                }
-                                else
-                                {
-                                    AvifNative.CompressWithoutTransparency(window,
-                                                                           options,
-                                                                           ReportCompressionProgress,
-                                                                           ref progressDone,
-                                                                           progressTotal,
-                                                                           colorConversionInfo,
-                                                                           out color);
-                                }
+                                AvifNative.CompressColorImage(window,
+                                                              options,
+                                                              ReportCompressionProgress,
+                                                              ref progressDone,
+                                                              progressTotal,
+                                                              colorConversionInfo,
+                                                              out color);
                             }
 
                             colorImages.Add(color);
                             color = null;
-                            if (hasTransparency)
-                            {
-                                alphaImages.Add(alpha);
-                                alpha = null;
-                            }
                         }
                         finally
                         {
                             color?.Dispose();
-                            alpha?.Dispose();
+                        }
+                    }
+
+                    if (hasTransparency)
+                    {
+                        if (homogeneousTileInfo.DuplicateAlphaTileMap.TryGetValue(i, out duplicateTileIndex))
+                        {
+                            alphaImages.Add(alphaImages[duplicateTileIndex]);
+
+                            progressDone += 2U;
+                            progressCallback?.Invoke(null, new ProgressEventArgs(((double)progressDone / progressTotal) * 100.0, true));
+                        }
+                        else
+                        {
+                            CompressedAV1Image alpha = null;
+
+                            try
+                            {
+                                Rectangle windowRect = windowRectangles[i];
+                                using (Surface window = scratchSurface.CreateWindow(windowRect))
+                                {
+                                    AvifNative.CompressAlphaImage(window,
+                                                                  options,
+                                                                  ReportCompressionProgress,
+                                                                  ref progressDone,
+                                                                  progressTotal,
+                                                                  out alpha);
+                                }
+
+                                alphaImages.Add(alpha);
+                                alpha = null;
+                            }
+                            finally
+                            {
+                                alpha?.Dispose();
+                            }
                         }
                     }
                 }
@@ -459,34 +469,57 @@ namespace AvifFileType
             return items;
         }
 
-        private static HomogeneousTileInfo GetHomogeneousTileInfo(Surface surface, Rectangle[] tileRects)
+        private static HomogeneousTileInfo GetHomogeneousTileInfo(Surface surface, Rectangle[] tileRects, bool includeAlphaTiles)
         {
-            Dictionary<int, int> duplicateTileMap = new Dictionary<int, int>();
-            HashSet<int> homogeneousTiles = new HashSet<int>();
+            Dictionary<int, int> duplicateColorTileMap = new Dictionary<int, int>();
+            HashSet<int> homogeneousColorTiles = new HashSet<int>();
+            Dictionary<int, int> duplicateAlphaTileMap = new Dictionary<int, int>();
+            HashSet<int> homogeneousAlphaTiles = new HashSet<int>();
 
             if (tileRects.Length > 1)
             {
-                Dictionary<uint, int> homogeneousTileCache = new Dictionary<uint, int>();
+                Dictionary<uint, int> homogeneousColorTileCache = new Dictionary<uint, int>();
+                Dictionary<byte, int> homogeneousAlphaTileCache = new Dictionary<byte, int>();
 
                 for (int i = 0; i < tileRects.Length; i++)
                 {
-                    if (IsHomogeneousTile(surface, tileRects[i], out uint firstPixelBgra))
+                    if (IsHomogeneousColorTile(surface, tileRects[i], out uint firstPixelBgr))
                     {
-                        homogeneousTiles.Add(i);
+                        homogeneousColorTiles.Add(i);
 
-                        if (homogeneousTileCache.TryGetValue(firstPixelBgra, out int duplicateTileIndex))
+                        if (homogeneousColorTileCache.TryGetValue(firstPixelBgr, out int duplicateTileIndex))
                         {
-                            duplicateTileMap.Add(i, duplicateTileIndex);
+                            duplicateColorTileMap.Add(i, duplicateTileIndex);
                         }
                         else
                         {
-                            homogeneousTileCache.Add(firstPixelBgra, i);
+                            homogeneousColorTileCache.Add(firstPixelBgr, i);
+                        }
+                    }
+
+                    if (includeAlphaTiles)
+                    {
+                        if (IsHomogeneousAlphaTile(surface, tileRects[i], out byte firstPixelAlpha))
+                        {
+                            homogeneousAlphaTiles.Add(i);
+
+                            if (homogeneousAlphaTileCache.TryGetValue(firstPixelAlpha, out int duplicateTileIndex))
+                            {
+                                duplicateAlphaTileMap.Add(i, duplicateTileIndex);
+                            }
+                            else
+                            {
+                                homogeneousAlphaTileCache.Add(firstPixelAlpha, i);
+                            }
                         }
                     }
                 }
             }
 
-            return new HomogeneousTileInfo(duplicateTileMap, homogeneousTiles);
+            return new HomogeneousTileInfo(duplicateColorTileMap,
+                                           homogeneousColorTiles,
+                                           duplicateAlphaTileMap,
+                                           homogeneousAlphaTiles);
         }
 
         private static Rectangle[] GetTileWindowRectangles(ImageGridMetadata imageGridMetadata, Document document)
@@ -565,9 +598,9 @@ namespace AvifFileType
             return true;
         }
 
-        private static unsafe bool IsHomogeneousTile(Surface surface, Rectangle roi, out uint firstPixelBgra)
+        private static unsafe bool IsHomogeneousAlphaTile(Surface surface, Rectangle roi, out byte firstPixelAlpha)
         {
-            firstPixelBgra = surface[roi.Left, roi.Top].Bgra;
+            firstPixelAlpha = surface[roi.Left, roi.Top].A;
 
             for (int y = roi.Top; y < roi.Bottom; y++)
             {
@@ -575,7 +608,29 @@ namespace AvifFileType
 
                 for (int x = roi.Left; x < roi.Right; x++)
                 {
-                    if (ptr->Bgra != firstPixelBgra)
+                    if (ptr->A != firstPixelAlpha)
+                    {
+                        return false;
+                    }
+
+                    ptr++;
+                }
+            }
+
+            return true;
+        }
+
+        private static unsafe bool IsHomogeneousColorTile(Surface surface, Rectangle roi, out uint firstPixelBgr)
+        {
+            firstPixelBgr = surface[roi.Left, roi.Top].Bgra & 0x00ffffff;
+
+            for (int y = roi.Top; y < roi.Bottom; y++)
+            {
+                ColorBgra* ptr = surface.GetPointAddressUnchecked(roi.Left, y);
+
+                for (int x = roi.Left; x < roi.Right; x++)
+                {
+                    if ((ptr->Bgra & 0x00ffffff) != firstPixelBgr)
                     {
                         return false;
                     }

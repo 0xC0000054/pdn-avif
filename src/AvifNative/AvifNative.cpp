@@ -37,64 +37,6 @@ namespace AvifNative
     typedef std::unique_ptr<aom_image, details::aom_image_deleter> ScopedAOMImage;
 }
 
-namespace
-{
-    EncoderStatus CompressWithAOM(
-        const BitmapData* image,
-        const EncoderOptions* encodeOptions,
-        ProgressContext* progressContext,
-        const CICPColorData& colorInfo,
-        CompressedAV1OutputAlloc outputAllocator,
-        void** compressedColorImage,
-        void** compressedAlphaImage)
-    {
-        const YUVChromaSubsampling yuvFormat = encodeOptions->yuvFormat;
-
-        aom_img_fmt aomFormat;
-        switch (yuvFormat)
-        {
-        case YUVChromaSubsampling::Subsampling400:
-        case YUVChromaSubsampling::Subsampling420:
-            aomFormat = AOM_IMG_FMT_I420;
-            break;
-        case YUVChromaSubsampling::Subsampling422:
-            aomFormat = AOM_IMG_FMT_I422;
-            break;
-        case YUVChromaSubsampling::Subsampling444:
-        case YUVChromaSubsampling::IdentityMatrix:
-            aomFormat = AOM_IMG_FMT_I444;
-            break;
-        default:
-            return EncoderStatus::UnknownYUVFormat;
-        }
-
-        AvifNative::ScopedAOMImage color(ConvertColorToAOMImage(image, colorInfo, yuvFormat, aomFormat));
-        if (!color)
-        {
-            return EncoderStatus::OutOfMemory;
-        }
-
-        AvifNative::ScopedAOMImage alpha;
-        if (compressedAlphaImage)
-        {
-            alpha.reset(ConvertAlphaToAOMImage(image));
-            if (!alpha)
-            {
-                return EncoderStatus::OutOfMemory;
-            }
-        }
-
-        return CompressAOMImages(
-            color.get(),
-            alpha.get(),
-            encodeOptions,
-            progressContext,
-            outputAllocator,
-            compressedColorImage,
-            compressedAlphaImage);
-    }
-}
-
 DecoderStatus __stdcall DecompressColorImage(
     const uint8_t* compressedColorImage,
     size_t compressedColorImageSize,
@@ -123,33 +65,67 @@ DecoderStatus __stdcall DecompressAlphaImage(
         outputImage);
 }
 
-EncoderStatus __stdcall CompressImage(
+EncoderStatus __stdcall CompressColorImage(
     const BitmapData* image,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
     const CICPColorData& colorInfo,
     CompressedAV1OutputAlloc outputAllocator,
-    void** compressedColorImage,
-    void** compressedAlphaImage)
+    void** compressedColorImage)
 {
     if (!image || !encodeOptions || !progressContext || !outputAllocator || !compressedColorImage)
     {
         return EncoderStatus::NullParameter;
     }
 
-    if (!progressContext->progressCallback(++progressContext->progressDone, progressContext->progressTotal))
+    const YUVChromaSubsampling yuvFormat = encodeOptions->yuvFormat;
+
+    aom_img_fmt aomFormat;
+    switch (yuvFormat)
     {
-        return EncoderStatus::UserCancelled;
+    case YUVChromaSubsampling::Subsampling400:
+    case YUVChromaSubsampling::Subsampling420:
+        aomFormat = AOM_IMG_FMT_I420;
+        break;
+    case YUVChromaSubsampling::Subsampling422:
+        aomFormat = AOM_IMG_FMT_I422;
+        break;
+    case YUVChromaSubsampling::Subsampling444:
+    case YUVChromaSubsampling::IdentityMatrix:
+        aomFormat = AOM_IMG_FMT_I444;
+        break;
+    default:
+        return EncoderStatus::UnknownYUVFormat;
     }
 
-    return CompressWithAOM(
-        image,
-        encodeOptions,
-        progressContext,
-        colorInfo,
-        outputAllocator,
-        compressedColorImage,
-        compressedAlphaImage);
+    AvifNative::ScopedAOMImage color(ConvertColorToAOMImage(image, colorInfo, yuvFormat, aomFormat));
+    if (!color)
+    {
+        return EncoderStatus::OutOfMemory;
+    }
+
+    return CompressAOMImage(color.get(), encodeOptions, progressContext, outputAllocator, compressedColorImage);
+}
+
+EncoderStatus __stdcall CompressAlphaImage(
+    const BitmapData* image,
+    const EncoderOptions* encodeOptions,
+    ProgressContext* progressContext,
+    CompressedAV1OutputAlloc outputAllocator,
+    void** compressedAlphaImage)
+{
+    if (!image || !encodeOptions || !progressContext || !outputAllocator || !compressedAlphaImage)
+    {
+        return EncoderStatus::NullParameter;
+    }
+
+    AvifNative::ScopedAOMImage alpha(ConvertAlphaToAOMImage(image));
+    if (!alpha)
+    {
+        return EncoderStatus::OutOfMemory;
+    }
+
+    return CompressAOMImage(alpha.get(), encodeOptions, progressContext, outputAllocator, compressedAlphaImage);
 }
 
 bool __stdcall MemoryBlocksAreEqual(const void* buffer1, const void* buffer2, size_t size)

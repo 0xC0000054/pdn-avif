@@ -16,25 +16,43 @@ namespace AvifFileType
 {
     internal sealed class HomogeneousTileInfo
     {
-        public HomogeneousTileInfo(Dictionary<int, int> duplicateTileMap,
-                                   HashSet<int> homogeneousTiles)
+        public HomogeneousTileInfo(Dictionary<int, int> duplicateColorTileMap,
+                                   HashSet<int> homogeneousColorTiles,
+                                   Dictionary<int, int> duplicateAlphaTileMap,
+                                   HashSet<int> homogeneousAlphaTiles)
         {
-            if (duplicateTileMap is null)
+            if (duplicateColorTileMap is null)
             {
-                ExceptionUtil.ThrowArgumentNullException(nameof(duplicateTileMap));
+                ExceptionUtil.ThrowArgumentNullException(nameof(duplicateColorTileMap));
             }
 
-            if (homogeneousTiles is null)
+            if (homogeneousColorTiles is null)
             {
-                ExceptionUtil.ThrowArgumentNullException(nameof(homogeneousTiles));
+                ExceptionUtil.ThrowArgumentNullException(nameof(homogeneousColorTiles));
             }
 
-            this.DuplicateTileMap = duplicateTileMap;
-            this.HomogeneousTiles = homogeneousTiles;
+            if (duplicateAlphaTileMap is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(duplicateAlphaTileMap));
+            }
+
+            if (homogeneousAlphaTiles is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(homogeneousAlphaTiles));
+            }
+
+            this.DuplicateColorTileMap = duplicateColorTileMap;
+            this.HomogeneousColorTiles = homogeneousColorTiles;
+            this.DuplicateAlphaTileMap = duplicateAlphaTileMap;
+            this.HomogeneousAlphaTiles = homogeneousAlphaTiles;
         }
 
-        public Dictionary<int, int> DuplicateTileMap { get; }
+        public Dictionary<int, int> DuplicateColorTileMap { get; }
 
-        public HashSet<int> HomogeneousTiles { get; }
+        public HashSet<int> HomogeneousColorTiles { get; }
+
+        public Dictionary<int, int> DuplicateAlphaTileMap { get; }
+
+        public HashSet<int> HomogeneousAlphaTiles { get; }
     }
 }

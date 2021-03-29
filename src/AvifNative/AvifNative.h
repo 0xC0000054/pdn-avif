@@ -133,13 +133,19 @@ extern "C" {
         DecodeInfo* decodeInfo,
         BitmapData* outputImage);
 
-    __declspec(dllexport) EncoderStatus __stdcall CompressImage(
+    __declspec(dllexport) EncoderStatus __stdcall CompressColorImage(
         const BitmapData* bitmap,
         const EncoderOptions* encodeOptions,
         ProgressContext* progressContext,
         const CICPColorData& colorInfo,
         CompressedAV1OutputAlloc outputAllocator,
-        void** compressedColorImage,
+        void** compressedColorImage);
+
+    __declspec(dllexport) EncoderStatus __stdcall CompressAlphaImage(
+        const BitmapData* bitmap,
+        const EncoderOptions* encodeOptions,
+        ProgressContext* progressContext,
+        CompressedAV1OutputAlloc outputAllocator,
         void** compressedAlphaImage);
 
     __declspec(dllexport) bool __stdcall MemoryBlocksAreEqual(

@@ -318,39 +318,25 @@ namespace
     }
 }
 
-EncoderStatus CompressAOMImages(
-    const aom_image* color,
-    const aom_image* alpha,
+EncoderStatus CompressAOMImage(
+    const aom_image* image,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
     CompressedAV1OutputAlloc outputAllocator,
-    void** compressedColorImage,
-    void** compressedAlphaImage)
+    void** compressedImage)
 {
     if (!outputAllocator)
     {
         return EncoderStatus::NullParameter;
     }
 
-    if (compressedColorImage)
+    if (compressedImage)
     {
-        *compressedColorImage = nullptr;
+        *compressedImage = nullptr;
     }
     else
     {
         return EncoderStatus::NullParameter;
-    }
-
-    if (alpha)
-    {
-        if (compressedAlphaImage)
-        {
-            *compressedAlphaImage = nullptr;
-        }
-        else
-        {
-            return EncoderStatus::NullParameter;
-        }
     }
 
     AvifEncoderOptions options(encodeOptions);
@@ -362,14 +348,5 @@ EncoderStatus CompressAOMImages(
         return EncoderStatus::UserCancelled;
     }
 
-    EncoderStatus status = EncodeAOMImage(iface, options, progressContext, color,
-                                          outputAllocator, compressedColorImage);
-
-    if (status == EncoderStatus::Ok && alpha)
-    {
-        status = EncodeAOMImage(iface, options, progressContext, alpha,
-                                outputAllocator, compressedAlphaImage);
-    }
-
-    return status;
+    return EncodeAOMImage(iface, options, progressContext, image, outputAllocator, compressedImage);
 }

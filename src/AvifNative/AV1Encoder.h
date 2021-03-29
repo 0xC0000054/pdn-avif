@@ -19,14 +19,12 @@
 extern "C" {
 #endif // __cplusplus
 
-EncoderStatus CompressAOMImages(
-    const aom_image* color,
-    const aom_image* alpha,
+EncoderStatus CompressAOMImage(
+    const aom_image* image,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
     CompressedAV1OutputAlloc outputAllocator,
-    void** compressedColorImage,
-    void** compressedAlphaImage);
+    void** compressedImage);
 
 #ifdef __cplusplus
 }

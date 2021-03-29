@@ -123,17 +123,19 @@ namespace AvifFileType
                     return;
                 }
 
-                foreach (KeyValuePair<int, int> item in homogeneousTiles.DuplicateTileMap)
+                foreach (KeyValuePair<int, int> item in homogeneousTiles.DuplicateAlphaTileMap)
                 {
                     this.duplicateAlphaTiles.Add(item.Key, item.Value);
                 }
 
-                if (alphaImages.Count == homogeneousTiles.HomogeneousTiles.Count)
+                if (alphaImages.Count == homogeneousTiles.HomogeneousAlphaTiles.Count)
                 {
                     return;
                 }
 
-                using (IArrayPoolBuffer<int> duplicateTileSearchSpace = GetDuplicateTileSearchSpace(alphaImages, homogeneousTiles, arrayPool))
+                using (IArrayPoolBuffer<int> duplicateTileSearchSpace = GetDuplicateTileSearchSpace(alphaImages,
+                                                                                                    homogeneousTiles.HomogeneousAlphaTiles,
+                                                                                                    arrayPool))
                 {
                     for (int i = 0; i < duplicateTileSearchSpace.Count; i++)
                     {
@@ -205,17 +207,19 @@ namespace AvifFileType
                     return;
                 }
 
-                foreach (KeyValuePair<int, int> item in homogeneousTiles.DuplicateTileMap)
+                foreach (KeyValuePair<int, int> item in homogeneousTiles.DuplicateColorTileMap)
                 {
                     this.duplicateColorTiles.Add(item.Key, item.Value);
                 }
 
-                if (colorImages.Count == homogeneousTiles.HomogeneousTiles.Count)
+                if (colorImages.Count == homogeneousTiles.HomogeneousColorTiles.Count)
                 {
                     return;
                 }
 
-                using (IArrayPoolBuffer<int> duplicateTileSearchSpace = GetDuplicateTileSearchSpace(colorImages, homogeneousTiles, arrayPool))
+                using (IArrayPoolBuffer<int> duplicateTileSearchSpace = GetDuplicateTileSearchSpace(colorImages,
+                                                                                                    homogeneousTiles.HomogeneousColorTiles,
+                                                                                                    arrayPool))
                 {
                     for (int i = 0; i < duplicateTileSearchSpace.Count; i++)
                     {
@@ -278,17 +282,17 @@ namespace AvifFileType
             }
 
             private static IArrayPoolBuffer<int> GetDuplicateTileSearchSpace(IReadOnlyList<CompressedAV1Image> images,
-                                                                             HomogeneousTileInfo homogeneousTiles,
+                                                                             HashSet<int> homogeneousTiles,
                                                                              IArrayPoolService arrayPool)
             {
-                IArrayPoolBuffer<int> buffer = arrayPool.Rent<int>(images.Count - homogeneousTiles.HomogeneousTiles.Count);
+                IArrayPoolBuffer<int> buffer = arrayPool.Rent<int>(images.Count - homogeneousTiles.Count);
 
                 int[] searchSpace = buffer.Array;
                 int index = 0;
 
                 for (int i = 0; i < images.Count; i++)
                 {
-                    if (!homogeneousTiles.HomogeneousTiles.Contains(i))
+                    if (!homogeneousTiles.Contains(i))
                     {
                         searchSpace[index] = i;
                         index++;

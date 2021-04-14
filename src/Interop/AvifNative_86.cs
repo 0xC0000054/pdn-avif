@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 
 namespace AvifFileType.Interop
 {
+    [System.Security.SuppressUnmanagedCodeSecurity]
     internal static class AvifNative_86
     {
         private const string DllName = "AvifNative_x86.dll";

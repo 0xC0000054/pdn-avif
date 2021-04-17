@@ -10,6 +10,8 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using PaintDotNet;
+using PaintDotNet.AppModel;
 using System;
 using System.Runtime.InteropServices;
 
@@ -18,13 +20,13 @@ namespace AvifFileType.Interop
     internal sealed class ManagedCompressedAV1Data
         : CompressedAV1Data
     {
-        private readonly byte[] buffer;
+        private IArrayPoolBuffer<byte> buffer;
         private GCHandle gcHandle;
 
-        public ManagedCompressedAV1Data(ulong size)
+        public ManagedCompressedAV1Data(ulong size, IArrayPoolService arrayPool)
             : base(size)
         {
-            this.buffer = new byte[size];
+            this.buffer = arrayPool.Rent<byte>(checked((int)size));
         }
 
         ~ManagedCompressedAV1Data()
@@ -39,6 +41,8 @@ namespace AvifFileType.Interop
                 this.gcHandle.Free();
             }
 
+            DisposableUtil.Free(ref this.buffer);
+
             base.Dispose(disposing);
         }
 
@@ -46,7 +50,7 @@ namespace AvifFileType.Interop
         {
             if (!this.gcHandle.IsAllocated)
             {
-                this.gcHandle = GCHandle.Alloc(this.buffer, GCHandleType.Pinned);
+                this.gcHandle = GCHandle.Alloc(this.buffer.Array, GCHandleType.Pinned);
             }
 
             return this.gcHandle.AddrOfPinnedObject();
@@ -62,7 +66,7 @@ namespace AvifFileType.Interop
 
         protected override void WriteBuffer(BigEndianBinaryWriter writer)
         {
-            writer.Write(this.buffer, 0, this.buffer.Length);
+            writer.Write(this.buffer.Array, 0, this.buffer.RequestedLength);
         }
     }
 }

@@ -209,6 +209,7 @@ namespace AvifFileType
                                 AvifNative.CompressColorImage(window,
                                                               options,
                                                               ReportCompressionProgress,
+                                                              arrayPool,
                                                               ref progressDone,
                                                               progressTotal,
                                                               colorConversionInfo,
@@ -245,6 +246,7 @@ namespace AvifFileType
                                     AvifNative.CompressAlphaImage(window,
                                                                   options,
                                                                   ReportCompressionProgress,
+                                                                  arrayPool,
                                                                   ref progressDone,
                                                                   progressTotal,
                                                                   out alpha);

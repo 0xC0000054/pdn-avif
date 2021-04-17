@@ -12,6 +12,7 @@
 
 using AvifFileType.Interop;
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using System;
 using System.Runtime.ExceptionServices;
 #if !NET47
@@ -25,6 +26,7 @@ namespace AvifFileType
         public static void CompressAlphaImage(Surface surface,
                                               EncoderOptions options,
                                               AvifProgressCallback avifProgress,
+                                              IArrayPoolService arrayPool,
                                               ref uint progressDone,
                                               uint progressTotal,
                                               out CompressedAV1Image alpha)
@@ -39,7 +41,7 @@ namespace AvifFileType
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
 
-            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1))
+            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1, arrayPool))
             {
                 IntPtr alphaImage;
 
@@ -92,6 +94,7 @@ namespace AvifFileType
         public static void CompressColorImage(Surface surface,
                                               EncoderOptions options,
                                               AvifProgressCallback avifProgress,
+                                              IArrayPoolService arrayPool,
                                               ref uint progressDone,
                                               uint progressTotal,
                                               CICPColorData colorInfo,
@@ -107,7 +110,7 @@ namespace AvifFileType
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
 
-            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1))
+            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1, arrayPool))
             {
                 IntPtr colorImage;
 

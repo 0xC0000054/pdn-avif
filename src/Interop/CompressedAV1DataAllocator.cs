@@ -109,13 +109,7 @@ namespace AvifFileType.Interop
 
         private sealed class CompressedDataState
         {
-            // 81920 is the largest multiple of 4096 that is under the large object heap limit (around 85,000 bytes).
-            // It is used as the managed buffer size cutoff to avoid having to allocate both an unmanaged buffer and
-            // a temporary managed buffer for as many images as possible.
-            //
-            // The BigEndianBinaryWriter will use a temporary managed buffer that is this size when reading data
-            // from the unmanaged buffer.
-            private const ulong ManagedCompressedAV1DataMaxSize = 81920;
+            private const ulong ManagedCompressedAV1DataMaxSize = 256 * 1024;
 
             private readonly CompressedAV1Data data;
             private bool isPinned;

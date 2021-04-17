@@ -24,13 +24,7 @@ namespace AvifFileType
     internal sealed class AvifParser
         : IDisposable
     {
-        // 81920 is the largest multiple of 4096 that is under the large object heap limit (around 85,000 bytes).
-        // It is used as the managed buffer size cutoff to avoid having to allocate both an unmanaged buffer and
-        // a temporary managed buffer for as many images as possible.
-        //
-        // When reading data into the unmanaged buffer the EndianBinaryReader will use a temporary managed
-        // buffer that is this size.
-        private const ulong ManagedAvifItemDataMaxSize = 81920;
+        private const ulong ManagedAvifItemDataMaxSize = 256 * 1024;
 
         private FileTypeBox fileTypeBox;
         private MetaBox metaBox;

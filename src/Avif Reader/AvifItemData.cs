@@ -89,14 +89,12 @@ namespace AvifFileType
     internal sealed class ManagedAvifItemData
         : AvifItemData
     {
-        private byte[] buffer;
         private IArrayPoolBuffer<byte> bufferFromArrayPool;
 
         public ManagedAvifItemData(int length, IArrayPoolService pool)
             : base()
         {
             this.bufferFromArrayPool = pool.Rent<byte>(length);
-            this.buffer = this.bufferFromArrayPool.Array;
             this.Length = (ulong)length;
         }
 
@@ -104,33 +102,32 @@ namespace AvifFileType
         {
             VerifyNotDisposed();
 
-            return this.buffer;
+            return this.bufferFromArrayPool.Array;
         }
 
         protected override void Dispose(bool disposing)
         {
             DisposableUtil.Free(ref this.bufferFromArrayPool);
-            this.buffer = null;
 
             base.Dispose(disposing);
         }
 
         protected override Stream GetStreamImpl()
         {
-            return new MemoryStream(this.buffer, 0, (int)this.Length, writable: false);
+            return new MemoryStream(this.bufferFromArrayPool.Array, 0, (int)this.Length, writable: false);
         }
 
         protected override byte[] ToArrayImpl()
         {
             byte[] array = new byte[this.Length];
-            Array.Copy(this.buffer, array, array.Length);
+            Array.Copy(this.bufferFromArrayPool.Array, array, array.Length);
 
             return array;
         }
 
         protected override unsafe void UseBufferPointerImpl(UseBufferPointerDelegate action)
         {
-            fixed (byte* ptr = this.buffer)
+            fixed (byte* ptr = this.bufferFromArrayPool.Array)
             {
                 action(ptr, this.Length);
             }

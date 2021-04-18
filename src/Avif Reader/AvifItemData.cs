@@ -107,7 +107,10 @@ namespace AvifFileType
 
         protected override void Dispose(bool disposing)
         {
-            DisposableUtil.Free(ref this.bufferFromArrayPool);
+            if (disposing)
+            {
+                DisposableUtil.Free(ref this.bufferFromArrayPool);
+            }
 
             base.Dispose(disposing);
         }

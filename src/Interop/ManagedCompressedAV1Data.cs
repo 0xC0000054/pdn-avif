@@ -36,12 +36,15 @@ namespace AvifFileType.Interop
 
         protected override void Dispose(bool disposing)
         {
+            if (disposing)
+            {
+                DisposableUtil.Free(ref this.buffer);
+            }
+
             if (this.gcHandle.IsAllocated)
             {
                 this.gcHandle.Free();
             }
-
-            DisposableUtil.Free(ref this.buffer);
 
             base.Dispose(disposing);
         }

@@ -387,7 +387,7 @@ namespace AvifFileType
                     case EncoderStatus.UnknownYUVFormat:
                         throw new FormatException("The YUV format is not supported by the encoder.");
                     case EncoderStatus.CodecInitFailed:
-                        throw new FormatException("Unable to initialize AV1 encoder.");
+                        throw new FormatException("Unable to initialize the AV1 encoder.");
                     case EncoderStatus.EncodeFailed:
                         throw new FormatException("The AV1 encode failed.");
                     case EncoderStatus.UserCancelled:
@@ -409,7 +409,7 @@ namespace AvifFileType
                 case DecoderStatus.OutOfMemory:
                     throw new OutOfMemoryException();
                 case DecoderStatus.CodecInitFailed:
-                    throw new FormatException("Unable to initialize AV1 decoder.");
+                    throw new FormatException("Unable to initialize the AV1 decoder.");
                 case DecoderStatus.DecodeFailed:
                     throw new FormatException("The AV1 decode failed.");
                 case DecoderStatus.AlphaSizeMismatch:

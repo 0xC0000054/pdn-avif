@@ -183,9 +183,17 @@ namespace AvifFileType
                 {
                     ManagedAvifItemData managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
 
-                    this.reader.ProperRead(managedItemData.GetBuffer(), 0, (int)managedItemData.Length);
+                    try
+                    {
+                        this.reader.ProperRead(managedItemData.GetBuffer(), 0, (int)managedItemData.Length);
 
-                    data = managedItemData;
+                        data = managedItemData;
+                        managedItemData = null;
+                    }
+                    finally
+                    {
+                        managedItemData?.Dispose();
+                    }
                 }
                 else
                 {
@@ -478,37 +486,45 @@ namespace AvifFileType
             {
                 ManagedAvifItemData managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
 
-                int offset = 0;
-                int remainingBytes = (int)managedItemData.Length;
-                byte[] bytes = managedItemData.GetBuffer();
-
-                for (int i = 0; i < extents.Count; i++)
+                try
                 {
-                    ItemLocationExtent extent = extents[i];
+                    int offset = 0;
+                    int remainingBytes = (int)managedItemData.Length;
+                    byte[] bytes = managedItemData.GetBuffer();
 
-                    long itemOffset = CalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
-
-                    int length = (int)extent.Length;
-
-                    if (length > remainingBytes)
+                    for (int i = 0; i < extents.Count; i++)
                     {
-                        throw new FormatException("The extent length is greater than the number of bytes remaining for the item.");
+                        ItemLocationExtent extent = extents[i];
+
+                        long itemOffset = CalculateExtentOffset(entry.BaseOffset, entry.ConstructionMethod, extent);
+
+                        int length = (int)extent.Length;
+
+                        if (length > remainingBytes)
+                        {
+                            throw new FormatException("The extent length is greater than the number of bytes remaining for the item.");
+                        }
+
+                        this.reader.Position = itemOffset;
+                        this.reader.ProperRead(bytes, offset, length);
+
+                        offset += length;
+                        remainingBytes -= length;
                     }
 
-                    this.reader.Position = itemOffset;
-                    this.reader.ProperRead(bytes, offset, length);
+                    if (remainingBytes > 0)
+                    {
+                        // This should never happen, the total item size is the sum of all the extent sizes.
+                        throw new FormatException("The item has more data than was read from the extents.");
+                    }
 
-                    offset += length;
-                    remainingBytes -= length;
+                    data = managedItemData;
+                    managedItemData = null;
                 }
-
-                if (remainingBytes > 0)
+                finally
                 {
-                    // This should never happen, the total item size is the sum of all the extent sizes.
-                    throw new FormatException("The item has more data than was read from the extents.");
+                    managedItemData?.Dispose();
                 }
-
-                data = managedItemData;
             }
             else
             {

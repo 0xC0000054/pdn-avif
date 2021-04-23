@@ -47,13 +47,6 @@ namespace AvifFileType
             return GetStreamImpl();
         }
 
-        public byte[] ToArray()
-        {
-            VerifyNotDisposed();
-
-            return ToArrayImpl();
-        }
-
         public unsafe void UseBufferPointer(UseBufferPointerDelegate action)
         {
             if (action is null)
@@ -72,8 +65,6 @@ namespace AvifFileType
         }
 
         protected abstract Stream GetStreamImpl();
-
-        protected abstract byte[] ToArrayImpl();
 
         protected abstract unsafe void UseBufferPointerImpl(UseBufferPointerDelegate action);
 
@@ -118,14 +109,6 @@ namespace AvifFileType
         protected override Stream GetStreamImpl()
         {
             return new MemoryStream(this.bufferFromArrayPool.Array, 0, (int)this.Length, writable: false);
-        }
-
-        protected override byte[] ToArrayImpl()
-        {
-            byte[] array = new byte[this.Length];
-            Array.Copy(this.bufferFromArrayPool.Array, array, array.Length);
-
-            return array;
         }
 
         protected override unsafe void UseBufferPointerImpl(UseBufferPointerDelegate action)
@@ -177,36 +160,6 @@ namespace AvifFileType
         {
             // The UnmanagedMemoryStream class does not take ownership of the SafeBuffer.
             return new UnmanagedMemoryStream(this.buffer, 0, checked((long)this.Length), FileAccess.Read);
-        }
-
-        protected override unsafe byte[] ToArrayImpl()
-        {
-            ulong length = this.Length;
-
-            byte[] array = new byte[length];
-
-            byte* readPtr = null;
-#if NET47
-            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-            try
-            {
-                this.buffer.AcquirePointer(ref readPtr);
-
-                fixed (byte* writePtr = array)
-                {
-                    Buffer.MemoryCopy(readPtr, writePtr, length, length);
-                }
-            }
-            finally
-            {
-                if (readPtr != null)
-                {
-                    this.buffer.ReleasePointer();
-                }
-            }
-
-            return array;
         }
 
         protected override unsafe void UseBufferPointerImpl(UseBufferPointerDelegate action)

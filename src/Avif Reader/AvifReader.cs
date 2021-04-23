@@ -182,27 +182,13 @@ namespace AvifFileType
             return this.iccProfileColorInformation?.GetProfileBytes();
         }
 
-        public byte[] GetXmpData()
+        public AvifItemData GetXmpData()
         {
             VerifyNotDisposed();
 
             ItemLocationEntry entry = this.parser.TryGetXmpLocation(this.primaryItemId);
 
-            if (entry != null)
-            {
-                ulong length = entry.TotalItemSize;
-
-                // Ignore any XMP packets that are larger than 2GB.
-                if (length < int.MaxValue)
-                {
-                    using (AvifItemData itemData = this.parser.ReadItemData(entry))
-                    {
-                        return itemData.ToArray();
-                    }
-                }
-            }
-
-            return null;
+            return entry != null ? this.parser.ReadItemData(entry) : null;
         }
 
         private static void CheckImageGridAndTileBounds(uint tileWidth, uint tileHeight, YUVChromaSubsampling tileChroma, ImageGridInfo gridInfo)

@@ -374,14 +374,24 @@ namespace AvifFileType
                                                                iccProfileBytes));
             }
 
-            byte[] xmpBytes = reader.GetXmpData();
+            AvifItemData xmp = reader.GetXmpData();
 
-            if (xmpBytes != null)
+            if (xmp != null)
             {
-                XmpPacket xmpPacket = XmpPacket.TryParse(xmpBytes);
-                if (xmpPacket != null)
+                try
                 {
-                    doc.Metadata.SetXmpPacket(xmpPacket);
+                    using (Stream stream = xmp.GetStream())
+                    {
+                        XmpPacket xmpPacket = XmpPacket.TryParse(stream);
+                        if (xmpPacket != null)
+                        {
+                            doc.Metadata.SetXmpPacket(xmpPacket);
+                        }
+                    }
+                }
+                finally
+                {
+                    xmp.Dispose();
                 }
             }
         }

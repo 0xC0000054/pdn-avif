@@ -13,7 +13,7 @@
 using AvifFileType.AvifContainer;
 using AvifFileType.Interop;
 using PaintDotNet;
-using PaintDotNet.IO;
+using PaintDotNet.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -219,21 +219,6 @@ namespace AvifFileType
                     {
                         ExceptionUtil.ThrowFormatException("The tile and output image height must be an even number.");
                     }
-                }
-            }
-        }
-
-        private static unsafe void ConvertSurfaceFromPremultipliedAlpha(Surface surface)
-        {
-            for (int y = 0; y < surface.Height; y++)
-            {
-                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
-                ColorBgra* ptrEnd = ptr + surface.Width;
-
-                while (ptr < ptrEnd)
-                {
-                    *ptr = ptr->ConvertFromPremultipliedAlpha();
-                    ptr++;
                 }
             }
         }
@@ -567,10 +552,7 @@ namespace AvifFileType
 
             if (this.parser.IsAlphaPremultiplied(this.primaryItemId, this.alphaItemId))
             {
-                // The ConvertSurfaceFromPremultipliedAlpha method calls ColorBgra.ConvertFromPremultipliedAlpha() in a
-                // loop due to the fact that SurfaceExtensions.ConvertFromPremultipliedAlpha() produces incorrect results
-                // for some images.
-                ConvertSurfaceFromPremultipliedAlpha(fullSurface);
+                fullSurface.ConvertFromPremultipliedAlpha();
             }
         }
 

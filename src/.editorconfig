@@ -29,6 +29,9 @@ csharp_style_expression_bodied_properties             = false : none
 csharp_style_expression_bodied_indexers               = false : none
 csharp_style_expression_bodied_accessors              = false : none
 
+# Code style defaults
+csharp_style_implicit_object_creation_when_type_is_apparent = false
+
 # Code block settings
 csharp_prefer_braces                                  = true : warning
 

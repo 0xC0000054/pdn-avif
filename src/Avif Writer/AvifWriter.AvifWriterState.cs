@@ -56,8 +56,8 @@ namespace AvifFileType
 
                 this.ImageGrid = imageGridMetadata;
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
-                this.duplicateAlphaTiles = new Dictionary<int, int>();
-                this.duplicateColorTiles = new Dictionary<int, int>();
+                this.duplicateAlphaTiles = new Dictionary<int, int>(homogeneousTiles.DuplicateAlphaTileMap.Count);
+                this.duplicateColorTiles = new Dictionary<int, int>(homogeneousTiles.DuplicateColorTileMap.Count);
                 DeduplicateColorTiles(colorImages, homogeneousTiles, arrayPool);
 
                 if (alphaImages != null)

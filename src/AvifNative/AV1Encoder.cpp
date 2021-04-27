@@ -48,15 +48,21 @@ namespace
 {
     struct AvifEncoderOptions
     {
+        enum class ImageType
+        {
+            Color = 0,
+            Alpha
+        };
+
         int threadCount;
         int quality;
         int cpuUsed;
         int usage;
 
-        AvifEncoderOptions(const EncoderOptions* options)
+        AvifEncoderOptions(const EncoderOptions* options, ImageType imageType)
         {
             threadCount = ClampThreadCount(options->maxThreads);
-            quality = ConvertQualityToAOMRange(options->quality);
+            quality = ConvertQualityToAOMRange(options, imageType);
             usage = AOM_USAGE_ALL_INTRA;
 
             switch (options->compressionSpeed)
@@ -119,8 +125,10 @@ namespace
             return table;
         }
 
-        static int ConvertQualityToAOMRange(int32_t quality)
+        static int ConvertQualityToAOMRange(const EncoderOptions* options, ImageType imageType)
         {
+            int32_t quality = imageType == ImageType::Color ? options->colorQuality : options->alphaQuality;
+
             // Clamp the quality value to the lookup table range
             if (quality < 0)
             {
@@ -316,37 +324,70 @@ namespace
                                         outputAllocator, outputImage);
         return error;
     }
+
+    EncoderStatus CompressAOMImage(
+        const aom_image* image,
+        AvifEncoderOptions::ImageType imageType,
+        const EncoderOptions* encodeOptions,
+        ProgressContext* progressContext,
+        CompressedAV1OutputAlloc outputAllocator,
+        void** compressedImage)
+    {
+        if (!outputAllocator)
+        {
+            return EncoderStatus::NullParameter;
+        }
+
+        if (compressedImage)
+        {
+            *compressedImage = nullptr;
+        }
+        else
+        {
+            return EncoderStatus::NullParameter;
+        }
+
+        AvifEncoderOptions options(encodeOptions, imageType);
+
+        aom_codec_iface_t* iface = aom_codec_av1_cx();
+
+        if (!progressContext->progressCallback(++progressContext->progressDone, progressContext->progressTotal))
+        {
+            return EncoderStatus::UserCancelled;
+        }
+
+        return EncodeAOMImage(iface, options, progressContext, image, outputAllocator, compressedImage);
+    }
 }
 
-EncoderStatus CompressAOMImage(
-    const aom_image* image,
+EncoderStatus CompressAOMColorImage(
+    const aom_image* color,
     const EncoderOptions* encodeOptions,
     ProgressContext* progressContext,
     CompressedAV1OutputAlloc outputAllocator,
-    void** compressedImage)
+    void** compressedColorImage)
 {
-    if (!outputAllocator)
-    {
-        return EncoderStatus::NullParameter;
-    }
+    return CompressAOMImage(
+        color,
+        AvifEncoderOptions::ImageType::Color,
+        encodeOptions,
+        progressContext,
+        outputAllocator,
+        compressedColorImage);
+}
 
-    if (compressedImage)
-    {
-        *compressedImage = nullptr;
-    }
-    else
-    {
-        return EncoderStatus::NullParameter;
-    }
-
-    AvifEncoderOptions options(encodeOptions);
-
-    aom_codec_iface_t* iface = aom_codec_av1_cx();
-
-    if (!progressContext->progressCallback(++progressContext->progressDone, progressContext->progressTotal))
-    {
-        return EncoderStatus::UserCancelled;
-    }
-
-    return EncodeAOMImage(iface, options, progressContext, image, outputAllocator, compressedImage);
+EncoderStatus CompressAOMAlphaImage(
+    const aom_image* alpha,
+    const EncoderOptions* encodeOptions,
+    ProgressContext* progressContext,
+    CompressedAV1OutputAlloc outputAllocator,
+    void** compressedAlphaImage)
+{
+    return CompressAOMImage(
+        alpha,
+        AvifEncoderOptions::ImageType::Alpha,
+        encodeOptions,
+        progressContext,
+        outputAllocator,
+        compressedAlphaImage);
 }

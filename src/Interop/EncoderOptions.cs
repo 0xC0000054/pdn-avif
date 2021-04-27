@@ -17,7 +17,8 @@ namespace AvifFileType.Interop
     [StructLayout(LayoutKind.Sequential)]
     internal sealed class EncoderOptions
     {
-        public int quality;
+        public int colorQuality;
+        public int alphaQuality;
         public CompressionSpeed compressionSpeed;
         public YUVChromaSubsampling yuvFormat;
         public int maxThreads;

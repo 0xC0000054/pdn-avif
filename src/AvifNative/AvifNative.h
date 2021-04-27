@@ -68,7 +68,8 @@ extern "C" {
     // This must be kept in sync with EncoderOptions.cs
     struct EncoderOptions
     {
-        int32_t quality;
+        int32_t colorQuality;
+        int32_t alphaQuality;
         CompressionSpeed compressionSpeed;
         YUVChromaSubsampling yuvFormat;
         int32_t maxThreads;

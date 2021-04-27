@@ -73,6 +73,7 @@ namespace AvifFileType
         public static void Save(Document document,
                          Stream output,
                          int quality,
+                         bool losslessAlpha,
                          CompressionSpeed compressionSpeed,
                          YUVChromaSubsampling chromaSubsampling,
                          bool preserveExistingTileSize,
@@ -96,7 +97,8 @@ namespace AvifFileType
             AvifMetadata metadata = CreateAvifMetadata(document);
             EncoderOptions options = new EncoderOptions
             {
-                quality = quality,
+                colorQuality = quality,
+                alphaQuality = losslessAlpha ? 100 : quality,
                 compressionSpeed = compressionSpeed,
                 // YUV 4:0:0 is always used for gray-scale images because it
                 // produces the smallest file size with no quality loss.

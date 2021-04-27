@@ -36,7 +36,8 @@ namespace AvifFileType
             ForumLink,
             GitHubLink,
             PreserveExistingTileSize,
-            PremultipliedAlpha
+            PremultipliedAlpha,
+            LosslessAlphaCompression
         }
 
         /// <summary>
@@ -91,6 +92,7 @@ namespace AvifFileType
             Property[] props = new Property[]
             {
                 new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
+                new BooleanProperty(PropertyNames.LosslessAlphaCompression, true),
                 StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionSpeed, CompressionSpeed.Fast),
                 CreateChromaSubsampling(),
                 new BooleanProperty(PropertyNames.PreserveExistingTileSize, true),
@@ -106,6 +108,10 @@ namespace AvifFileType
                                                                  100,
                                                                  false),
                 new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.YUVChromaSubsampling,
+                                                                 PropertyNames.Quality,
+                                                                 100,
+                                                                 false),
+                new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.LosslessAlphaCompression,
                                                                  PropertyNames.Quality,
                                                                  100,
                                                                  false)
@@ -141,6 +147,10 @@ namespace AvifFileType
             PropertyControlInfo qualityPCI = configUI.FindControlForPropertyName(PropertyNames.Quality);
             qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("Quality_DisplayName");
             qualityPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = string.Empty;
+
+            PropertyControlInfo losslessAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.LosslessAlphaCompression);
+            losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
+            losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("LosslessAlphaCompression_Description");
 
             PropertyControlInfo compressionSpeedPCI = configUI.FindControlForPropertyName(PropertyNames.CompressionSpeed);
             compressionSpeedPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("CompressionSpeed_DisplayName");
@@ -186,10 +196,12 @@ namespace AvifFileType
 
             // The premultiplied alpha conversion can cause the colors to drift, so it is disabled for lossless encoding.
             bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha).Value && quality < 100;
+            bool losslessAlpha = token.GetProperty<BooleanProperty>(PropertyNames.LosslessAlphaCompression).Value;
 
             AvifFile.Save(input,
                           output,
                           quality,
+                          losslessAlpha,
                           compressionSpeed,
                           chromaSubsampling,
                           preserveExistingTileSize,

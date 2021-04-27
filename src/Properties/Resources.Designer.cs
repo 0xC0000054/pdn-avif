@@ -160,6 +160,15 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Lossless Alpha Compression.
+        /// </summary>
+        internal static string LosslessAlphaCompression_Description {
+            get {
+                return ResourceManager.GetString("LosslessAlphaCompression_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Premultiplied Alpha.
         /// </summary>
         internal static string PremultipliedAlpha_Description {

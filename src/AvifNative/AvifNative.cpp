@@ -104,7 +104,7 @@ EncoderStatus __stdcall CompressColorImage(
         return EncoderStatus::OutOfMemory;
     }
 
-    return CompressAOMImage(color.get(), encodeOptions, progressContext, outputAllocator, compressedColorImage);
+    return CompressAOMColorImage(color.get(), encodeOptions, progressContext, outputAllocator, compressedColorImage);
 }
 
 EncoderStatus __stdcall CompressAlphaImage(
@@ -125,7 +125,7 @@ EncoderStatus __stdcall CompressAlphaImage(
         return EncoderStatus::OutOfMemory;
     }
 
-    return CompressAOMImage(alpha.get(), encodeOptions, progressContext, outputAllocator, compressedAlphaImage);
+    return CompressAOMAlphaImage(alpha.get(), encodeOptions, progressContext, outputAllocator, compressedAlphaImage);
 }
 
 bool __stdcall MemoryBlocksAreEqual(const void* buffer1, const void* buffer2, size_t size)

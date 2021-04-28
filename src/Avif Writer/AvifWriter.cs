@@ -298,11 +298,6 @@ namespace AvifFileType
                 int index = itemIndexes[i];
                 AvifWriterItem item = items[index];
 
-                if (item.Image is null && item.ContentBytes is null)
-                {
-                    continue;
-                }
-
                 if (item.Image != null)
                 {
                     if (item.DuplicateImageIndex >= 0)
@@ -327,7 +322,7 @@ namespace AvifFileType
                     this.progressDone++;
                     this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));
                 }
-                else
+                else if (item.ContentBytes != null)
                 {
                     // We only ever write items with a single extent.
                     item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);

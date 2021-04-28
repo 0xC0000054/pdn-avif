@@ -344,12 +344,11 @@ aom_image_t* ConvertColorToAOMImage(
         return nullptr;
     }
 
-    aomImage->range = AOM_CR_FULL_RANGE;
-    aomImage->monochrome = yuvFormat == YUVChromaSubsampling::Subsampling400;
-
     aomImage->cp = static_cast<aom_color_primaries_t>(colorInfo.colorPrimaries);
     aomImage->tc = static_cast<aom_transfer_characteristics_t>(colorInfo.transferCharacteristics);
     aomImage->mc = static_cast<aom_matrix_coefficients_t>(colorInfo.matrixCoefficients);
+    aomImage->range = AOM_CR_FULL_RANGE;
+    aomImage->monochrome = yuvFormat == YUVChromaSubsampling::Subsampling400;
 
     if (aomImage->monochrome)
     {
@@ -415,12 +414,11 @@ aom_image_t* ConvertAlphaToAOMImage(const BitmapData* bgraImage)
         return nullptr;
     }
 
-    aomImage->range = AOM_CR_FULL_RANGE;
-    aomImage->monochrome = 1;
-
     aomImage->cp = AOM_CICP_CP_UNSPECIFIED;
     aomImage->tc = AOM_CICP_TC_UNSPECIFIED;
     aomImage->mc = AOM_CICP_MC_UNSPECIFIED;
+    aomImage->range = AOM_CR_FULL_RANGE;
+    aomImage->monochrome = 1;
 
     AlphaToY8(
         bgraImage,

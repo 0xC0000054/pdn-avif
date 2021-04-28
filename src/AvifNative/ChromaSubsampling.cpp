@@ -88,7 +88,7 @@ namespace
             v = 1.0f;
         }
 
-        return  static_cast<uint8_t>(avifRoundf(v * 255.0f));
+        return static_cast<uint8_t>(avifRoundf(v * 255.0f));
     }
 
     uint32_t GetUVHeight(uint32_t imageHeight, aom_img_fmt_t aomFormat)

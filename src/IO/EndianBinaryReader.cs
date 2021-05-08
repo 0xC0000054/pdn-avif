@@ -187,7 +187,7 @@ namespace AvifFileType
             }
             catch (OverflowException ex)
             {
-                throw new ArgumentOutOfRangeException(nameof(length), ex);
+                throw new ArgumentOutOfRangeException("Overflow when calculating the segment size.", ex);
             }
 
             return new EndianBinaryReaderSegment(this, startOffset, length);

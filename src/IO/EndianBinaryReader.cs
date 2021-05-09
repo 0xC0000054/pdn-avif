@@ -200,6 +200,7 @@ namespace AvifFileType
         {
             if (!this.disposed)
             {
+                this.disposed = true;
                 DisposableUtil.Free(ref this.bufferFromArrayPool);
                 this.buffer = null;
 

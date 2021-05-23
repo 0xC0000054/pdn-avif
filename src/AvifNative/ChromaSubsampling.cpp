@@ -247,7 +247,6 @@ namespace
 
                     uPlane[x + (y * uPlaneStride)] = yuvToUNorm(YuvChannel::U, avgU);
                     vPlane[x + (y * vPlaneStride)] = yuvToUNorm(YuvChannel::V, avgV);
-
                 }
                 else if (yuvFormat == YUVChromaSubsampling::Subsampling422)
                 {

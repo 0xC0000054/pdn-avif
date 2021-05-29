@@ -36,12 +36,6 @@ namespace AvifFileType.AvifContainer
             this.VerticalOffset = verticalOffset;
         }
 
-        // Used via reflection to get the item property box type.
-        private CleanApertureBox()
-            : base(BoxTypes.CleanAperture)
-        {
-        }
-
         public Rational Width { get; }
 
         public Rational Height { get; }

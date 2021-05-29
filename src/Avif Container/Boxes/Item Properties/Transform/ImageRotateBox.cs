@@ -44,12 +44,6 @@ namespace AvifFileType.AvifContainer
             this.Rotation = (ImageRotation)value;
         }
 
-        // Used via reflection to get the item property box type.
-        private ImageRotateBox()
-            : base(BoxTypes.ImageRotation)
-        {
-        }
-
         public ImageRotation Rotation { get; }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]

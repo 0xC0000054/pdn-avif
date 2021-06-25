@@ -37,6 +37,12 @@ namespace AvifFileType
             int cropWidth = cleanApertureBox.Width.ToInt32();
             int cropHeight = cleanApertureBox.Height.ToInt32();
 
+            if (cropWidth <= 0 || cropHeight <= 0)
+            {
+                // Invalid crop width/height.
+                return;
+            }
+
             double offsetX = cleanApertureBox.HorizontalOffset.ToDouble();
             double offsetY = cleanApertureBox.VerticalOffset.ToDouble();
 

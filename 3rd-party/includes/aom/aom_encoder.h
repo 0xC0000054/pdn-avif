@@ -870,11 +870,11 @@ typedef struct aom_codec_enc_cfg {
    */
   unsigned int use_fixed_qp_offsets;
 
-/*!\brief Number of fixed QP offsets
+/*!\brief Max number of fixed QP offsets
  *
  * This defines the number of elements in the fixed_qp_offsets array.
  */
-#define FIXED_QP_OFFSET_COUNT 5
+#define FIXED_QP_OFFSET_COUNT 6
 
   /*!\brief Array of fixed QP offsets
    *

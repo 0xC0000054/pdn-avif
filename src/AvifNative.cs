@@ -72,6 +72,16 @@ namespace AvifFileType
                                                               outputAllocDelegate,
                                                               out alphaImage);
                 }
+#if !NET47
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    status = AvifNative_ARM64.CompressAlphaImage(ref bitmapData,
+                                                                 options,
+                                                                 progressContext,
+                                                                 outputAllocDelegate,
+                                                                 out alphaImage);
+                }
+#endif
                 else
                 {
                     throw new PlatformNotSupportedException();
@@ -143,6 +153,17 @@ namespace AvifFileType
                                                               outputAllocDelegate,
                                                               out colorImage);
                 }
+#if !NET47
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    status = AvifNative_ARM64.CompressColorImage(ref bitmapData,
+                                                                 options,
+                                                                 progressContext,
+                                                                 ref colorInfo,
+                                                                 outputAllocDelegate,
+                                                                 out colorImage);
+                }
+#endif
                 else
                 {
                     throw new PlatformNotSupportedException();
@@ -225,6 +246,16 @@ namespace AvifFileType
                                                                         decodeInfo,
                                                                         ref bitmapData);
                         }
+#if !NET47
+                        else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                        {
+                            status = AvifNative_ARM64.DecompressColorImage(ptr,
+                                                                           colorImageSize,
+                                                                           ref colorData,
+                                                                           decodeInfo,
+                                                                           ref bitmapData);
+                        }
+#endif
                         else
                         {
                             throw new PlatformNotSupportedException();
@@ -256,6 +287,16 @@ namespace AvifFileType
                                                                         decodeInfo,
                                                                         ref bitmapData);
                         }
+#if !NET47
+                        else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                        {
+                            status = AvifNative_ARM64.DecompressColorImage(ptr,
+                                                                           colorImageSize,
+                                                                           IntPtr.Zero,
+                                                                           decodeInfo,
+                                                                           ref bitmapData);
+                        }
+#endif
                         else
                         {
                             throw new PlatformNotSupportedException();
@@ -327,6 +368,15 @@ namespace AvifFileType
                                                                         decodeInfo,
                                                                         ref bitmapData);
                         }
+#if !NET47
+                        else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                        {
+                            status = AvifNative_ARM64.DecompressAlphaImage(ptr,
+                                                                           alphaImageSize,
+                                                                           decodeInfo,
+                                                                           ref bitmapData);
+                        }
+#endif
                         else
                         {
                             throw new PlatformNotSupportedException();
@@ -360,6 +410,12 @@ namespace AvifFileType
             {
                 result = AvifNative_86.MemoryBlocksAreEqual(buffer1, buffer2, new UIntPtr(length));
             }
+#if !NET47
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            {
+                result = AvifNative_ARM64.MemoryBlocksAreEqual(buffer1, buffer2, new UIntPtr(length));
+            }
+#endif
             else
             {
                 throw new PlatformNotSupportedException();

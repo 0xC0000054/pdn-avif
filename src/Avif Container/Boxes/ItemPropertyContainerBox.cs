@@ -37,6 +37,7 @@ namespace AvifFileType.AvifContainer
             }
 
             this.properties = new List<IItemProperty>();
+            ItemPropertyFactory propertyFactory = new ItemPropertyFactory();
 
             while (reader.Position < reader.EndOffset)
             {
@@ -44,7 +45,7 @@ namespace AvifFileType.AvifContainer
 
                 EndianBinaryReaderSegment childSegment = reader.CreateChildSegment(entry);
 
-                this.properties.Add(ItemPropertyFactory.TryCreate(childSegment, entry));
+                this.properties.Add(propertyFactory.TryCreate(childSegment, entry));
 
                 reader.Position = childSegment.EndOffset;
             }

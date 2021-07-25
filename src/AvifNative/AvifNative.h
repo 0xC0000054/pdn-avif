@@ -92,6 +92,9 @@ extern "C" {
         YUVChromaSubsampling chromaSubsampling;
         uint32_t bitDepth;
         CICPColorData firstTileColorData;
+        uint16_t spatialLayerId; // Only valid if allLayers is true.
+        bool allLayers;
+        uint8_t operatingPoint;
     };
 
     struct BitmapData

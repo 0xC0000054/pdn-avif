@@ -24,5 +24,9 @@ namespace AvifFileType.Interop
         public YUVChromaSubsampling chromaSubsampling;
         public uint bitDepth;
         public CICPColorData firstTileColorData;
+        public ushort spatialLayerId;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool allLayers;
+        public byte operatingPoint;
     }
 }

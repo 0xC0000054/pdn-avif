@@ -24,6 +24,7 @@ namespace
         aom_codec_ctx_t* codec,
         const uint8_t* compressedImage,
         size_t compressedImageSize,
+        const DecodeInfo* decodeInfo,
         aom_image_t** decodedImage)
     {
         const aom_codec_err_t error = aom_codec_decode(codec, compressedImage, compressedImageSize, nullptr);
@@ -42,7 +43,24 @@ namespace
 
         aom_codec_iter_t iter = nullptr;
 
-        *decodedImage = aom_codec_get_frame(codec, &iter);
+        while (true)
+        {
+            aom_image_t* frame = aom_codec_get_frame(codec, &iter);
+
+            if (decodeInfo->allLayers)
+            {
+                if (frame->spatial_id == decodeInfo->spatialLayerId)
+                {
+                    *decodedImage = frame;
+                    break;
+                }
+            }
+            else
+            {
+                *decodedImage = frame;
+                break;
+            }
+        }
 
         if (!*decodedImage)
         {
@@ -62,6 +80,17 @@ namespace
             aom_codec_iface_t* iface = aom_codec_av1_dx();
             throw_on_error(aom_codec_dec_init(&codec, iface, nullptr, 0));
             initialized = true;
+        }
+
+        void ConfigureDecoderOptions(const DecodeInfo* info)
+        {
+            if (!initialized)
+            {
+                throw codec_init_error("ConfigureDecoderOptions called on an invalid object.");
+            }
+
+            throw_on_error(aom_codec_control(&codec, AV1D_SET_OUTPUT_ALL_LAYERS, static_cast<int>(info->allLayers)));
+            throw_on_error(aom_codec_control(&codec, AV1D_SET_OPERATING_POINT, info->operatingPoint));
         }
     };
 }
@@ -83,6 +112,7 @@ DecoderStatus DecodeColorImage(
     try
     {
         ScopedAOMDecoder codec;
+        codec.ConfigureDecoderOptions(decodeInfo);
 
         // The image is owned by the decoder.
 
@@ -91,6 +121,7 @@ DecoderStatus DecodeColorImage(
         status = DecodeAV1Image(codec.get(),
                                 compressedColorImage,
                                 compressedColorImageSize,
+                                decodeInfo,
                                 &aomImage);
 
         if (status == DecoderStatus::Ok)
@@ -135,6 +166,7 @@ DecoderStatus DecodeAlphaImage(
     try
     {
         ScopedAOMDecoder codec;
+        codec.ConfigureDecoderOptions(decodeInfo);
 
         // The image is owned by the decoder.
 
@@ -143,6 +175,7 @@ DecoderStatus DecodeAlphaImage(
         status = DecodeAV1Image(codec.get(),
                                 compressedAlphaImage,
                                 compressedAlphaImageSize,
+                                decodeInfo,
                                 &aomImage);
 
         if (status == DecoderStatus::Ok)

@@ -352,7 +352,31 @@ namespace AvifFileType
 
         private void DecodeColorImage(uint itemId, DecodeInfo decodeInfo, CICPColorData? colorConversionInfo, Surface fullSurface)
         {
-            using (AvifItemData color = ReadColorImage(itemId))
+            ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
+
+            if (entry is null)
+            {
+                ExceptionUtil.ThrowFormatException("The color image item location was not found.");
+            }
+
+            LayerSelectorInfo layerInfo = this.parser.GetLayerSelectorInfo(itemId, entry.TotalItemSize);
+            // Read all of the image data, unless there are additional spatial layers beyond the one we want.
+            ulong? numberOfBytesToRead = null;
+
+            if (layerInfo != null)
+            {
+                decodeInfo.spatialLayerId = layerInfo.SpatialLayerId;
+                decodeInfo.allLayers = true;
+                numberOfBytesToRead = layerInfo.LayerDataSize;
+            }
+            else
+            {
+                decodeInfo.spatialLayerId = 0;
+                decodeInfo.allLayers = false;
+            }
+            decodeInfo.operatingPoint = GetOperatingPoint(itemId);
+
+            using (AvifItemData color = this.parser.ReadItemData(entry, numberOfBytesToRead))
             {
                 AvifNative.DecompressColor(color, colorConversionInfo, decodeInfo, fullSurface);
             }
@@ -360,7 +384,31 @@ namespace AvifFileType
 
         private void DecodeAlphaImage(uint itemId, DecodeInfo decodeInfo, Surface fullSurface)
         {
-            using (AvifItemData alpha = ReadAlphaImage(itemId))
+            ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
+
+            if (entry is null)
+            {
+                ExceptionUtil.ThrowFormatException("The alpha image item location was not found.");
+            }
+
+            LayerSelectorInfo layerInfo = this.parser.GetLayerSelectorInfo(itemId, entry.TotalItemSize);
+            // Read all of the image data, unless there are additional spatial layers beyond the one we want.
+            ulong? numberOfBytesToRead = null;
+
+            if (layerInfo != null)
+            {
+                decodeInfo.spatialLayerId = layerInfo.SpatialLayerId;
+                decodeInfo.allLayers = true;
+                numberOfBytesToRead = layerInfo.LayerDataSize;
+            }
+            else
+            {
+                decodeInfo.spatialLayerId = 0;
+                decodeInfo.allLayers = false;
+            }
+            decodeInfo.operatingPoint = GetOperatingPoint(itemId);
+
+            using (AvifItemData alpha = this.parser.ReadItemData(entry, numberOfBytesToRead))
             {
                 AvifNative.DecompressAlpha(alpha, decodeInfo, fullSurface);
             }
@@ -531,6 +579,20 @@ namespace AvifFileType
             return new Size((int)width, (int)height);
         }
 
+        private byte GetOperatingPoint(uint itemId)
+        {
+            byte operatingPoint = 0;
+
+            AV1OperatingPointBox box = this.parser.TryGetAssociatedItemProperty<AV1OperatingPointBox>(itemId);
+
+            if (box != null)
+            {
+                operatingPoint = box.OperatingPointIndex;
+            }
+
+            return operatingPoint;
+        }
+
         private void ProcessAlphaImage(Surface fullSurface)
         {
             if (this.alphaGridInfo != null)
@@ -584,33 +646,10 @@ namespace AvifFileType
                     expectedHeight = (uint)fullSurface.Height
                 };
 
+
                 DecodeColorImage(this.primaryItemId, decodeInfo, colorConversionInfo, fullSurface);
                 SetImageColorData(colorConversionInfo, decodeInfo);
             }
-        }
-
-        private AvifItemData ReadAlphaImage(uint itemId)
-        {
-            ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
-
-            if (entry is null)
-            {
-                ExceptionUtil.ThrowFormatException("The alpha image item location was not found.");
-            }
-
-            return this.parser.ReadItemData(entry);
-        }
-
-        private AvifItemData ReadColorImage(uint itemId)
-        {
-            ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
-
-            if (entry is null)
-            {
-                ExceptionUtil.ThrowFormatException("The color image item location was not found.");
-            }
-
-            return this.parser.ReadItemData(entry);
         }
 
         private void SetImageColorData(CICPColorData? containerColorData, DecodeInfo decodeInfo)

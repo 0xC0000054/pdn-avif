@@ -14,9 +14,16 @@ using System.Diagnostics;
 
 namespace AvifFileType.AvifContainer
 {
-    internal static class ItemPropertyFactory
+    internal sealed class ItemPropertyFactory
     {
-        internal static IItemProperty TryCreate(in EndianBinaryReaderSegment reader, Box header)
+        private bool transformPropertySeen;
+
+        internal ItemPropertyFactory()
+        {
+            this.transformPropertySeen = false;
+        }
+
+        internal IItemProperty TryCreate(in EndianBinaryReaderSegment reader, Box header)
         {
             IItemProperty property;
 
@@ -63,14 +70,34 @@ namespace AvifFileType.AvifContainer
             else if (header.Type == BoxTypes.CleanAperture)
             {
                 property = new CleanApertureBox(reader, header);
+                this.transformPropertySeen = true;
             }
             else if (header.Type == BoxTypes.ImageMirror)
             {
                 property = new ImageMirrorBox(reader, header);
+                this.transformPropertySeen = true;
             }
             else if (header.Type == BoxTypes.ImageRotation)
             {
                 property = new ImageRotateBox(reader, header);
+                this.transformPropertySeen = true;
+            }
+            else if (header.Type == BoxTypes.AV1LayeredImageIndexing)
+            {
+                property = new AV1LayeredImageIndexingBox(reader, header);
+            }
+            else if (header.Type == BoxTypes.AV1OperatingPoint)
+            {
+                property = new AV1OperatingPointBox(reader, header);
+            }
+            else if (header.Type == BoxTypes.LayerSelector)
+            {
+                if (this.transformPropertySeen)
+                {
+                    ExceptionUtil.ThrowFormatException("The layer selector property must come before the transform properties.");
+                }
+
+                property = new LayerSelectorBox(reader, header);
             }
             else
             {
@@ -80,6 +107,5 @@ namespace AvifFileType.AvifContainer
 
             return property;
         }
-
     }
 }

@@ -87,6 +87,46 @@ namespace AvifFileType
             return alphaImageItemId;
         }
 
+        public LayerSelectorInfo GetLayerSelectorInfo(uint itemId, ulong totalItemSize)
+        {
+            AV1LayeredImageIndexingBox layeredImageIndexingBox = null;
+            LayerSelectorBox layerSelectorBox = null;
+
+            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
+            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+
+            if (items != null)
+            {
+                for (int i = 0; i < items.Count; i++)
+                {
+                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
+
+                    if (property != null)
+                    {
+                        if (property.Type == BoxTypes.AV1LayeredImageIndexing)
+                        {
+                            layeredImageIndexingBox = (AV1LayeredImageIndexingBox)property;
+                        }
+                        else if (property.Type == BoxTypes.LayerSelector)
+                        {
+                            layerSelectorBox = (LayerSelectorBox)property;
+                        }
+                    }
+                }
+            }
+
+            LayerSelectorInfo layerSelectorInfo = null;
+
+            if (layerSelectorBox != null)
+            {
+                layerSelectorInfo = new LayerSelectorInfo(layeredImageIndexingBox,
+                                                          totalItemSize,
+                                                          layerSelectorBox.LayerId);
+            }
+
+            return layerSelectorInfo;
+        }
+
         public uint GetPrimaryItemId()
         {
             return this.metaBox.PrimaryItem?.ItemId ?? 1;
@@ -162,7 +202,7 @@ namespace AvifFileType
             return entry != null && entry.FromItemId == primaryItemId;
         }
 
-        public AvifItemData ReadItemData(ItemLocationEntry entry)
+        public AvifItemData ReadItemData(ItemLocationEntry entry, ulong? numberOfBytesToRead = null)
         {
             if (entry is null)
             {
@@ -177,7 +217,7 @@ namespace AvifFileType
 
                 this.reader.Position = offset;
 
-                ulong totalItemSize = entry.TotalItemSize;
+                ulong totalItemSize = numberOfBytesToRead ?? entry.TotalItemSize;
 
                 if (totalItemSize <= ManagedAvifItemDataMaxSize)
                 {
@@ -475,12 +515,12 @@ namespace AvifFileType
             CheckForRequiredBoxes();
         }
 
-        private AvifItemData ReadDataFromMultipleExtents(ItemLocationEntry entry)
+        private AvifItemData ReadDataFromMultipleExtents(ItemLocationEntry entry, ulong? numberOfBytesToRead = null)
         {
             AvifItemData data;
 
             IReadOnlyList<ItemLocationExtent> extents = entry.Extents;
-            ulong totalItemSize = entry.TotalItemSize;
+            ulong totalItemSize = numberOfBytesToRead ?? entry.TotalItemSize;
 
             if (totalItemSize <= ManagedAvifItemDataMaxSize)
             {

@@ -16,6 +16,8 @@ namespace AvifFileType.AvifContainer
     {
         public static readonly FourCC AuxiliaryTypeProperty = new FourCC('a', 'u', 'x', 'C');
         public static readonly FourCC AV1Config = new FourCC('a', 'v', '1', 'C');
+        public static readonly FourCC AV1OperatingPoint = new FourCC('a', '1', 'o', 'p');
+        public static readonly FourCC AV1LayeredImageIndexing = new FourCC('a', '1', 'l', 'x');
         public static readonly FourCC FileType = new FourCC('f', 't', 'y', 'p');
         public static readonly FourCC CleanAperture = new FourCC('c', 'l', 'a', 'p');
         public static readonly FourCC ColorInformation = new FourCC('c', 'o', 'l', 'r');
@@ -32,6 +34,7 @@ namespace AvifFileType.AvifContainer
         public static readonly FourCC ItemInfoEntry = new FourCC('i', 'n', 'f', 'e');
         public static readonly FourCC ItemLocation = new FourCC('i', 'l', 'o', 'c');
         public static readonly FourCC ItemReference = new FourCC('i', 'r', 'e', 'f');
+        public static readonly FourCC LayerSelector = new FourCC('l', 's', 'e', 'l');
         public static readonly FourCC MediaData = new FourCC('m', 'd', 'a', 't');
         public static readonly FourCC Meta = new FourCC('m', 'e', 't', 'a');
         public static readonly FourCC PrimaryItem = new FourCC('p', 'i', 't', 'm');

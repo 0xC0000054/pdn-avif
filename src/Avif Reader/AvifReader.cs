@@ -309,8 +309,6 @@ namespace AvifFileType
 
         private void CheckRequiredImageProperties(uint itemId, ImageGridInfo gridInfo, string imageName)
         {
-            bool hasUnsupportedProperties = false;
-
             IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
 
             if (entry is null)
@@ -319,7 +317,7 @@ namespace AvifFileType
             }
             else if (entry.ItemType == ItemInfoEntryTypes.AV01)
             {
-                hasUnsupportedProperties = this.parser.HasUnsupportedEssentialProperties(itemId);
+                this.parser.ValidateRequiredImageProperties(itemId);
             }
             else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
             {
@@ -332,21 +330,12 @@ namespace AvifFileType
 
                 for (int i = 0; i < childImageIds.Count; i++)
                 {
-                    if (this.parser.HasUnsupportedEssentialProperties(childImageIds[i]))
-                    {
-                        hasUnsupportedProperties = true;
-                        break;
-                    }
+                    this.parser.ValidateRequiredImageProperties(childImageIds[i]);
                 }
             }
             else
             {
                 ExceptionUtil.ThrowFormatException($"The { imageName } image is not a supported format.");
-            }
-
-            if (hasUnsupportedProperties)
-            {
-                ExceptionUtil.ThrowFormatException($"The { imageName } image has essential item properties that are not supported.");
             }
         }
 

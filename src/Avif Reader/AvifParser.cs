@@ -169,32 +169,6 @@ namespace AvifFileType
             }
         }
 
-        public bool HasUnsupportedEssentialProperties(uint itemId)
-        {
-            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
-            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
-
-            if (items != null)
-            {
-                for (int i = 0; i < items.Count; i++)
-                {
-                    ItemPropertyAssociationEntry entry = items[i];
-
-                    if (entry.Essential)
-                    {
-                        IItemProperty property = itemPropertiesBox.TryGetProperty(entry.PropertyIndex);
-
-                        if (property is null)
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
         public bool IsAlphaPremultiplied(uint primaryItemId, uint alphaItemId)
         {
             IItemReferenceEntry entry = GetMatchingReferences(alphaItemId, ReferenceTypes.PremultipliedAlphaImage).FirstOrDefault();
@@ -349,6 +323,59 @@ namespace AvifFileType
             }
 
             return null;
+        }
+
+        public void ValidateRequiredImageProperties(uint itemId)
+        {
+            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
+            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+
+            if (items != null)
+            {
+                FourCC[] essentialProperties = new FourCC[]
+                {
+                    // The AVIF specification states that the a1op box must be marked as essential.
+                    BoxTypes.AV1OperatingPoint,
+                    // The HEIF specification states that the lsel box must be marked as essential.
+                    BoxTypes.LayerSelector
+                };
+
+                for (int i = 0; i < items.Count; i++)
+                {
+                    ItemPropertyAssociationEntry entry = items[i];
+                    IItemProperty property = itemPropertiesBox.TryGetProperty(entry.PropertyIndex);
+
+                    if (entry.Essential)
+                    {
+                        if (property is null)
+                        {
+                            ExceptionUtil.ThrowFormatException($"ItemId { itemId } has essential properties that are not supported.");
+                        }
+
+                        // The AVIF specification states that the a1lx box must not marked as essential.
+                        if (property.Type == BoxTypes.AV1LayeredImageIndexing)
+                        {
+                            ExceptionUtil.ThrowFormatException($"ItemId { itemId } has a property that is marked as essential, when it should not be.");
+                        }
+                    }
+                    else
+                    {
+                        if (property is null)
+                        {
+                            // Skip any unsupported properties.
+                            continue;
+                        }
+
+                        foreach (FourCC essentialProperty in essentialProperties)
+                        {
+                            if (property.Type == essentialProperty)
+                            {
+                                ExceptionUtil.ThrowFormatException($"ItemId { itemId } has a property that is not marked as essential, when it should be.");
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private long CalculateExtentOffset(ulong baseOffset, ConstructionMethod constructionMethod, ItemLocationExtent extent)

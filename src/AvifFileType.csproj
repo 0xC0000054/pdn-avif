@@ -5,14 +5,17 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="ARM64\**" />
     <Compile Remove="AvifNative\**" />
     <Compile Remove="Debug\**" />
     <Compile Remove="Release\**" />
     <Compile Remove="x64\**" />
+    <EmbeddedResource Remove="ARM64\**" />
     <EmbeddedResource Remove="AvifNative\**" />
     <EmbeddedResource Remove="Debug\**" />
     <EmbeddedResource Remove="Release\**" />
     <EmbeddedResource Remove="x64\**" />
+    <None Remove="ARM64\**" />
     <None Remove="AvifNative\**" />
     <None Remove="Debug\**" />
     <None Remove="Release\**" />

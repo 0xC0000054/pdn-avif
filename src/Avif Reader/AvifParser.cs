@@ -228,7 +228,7 @@ namespace AvifFileType
             }
             else
             {
-                data = ReadDataFromMultipleExtents(entry);
+                data = ReadDataFromMultipleExtents(entry, numberOfBytesToRead);
             }
 
             return data;

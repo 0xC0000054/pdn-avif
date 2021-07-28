@@ -27,11 +27,11 @@ namespace AvifFileType.AvifContainer
             this.VerticalOffset = new Rational(reader);
         }
 
-        public CleanApertureBox(Rational width, Rational heigth, Rational horizontalOffset, Rational verticalOffset)
+        public CleanApertureBox(Rational width, Rational height, Rational horizontalOffset, Rational verticalOffset)
             : base(BoxTypes.CleanAperture)
         {
             this.Width = width;
-            this.Height = heigth;
+            this.Height = height;
             this.HorizontalOffset = horizontalOffset;
             this.VerticalOffset = verticalOffset;
         }

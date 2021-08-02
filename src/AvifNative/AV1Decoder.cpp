@@ -32,14 +32,7 @@ namespace
         const aom_codec_err_t error = aom_codec_decode(codec, compressedImage, compressedImageSize, nullptr);
         if (error != AOM_CODEC_OK)
         {
-            if (error == AOM_CODEC_MEM_ERROR)
-            {
-                return DecoderStatus::OutOfMemory;
-            }
-            else
-            {
-                return DecoderStatus::DecodeFailed;
-            }
+            return error == AOM_CODEC_MEM_ERROR ? DecoderStatus::OutOfMemory : DecoderStatus::DecodeFailed;
         }
 
         aom_codec_iter_t iter = nullptr;
@@ -70,14 +63,7 @@ namespace
             }
         }
 
-        if (!*decodedImage)
-        {
-            return DecoderStatus::DecodeFailed;
-        }
-        else
-        {
-            return DecoderStatus::Ok;
-        }
+        return *decodedImage != nullptr ? DecoderStatus::Ok : DecoderStatus::DecodeFailed;
     }
 
     class ScopedAOMDecoder : public ScopedAOMCodec

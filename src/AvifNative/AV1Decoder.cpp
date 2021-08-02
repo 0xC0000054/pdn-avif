@@ -27,10 +27,11 @@ namespace
         const DecodeInfo* decodeInfo,
         aom_image_t** decodedImage)
     {
+        *decodedImage = nullptr;
+
         const aom_codec_err_t error = aom_codec_decode(codec, compressedImage, compressedImageSize, nullptr);
         if (error != AOM_CODEC_OK)
         {
-            *decodedImage = nullptr;
             if (error == AOM_CODEC_MEM_ERROR)
             {
                 return DecoderStatus::OutOfMemory;

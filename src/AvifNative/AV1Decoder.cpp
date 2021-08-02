@@ -48,9 +48,17 @@ namespace
         {
             aom_image_t* frame = aom_codec_get_frame(codec, &iter);
 
-            if (decodeInfo->allLayers)
+            if (frame != nullptr)
             {
-                if (frame->spatial_id == decodeInfo->spatialLayerId)
+                if (decodeInfo->allLayers)
+                {
+                    if (frame->spatial_id == decodeInfo->spatialLayerId)
+                    {
+                        *decodedImage = frame;
+                        break;
+                    }
+                }
+                else
                 {
                     *decodedImage = frame;
                     break;
@@ -58,7 +66,6 @@ namespace
             }
             else
             {
-                *decodedImage = frame;
                 break;
             }
         }

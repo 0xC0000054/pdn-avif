@@ -130,7 +130,7 @@ namespace AvifFileType.AvifContainer
                    + sizeof(byte); // Presentation parameters
         }
 
-        private bool GetConfigurationOption(byte value, int index)
+        private static bool GetConfigurationOption(byte value, int index)
         {
             return (value & (1 << (index - 1))) != 0;
         }

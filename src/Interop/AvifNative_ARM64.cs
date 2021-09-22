@@ -10,7 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-#if !NET47
 using System;
 using System.Runtime.InteropServices;
 
@@ -66,4 +65,3 @@ namespace AvifFileType.Interop
         internal static extern bool MemoryBlocksAreEqual(IntPtr buffer1, IntPtr buffer2, UIntPtr length);
     }
 }
-#endif

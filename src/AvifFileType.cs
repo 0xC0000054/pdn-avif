@@ -69,22 +69,6 @@ namespace AvifFileType
         }
 
         /// <summary>
-        /// Determines if the document was saved without altering the pixel values.
-        ///
-        /// Any settings that change the pixel values should return 'false'.
-        ///
-        /// Because Paint.NET prompts the user to flatten the image, flattening should not be
-        /// considered.
-        /// For example, a 32-bit PNG will return 'true' even if the document has multiple layers.
-        /// </summary>
-        protected override bool IsReflexive(PropertyBasedSaveConfigToken token)
-        {
-            int quality = token.GetProperty<Int32Property>(PropertyNames.Quality).Value;
-
-            return quality == 100;
-        }
-
-        /// <summary>
         /// Add properties to the dialog
         /// </summary>
         public override PropertyCollection OnCreateSavePropertyCollection()

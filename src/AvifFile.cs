@@ -87,10 +87,8 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
             }
 
-            using (RenderArgs args = new RenderArgs(scratchSurface))
-            {
-                document.Render(args, true);
-            }
+            scratchSurface.Fill(ColorBgra.TransparentBlack);
+            document.CreateRenderer().Render(scratchSurface);
 
             bool grayscale = IsGrayscaleImage(scratchSurface);
 
@@ -575,7 +573,7 @@ namespace AvifFileType
         {
             for (int y = 0; y < surface.Height; y++)
             {
-                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
+                ColorBgra* ptr = surface.GetRowPointerUnchecked(y);
                 ColorBgra* ptrEnd = ptr + surface.Width;
 
                 while (ptr < ptrEnd)
@@ -596,7 +594,7 @@ namespace AvifFileType
         {
             for (int y = 0; y < surface.Height; y++)
             {
-                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
+                ColorBgra* ptr = surface.GetRowPointerUnchecked(y);
                 ColorBgra* ptrEnd = ptr + surface.Width;
 
                 while (ptr < ptrEnd)
@@ -618,7 +616,7 @@ namespace AvifFileType
 
             for (int y = roi.Top; y < roi.Bottom; y++)
             {
-                ColorBgra* ptr = surface.GetPointAddressUnchecked(roi.Left, y);
+                ColorBgra* ptr = surface.GetPointPointerUnchecked(roi.Left, y);
 
                 for (int x = roi.Left; x < roi.Right; x++)
                 {
@@ -640,7 +638,7 @@ namespace AvifFileType
 
             for (int y = roi.Top; y < roi.Bottom; y++)
             {
-                ColorBgra* ptr = surface.GetPointAddressUnchecked(roi.Left, y);
+                ColorBgra* ptr = surface.GetPointPointerUnchecked(roi.Left, y);
 
                 for (int x = roi.Left; x < roi.Right; x++)
                 {

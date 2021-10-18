@@ -10,7 +10,7 @@ The plugin will override the bundled version if it has higher version number.
 ## Installation
 
 1. Close Paint.NET.
-2. Place AvifFileType.dll, AvifNative_x86.dll and AvifNative_x64.dll in the Paint.NET FileTypes folder which is usually located in one the following locations depending on the Paint.NET version you have installed.
+2. Place AvifFileType.dll, AvifNative_ARM64.dll, AvifNative_x86.dll and AvifNative_x64.dll in the Paint.NET FileTypes folder which is usually located in one the following locations depending on the Paint.NET version you have installed.
 
   Paint.NET Version |  FileTypes Folder Location
   --------|----------
@@ -29,7 +29,7 @@ See [License.txt](License.txt) for more information.
 ## Prerequisites
 
 * Visual Studio 2019
-* Paint.NET 4.2.16 or later
+* Paint.NET 4.3.2 or later
 
 ## Building the plugin
 

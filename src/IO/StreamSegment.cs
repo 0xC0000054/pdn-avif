@@ -160,7 +160,7 @@ namespace AvifFileType
 
             if ((this.Position + count) > this.Length)
             {
-                count = (int)(count - this.Position);
+                count = (int)(this.Length - this.Position);
             }
 
             return this.stream.BeginRead(buffer, offset, count, callback, state);
@@ -217,7 +217,7 @@ namespace AvifFileType
 
             if ((this.Position + count) > this.Length)
             {
-                count = (int)(count - this.Position);
+                count = (int)(this.Length - this.Position);
             }
 
             return this.stream.Read(buffer, offset, count);
@@ -234,7 +234,7 @@ namespace AvifFileType
 
             if ((this.Position + count) > this.Length)
             {
-                count = (int)(count - this.Position);
+                count = (int)(this.Length - this.Position);
             }
 
             return this.stream.ReadAsync(buffer, offset, count, cancellationToken);

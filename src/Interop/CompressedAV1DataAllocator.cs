@@ -109,7 +109,7 @@ namespace AvifFileType.Interop
 
         private sealed class CompressedDataState
         {
-            private const ulong ManagedCompressedAV1DataMaxSize = 256 * 1024;
+            private const ulong ManagedCompressedAV1DataMaxSize = 1024 * 1024;
 
             private readonly CompressedAV1Data data;
             private bool isPinned;

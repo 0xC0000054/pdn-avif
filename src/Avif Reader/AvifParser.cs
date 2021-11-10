@@ -24,7 +24,7 @@ namespace AvifFileType
     internal sealed class AvifParser
         : IDisposable
     {
-        private const ulong ManagedAvifItemDataMaxSize = 256 * 1024;
+        private const ulong ManagedAvifItemDataMaxSize = 1024 * 1024;
 
         private FileTypeBox fileTypeBox;
         private MetaBox metaBox;

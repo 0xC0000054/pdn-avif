@@ -425,40 +425,18 @@ namespace AvifFileType
 
             byte[] bytes = new byte[count];
 
-            if ((this.readOffset + count) <= this.readLength)
-            {
-                Buffer.BlockCopy(this.buffer, this.readOffset, bytes, 0, count);
-                this.readOffset += count;
-            }
-            else
-            {
-                // Ensure that any bytes at the end of the current buffer are included.
-                int bytesUnread = this.readLength - this.readOffset;
+            int totalBytesRead = 0;
 
-                if (bytesUnread > 0)
+            while (totalBytesRead < count)
+            {
+                int bytesRead = ReadInternal(bytes, totalBytesRead, count - totalBytesRead);
+
+                if (bytesRead == 0)
                 {
-                    Buffer.BlockCopy(this.buffer, this.readOffset, bytes, 0, bytesUnread);
+                    throw new EndOfStreamException();
                 }
 
-                int numBytesToRead = count - bytesUnread;
-                int numBytesRead = bytesUnread;
-                do
-                {
-                    int n = this.stream.Read(bytes, numBytesRead, numBytesToRead);
-
-                    if (n == 0)
-                    {
-                        throw new EndOfStreamException();
-                    }
-
-                    numBytesRead += n;
-                    numBytesToRead -= n;
-
-                } while (numBytesToRead > 0);
-
-                // Invalidate the existing buffer.
-                this.readOffset = 0;
-                this.readLength = 0;
+                totalBytesRead += bytesRead;
             }
 
             return bytes;

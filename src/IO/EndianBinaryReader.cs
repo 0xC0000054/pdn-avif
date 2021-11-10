@@ -374,11 +374,23 @@ namespace AvifFileType
             }
             else
             {
-                EnsureBuffer(length);
+                if (length < this.bufferSize)
+                {
+                    EnsureBuffer(length);
 
-                result = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
+                    result = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
 
-                this.readOffset += length;
+                    this.readOffset += length;
+                }
+                else
+                {
+                    using (IArrayPoolBuffer<byte> bytes = this.arrayPool.Rent<byte>(length))
+                    {
+                        ProperRead(bytes.Array, 0, bytes.RequestedLength);
+
+                        result = System.Text.Encoding.UTF8.GetString(bytes.Array, 0, bytes.RequestedLength);
+                    }
+                }
             }
 
             if (hasNullTerminator)

@@ -725,7 +725,18 @@ namespace AvifFileType
 
             if ((this.readOffset + count) <= this.readLength)
             {
-                Buffer.BlockCopy(this.buffer, this.readOffset, bytes, offset, count);
+                if (count <= 8)
+                {
+                    // Use a for loop when copying a small number of bytes.
+                    for (int i = 0; i < count; i++)
+                    {
+                        bytes[offset + i] = this.buffer[this.readOffset + i];
+                    }
+                }
+                else
+                {
+                    Buffer.BlockCopy(this.buffer, this.readOffset, bytes, offset, count);
+                }
                 this.readOffset += count;
 
                 return count;

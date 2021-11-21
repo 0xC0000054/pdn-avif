@@ -123,12 +123,12 @@ namespace AvifFileType
     internal sealed class UnmanagedAvifItemData
         : AvifItemData
     {
-        private SafeProcessHeapBuffer buffer;
+        private SafeNativeMemoryBuffer buffer;
 
         public UnmanagedAvifItemData(ulong length)
             : base()
         {
-            this.buffer = SafeProcessHeapBuffer.Create(length);
+            this.buffer = SafeNativeMemoryBuffer.Create(length);
             this.Length = length;
         }
 

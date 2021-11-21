@@ -17,12 +17,12 @@ namespace AvifFileType.Interop
     internal sealed class UnmanagedCompressedAV1Data
         : CompressedAV1Data
     {
-        private SafeProcessHeapBuffer buffer;
+        private SafeNativeMemoryBuffer buffer;
 
         public UnmanagedCompressedAV1Data(ulong size)
             : base(size)
         {
-            this.buffer = SafeProcessHeapBuffer.Create(size);
+            this.buffer = SafeNativeMemoryBuffer.Create(size);
         }
 
         protected override void Dispose(bool disposing)

@@ -172,12 +172,23 @@ namespace AvifFileType
             throw new NotSupportedException("The StreamSegment is read-only.");
         }
 
+        public override void Close() => this.stream?.Close();
+
+        public override void CopyTo(Stream destination, int bufferSize)
+        {
+            VerifyNotDisposed();
+
+            this.stream.CopyTo(destination, bufferSize);
+        }
+
         public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
         {
             VerifyNotDisposed();
 
             return this.stream.CopyToAsync(destination, bufferSize, cancellationToken);
         }
+
+        public override ValueTask DisposeAsync() => this.stream?.DisposeAsync() ?? ValueTask.CompletedTask;
 
         public override int EndRead(IAsyncResult asyncResult)
         {
@@ -223,6 +234,20 @@ namespace AvifFileType
             return this.stream.Read(buffer, offset, count);
         }
 
+        public override int Read(Span<byte> buffer)
+        {
+            VerifyNotDisposed();
+
+            int count = buffer.Length;
+
+            if ((this.Position + count) > this.Length)
+            {
+                count = (int)(this.Length - this.Position);
+            }
+
+            return this.stream.Read(buffer.Slice(0, count));
+        }
+
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             VerifyNotDisposed();
@@ -238,6 +263,20 @@ namespace AvifFileType
             }
 
             return this.stream.ReadAsync(buffer, offset, count, cancellationToken);
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            VerifyNotDisposed();
+
+            int count = buffer.Length;
+
+            if ((this.Position + count) > this.Length)
+            {
+                count = (int)(this.Length - this.Position);
+            }
+
+            return this.stream.ReadAsync(buffer.Slice(0, count), cancellationToken);
         }
 
         public override int ReadByte()
@@ -300,6 +339,18 @@ namespace AvifFileType
         {
             VerifyNotDisposed();
             StreamSegmentReadOnly();
+        }
+
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            VerifyNotDisposed();
+            StreamSegmentReadOnly();
+        }
+
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            VerifyNotDisposed();
+            throw new NotSupportedException("The StreamSegment is read-only.");
         }
 
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)

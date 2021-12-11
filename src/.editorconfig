@@ -44,6 +44,9 @@ dotnet_style_qualification_for_event                  = true : suggestion
 # IDE0057: Use range operator
 csharp_style_prefer_range_operator = false
 
+# IDE0066: Convert switch statement to expression
+csharp_style_prefer_switch_expression = false
+
 [*.{cpp,h}]
 indent_size              = 4
 indent_style             = space

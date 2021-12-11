@@ -28,13 +28,6 @@ namespace AvifFileType.Interop
 
             try
             {
-                // The documentation for NativeMemory.Alloc states that the memory block pointer cannot be passed
-                // to NativeMemory.Free if the length is zero, so we use a length of 1 in that case.
-                if (length == 0)
-                {
-                    length = 1;
-                }
-
                 buffer.SetHandle((IntPtr)NativeMemory.Alloc((nuint)length));
                 buffer.Initialize(length);
             }

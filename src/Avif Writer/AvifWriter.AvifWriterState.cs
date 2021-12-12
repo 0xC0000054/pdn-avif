@@ -56,8 +56,8 @@ namespace AvifFileType
 
                 this.ImageGrid = imageGridMetadata;
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
-                this.duplicateAlphaTiles = new Dictionary<int, int>(homogeneousTiles.DuplicateAlphaTileMap.Count);
-                this.duplicateColorTiles = new Dictionary<int, int>(homogeneousTiles.DuplicateColorTileMap.Count);
+                this.duplicateAlphaTiles = new Dictionary<int, int>(homogeneousTiles.DuplicateAlphaTileMap);
+                this.duplicateColorTiles = new Dictionary<int, int>(homogeneousTiles.DuplicateColorTileMap);
                 DeduplicateColorTiles(colorImages, homogeneousTiles, arrayPool);
 
                 if (alphaImages != null)
@@ -118,17 +118,7 @@ namespace AvifFileType
                 HomogeneousTileInfo homogeneousTiles,
                 IArrayPoolService arrayPool)
             {
-                if (alphaImages.Count == 1)
-                {
-                    return;
-                }
-
-                foreach (KeyValuePair<int, int> item in homogeneousTiles.DuplicateAlphaTileMap)
-                {
-                    this.duplicateAlphaTiles.Add(item.Key, item.Value);
-                }
-
-                if (alphaImages.Count == homogeneousTiles.HomogeneousAlphaTiles.Count)
+                if (alphaImages.Count == 1 || alphaImages.Count == homogeneousTiles.HomogeneousAlphaTiles.Count)
                 {
                     return;
                 }
@@ -202,17 +192,7 @@ namespace AvifFileType
                 HomogeneousTileInfo homogeneousTiles,
                 IArrayPoolService arrayPool)
             {
-                if (colorImages.Count == 1)
-                {
-                    return;
-                }
-
-                foreach (KeyValuePair<int, int> item in homogeneousTiles.DuplicateColorTileMap)
-                {
-                    this.duplicateColorTiles.Add(item.Key, item.Value);
-                }
-
-                if (colorImages.Count == homogeneousTiles.HomogeneousColorTiles.Count)
+                if (colorImages.Count == 1 || colorImages.Count == homogeneousTiles.HomogeneousColorTiles.Count)
                 {
                     return;
                 }

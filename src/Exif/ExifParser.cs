@@ -648,7 +648,7 @@ namespace AvifFileType.Exif
 
                             if (i < lastItemIndex)
                             {
-                                builder.Append(",");
+                                builder.Append(',');
                             }
                         }
 

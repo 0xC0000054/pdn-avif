@@ -300,30 +300,20 @@ namespace AvifFileType
             {
                 case SeekOrigin.Begin:
                     tempPosition = unchecked(this.origin + offset);
-
-                    if (offset < this.origin || offset > this.length)
-                    {
-                        ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(offset), "The offset is not within the stream segment.");
-                    }
                     break;
                 case SeekOrigin.Current:
                     tempPosition = unchecked(this.stream.Position + offset);
-
-                    if (tempPosition < this.origin || tempPosition > this.length)
-                    {
-                        ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(offset), "The offset is not within the stream segment.");
-                    }
                     break;
                 case SeekOrigin.End:
                     tempPosition = unchecked(this.length + offset);
-
-                    if (tempPosition < this.origin || tempPosition > this.length)
-                    {
-                        ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(offset), "The offset is not within the stream segment.");
-                    }
                     break;
                 default:
                     throw new ArgumentException("Unknown SeekOrigin value.");
+            }
+
+            if (tempPosition < this.origin || tempPosition > this.length)
+            {
+                ExceptionUtil.ThrowArgumentOutOfRangeException(nameof(offset), "The offset is not within the stream segment.");
             }
 
             return this.stream.Seek(tempPosition, origin);

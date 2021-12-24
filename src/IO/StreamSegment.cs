@@ -302,7 +302,7 @@ namespace AvifFileType
                     tempPosition = unchecked(this.origin + offset);
                     break;
                 case SeekOrigin.Current:
-                    tempPosition = unchecked(this.stream.Position + offset);
+                    tempPosition = unchecked(this.Position + offset);
                     break;
                 case SeekOrigin.End:
                     tempPosition = unchecked(this.length + offset);

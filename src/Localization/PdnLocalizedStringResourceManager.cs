@@ -29,8 +29,7 @@ namespace AvifFileType
             // Use a dictionary to map the resource name to its enumeration value.
             // This avoids repeated calls to Enum.TryParse.
             // Adapted from https://stackoverflow.com/a/13677446
-            pdnLocalizedStringMap = Enum.GetValues(typeof(AvifFileTypeStringNames))
-                                        .Cast<AvifFileTypeStringNames>()
+            pdnLocalizedStringMap = Enum.GetValues<AvifFileTypeStringNames>()
                                         .ToDictionary(kv => kv.ToString(), kv => kv, StringComparer.OrdinalIgnoreCase);
         }
 

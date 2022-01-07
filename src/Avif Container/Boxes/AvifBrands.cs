@@ -15,6 +15,7 @@ namespace AvifFileType.AvifContainer
     internal static class AvifBrands
     {
         public static readonly FourCC AVIF = new FourCC('a', 'v', 'i', 'f');
+        public static readonly FourCC AVIS = new FourCC('a', 'v', 'i', 's');
         public static readonly FourCC AV01 = new FourCC('a', 'v', '0', '1');
 
         public static readonly FourCC MA1A = new FourCC('M', 'A', '1', 'A');

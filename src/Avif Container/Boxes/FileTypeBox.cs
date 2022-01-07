@@ -86,22 +86,37 @@ namespace AvifFileType.AvifContainer
         {
             if (this.majorBrand != AvifBrands.AVIF && this.majorBrand != AvifBrands.AV01)
             {
-                bool isCompatible = false;
-
-                for (int i = 0; i < this.compatibleBrands.Count; i++)
+                if (this.majorBrand == AvifBrands.AVIS)
                 {
-                    FourCC brand = this.compatibleBrands[i];
-
-                    if (brand == AvifBrands.AVIF || brand == AvifBrands.AV01)
-                    {
-                        isCompatible = true;
-                        break;
-                    }
+                    ExceptionUtil.ThrowFormatException("Animated AVIF images are not supported.");
                 }
-
-                if (!isCompatible)
+                else
                 {
-                    ExceptionUtil.ThrowFormatException("The file is not AVIF compatible.");
+                    bool isCompatible = false;
+                    bool isImageSequence = false;
+
+                    for (int i = 0; i < this.compatibleBrands.Count; i++)
+                    {
+                        FourCC brand = this.compatibleBrands[i];
+
+                        if (brand == AvifBrands.AVIF || brand == AvifBrands.AV01)
+                        {
+                            isCompatible = true;
+                        }
+                        else if (brand == AvifBrands.AVIS)
+                        {
+                            isImageSequence = true;
+                        }
+                    }
+
+                    if (isImageSequence)
+                    {
+                        ExceptionUtil.ThrowFormatException("Animated AVIF images are not supported.");
+                    }
+                    else if (!isCompatible)
+                    {
+                        ExceptionUtil.ThrowFormatException("The file is not AVIF compatible.");
+                    }
                 }
             }
         }

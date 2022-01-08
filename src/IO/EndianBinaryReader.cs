@@ -279,8 +279,7 @@ namespace AvifFileType
                 return;
             }
 
-            // The largest multiple of 4096 that is under the large object heap limit.
-            const int MaxReadBufferSize = 81920;
+            const int MaxReadBufferSize = 1024 * 1024;
             int bufferSize = (int)Math.Min(count, MaxReadBufferSize);
 
             using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))

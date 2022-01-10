@@ -84,7 +84,7 @@ namespace AvifFileType.AvifContainer
         /// <exception cref="FormatException">The file is not AVIF compatible.</exception>
         public void CheckForAvifCompatibility()
         {
-            if (this.majorBrand != AvifBrands.AVIF && this.majorBrand != AvifBrands.AV01)
+            if (this.majorBrand != AvifBrands.AVIF)
             {
                 if (this.majorBrand == AvifBrands.AVIS)
                 {
@@ -99,7 +99,7 @@ namespace AvifFileType.AvifContainer
                     {
                         FourCC brand = this.compatibleBrands[i];
 
-                        if (brand == AvifBrands.AVIF || brand == AvifBrands.AV01)
+                        if (brand == AvifBrands.AVIF)
                         {
                             isCompatible = true;
                         }

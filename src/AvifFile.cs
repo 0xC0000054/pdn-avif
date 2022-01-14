@@ -71,16 +71,16 @@ namespace AvifFileType
         }
 
         public static void Save(Document document,
-                         Stream output,
-                         int quality,
-                         bool losslessAlpha,
-                         CompressionSpeed compressionSpeed,
-                         YUVChromaSubsampling chromaSubsampling,
-                         bool preserveExistingTileSize,
-                         bool premultipliedAlpha,
-                         Surface scratchSurface,
-                         ProgressEventHandler progressCallback,
-                         IArrayPoolService arrayPool)
+                                Stream output,
+                                int quality,
+                                bool losslessAlpha,
+                                CompressionSpeed compressionSpeed,
+                                YUVChromaSubsampling chromaSubsampling,
+                                bool preserveExistingTileSize,
+                                bool premultipliedAlpha,
+                                Surface scratchSurface,
+                                ProgressEventHandler progressCallback,
+                                IArrayPoolService arrayPool)
         {
             if (arrayPool is null)
             {

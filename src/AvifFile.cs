@@ -408,6 +408,16 @@ namespace AvifFileType
             {
                 Exif.ExifColorSpace exifColorSpace = Exif.ExifColorSpace.Srgb;
 
+                if (exifMetadata.TryGetValue(MetadataKeys.Exif.ColorSpace, out MetadataEntry value))
+                {
+                    exifMetadata.Remove(MetadataKeys.Exif.ColorSpace);
+
+                    if (MetadataHelpers.TryDecodeShort(value, out ushort colorSpace))
+                    {
+                        exifColorSpace = (Exif.ExifColorSpace)colorSpace;
+                    }
+                }
+
                 MetadataKey iccProfileKey = MetadataKeys.Image.InterColorProfile;
 
                 if (exifMetadata.TryGetValue(iccProfileKey, out MetadataEntry iccProfileItem))

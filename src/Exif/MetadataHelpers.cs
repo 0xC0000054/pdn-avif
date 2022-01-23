@@ -33,5 +33,20 @@ namespace AvifFileType.Exif
                 (byte)(value >> 8)
             };
         }
+
+        internal static bool TryDecodeShort(MetadataEntry entry, out ushort value)
+        {
+            if (entry.Type != TagDataType.Short || entry.LengthInBytes != 2)
+            {
+                value = 0;
+                return false;
+            }
+
+            byte[] data = entry.GetDataReadOnly();
+
+            value = (ushort)(data[0] | (data[1] << 8));
+
+            return true;
+        }
     }
 }

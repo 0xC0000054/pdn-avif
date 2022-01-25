@@ -631,7 +631,7 @@ namespace AvifFileType.Exif
 
                     if (type == TagDataType.Ascii)
                     {
-                        valueString = Encoding.ASCII.GetString(bytes).TrimEnd('\0');
+                        valueString = Encoding.UTF8.GetString(bytes).TrimEnd('\0');
                     }
                     else if (count == 1)
                     {

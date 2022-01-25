@@ -329,8 +329,6 @@ namespace AvifFileType.Exif
                                                   TagDataType.Long,
                                                   MetadataHelpers.EncodeLong((uint)doc.Height)));
 
-                entries.Remove(MetadataKeys.Image.ImageWidth);
-                entries.Remove(MetadataKeys.Image.ImageLength);
                 // These tags should not be included in uncompressed images.
                 entries.Remove(MetadataKeys.Exif.PixelXDimension);
                 entries.Remove(MetadataKeys.Exif.PixelYDimension);
@@ -347,8 +345,6 @@ namespace AvifFileType.Exif
                                                   TagDataType.Long,
                                                   MetadataHelpers.EncodeLong((uint)doc.Height)));
 
-                entries.Remove(MetadataKeys.Exif.PixelXDimension);
-                entries.Remove(MetadataKeys.Exif.PixelYDimension);
                 // These tags should not be included in compressed images.
                 entries.Remove(MetadataKeys.Image.ImageWidth);
                 entries.Remove(MetadataKeys.Image.ImageLength);

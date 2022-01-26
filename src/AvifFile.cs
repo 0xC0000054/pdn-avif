@@ -430,6 +430,11 @@ namespace AvifFileType
                     iccProfileBytes = iccProfileItem.Data.ToArrayEx();
                     exifMetadata.Remove(iccProfileKey);
                     exifColorSpace = Uncalibrated;
+
+                    // Remove the InteroperabilityIndex and related tags, these tags should
+                    // not be written if the image has an ICC color profile.
+                    exifMetadata.Remove(ExifPropertyKeys.Interop.InteroperabilityIndex.Path);
+                    exifMetadata.Remove(ExifPropertyKeys.Interop.InteroperabilityVersion.Path);
                 }
 
                 exifBytes = new ExifWriter(doc, exifMetadata, exifColorSpace).CreateExifBlob();

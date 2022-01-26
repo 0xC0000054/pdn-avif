@@ -10,6 +10,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using PaintDotNet.Imaging;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -83,9 +84,10 @@ namespace AvifFileType.Exif
             return metadataEntries;
         }
 
-        private static List<MetadataEntry> ConvertIFDEntriesToMetadataEntries(EndianBinaryReader reader, List<ParserIFDEntry> entries)
+        private static Dictionary<ExifPropertyPath, ExifValue> ConvertIFDEntriesToMetadataEntries(EndianBinaryReader reader,
+                                                                                                  List<ParserIFDEntry> entries)
         {
-            List<MetadataEntry> metadataEntries = new List<MetadataEntry>(entries.Count);
+            Dictionary<ExifPropertyPath, ExifValue> metadataEntries = new(entries.Count);
             bool swapNumberByteOrder = reader.Endianess == Endianess.Big;
 
             for (int i = 0; i < entries.Count; i++)
@@ -103,7 +105,7 @@ namespace AvifFileType.Exif
                 }
                 else
                 {
-                    long bytesToRead = entry.Count * TagDataTypeUtil.GetSizeInBytes(entry.Type);
+                    long bytesToRead = entry.Count * ExifValueTypeUtil.GetSizeInBytes(entry.Type);
 
                     // Skip any tags that are empty or larger than 2 GB.
                     if (bytesToRead == 0 || bytesToRead > int.MaxValue)
@@ -127,33 +129,32 @@ namespace AvifFileType.Exif
                         // Paint.NET converts all multi-byte numbers to little-endian.
                         switch (entry.Type)
                         {
-                            case TagDataType.Short:
-                            case TagDataType.SShort:
+                            case ExifValueType.Short:
+                            case ExifValueType.SShort:
                                 propertyData = SwapShortArrayToLittleEndian(propertyData, entry.Count);
                                 break;
-                            case TagDataType.Long:
-                            case TagDataType.SLong:
-                            case TagDataType.Float:
+                            case ExifValueType.Long:
+                            case ExifValueType.SLong:
+                            case ExifValueType.Float:
                                 propertyData = SwapLongArrayToLittleEndian(propertyData, entry.Count);
                                 break;
-                            case TagDataType.Rational:
-                            case TagDataType.SRational:
+                            case ExifValueType.Rational:
+                            case ExifValueType.SRational:
                                 propertyData = SwapRationalArrayToLittleEndian(propertyData, entry.Count);
                                 break;
-                            case TagDataType.Double:
+                            case ExifValueType.Double:
                                 propertyData = SwapDoubleArrayToLittleEndian(propertyData, entry.Count);
                                 break;
-                            case TagDataType.Byte:
-                            case TagDataType.Ascii:
-                            case TagDataType.Undefined:
-                            case TagDataType.SByte:
+                            case ExifValueType.Byte:
+                            case ExifValueType.Ascii:
+                            case ExifValueType.Undefined:
                             default:
                                 break;
                         }
                     }
                 }
 
-                metadataEntries.Add(new MetadataEntry(entry.Section, entry.Tag, entry.Type, propertyData));
+                metadataEntries.TryAdd(new ExifPropertyPath(entry.Section, entry.Tag), new ExifValue(entry.Type, propertyData));
             }
 
             return metadataEntries;
@@ -168,13 +169,13 @@ namespace AvifFileType.Exif
             bool foundInterop = false;
 
             Queue<MetadataOffset> ifdOffsets = new Queue<MetadataOffset>();
-            ifdOffsets.Enqueue(new MetadataOffset(MetadataSection.Image, firstIFDOffset));
+            ifdOffsets.Enqueue(new MetadataOffset(ExifSection.Image, firstIFDOffset));
 
             while (ifdOffsets.Count > 0)
             {
                 MetadataOffset metadataOffset = ifdOffsets.Dequeue();
 
-                MetadataSection section = metadataOffset.Section;
+                ExifSection section = metadataOffset.Section;
                 uint offset = metadataOffset.Offset;
 
                 if (offset >= reader.Length)
@@ -202,21 +203,21 @@ namespace AvifFileType.Exif
                             if (!foundExif)
                             {
                                 foundExif = true;
-                                ifdOffsets.Enqueue(new MetadataOffset(MetadataSection.Exif, entry.Offset));
+                                ifdOffsets.Enqueue(new MetadataOffset(ExifSection.Photo, entry.Offset));
                             }
                             break;
                         case TiffConstants.Tags.GpsIFD:
                             if (!foundGps)
                             {
                                 foundGps = true;
-                                ifdOffsets.Enqueue(new MetadataOffset(MetadataSection.Gps, entry.Offset));
+                                ifdOffsets.Enqueue(new MetadataOffset(ExifSection.GpsInfo, entry.Offset));
                             }
                             break;
                         case TiffConstants.Tags.InteropIFD:
                             if (!foundInterop)
                             {
                                 foundInterop = true;
-                                ifdOffsets.Enqueue(new MetadataOffset(MetadataSection.Interop, entry.Offset));
+                                ifdOffsets.Enqueue(new MetadataOffset(ExifSection.Interop, entry.Offset));
                             }
                             break;
                         case TiffConstants.Tags.StripOffsets:
@@ -385,11 +386,11 @@ namespace AvifFileType.Exif
         {
 #pragma warning disable IDE0032 // Use auto property
             private readonly IFDEntry entry;
-            private readonly MetadataSection section;
+            private readonly ExifSection section;
             private readonly bool offsetIsBigEndian;
 #pragma warning restore IDE0032 // Use auto property
 
-            public ParserIFDEntry(EndianBinaryReader reader, MetadataSection section)
+            public ParserIFDEntry(EndianBinaryReader reader, ExifSection section)
             {
                 this.entry = new IFDEntry(reader);
                 this.section = section;
@@ -398,7 +399,7 @@ namespace AvifFileType.Exif
 
             public ushort Tag => this.entry.Tag;
 
-            public TagDataType Type => this.entry.Type;
+            public ExifValueType Type => this.entry.Type;
 
             public uint Count => this.entry.Count;
 
@@ -408,12 +409,12 @@ namespace AvifFileType.Exif
             {
                 get
                 {
-                    return TagDataTypeUtil.ValueFitsInOffsetField(this.Type, this.Count);
+                    return ExifValueTypeUtil.ValueFitsInOffsetField(this.Type, this.Count);
                 }
             }
 
 #pragma warning disable IDE0032 // Use auto property
-            public MetadataSection Section => this.section;
+            public ExifSection Section => this.section;
 #pragma warning restore IDE0032 // Use auto property
 
             public unsafe byte[] GetValueBytesFromOffset()
@@ -423,7 +424,7 @@ namespace AvifFileType.Exif
                     return null;
                 }
 
-                TagDataType type = this.entry.Type;
+                ExifValueType type = this.entry.Type;
                 uint count = this.entry.Count;
                 uint offset = this.entry.Offset;
 
@@ -434,10 +435,10 @@ namespace AvifFileType.Exif
 
                 // Paint.NET always stores data in little-endian byte order.
                 byte[] bytes;
-                if (type == TagDataType.Byte ||
-                    type == TagDataType.Ascii ||
-                    type == TagDataType.SByte ||
-                    type == TagDataType.Undefined)
+                if (type == ExifValueType.Byte
+                    || type == ExifValueType.Ascii
+                    || type == (ExifValueType)6 // SByte
+                    || type == ExifValueType.Undefined)
                 {
                     bytes = new byte[count];
 
@@ -490,7 +491,7 @@ namespace AvifFileType.Exif
                         }
                     }
                 }
-                else if (type == TagDataType.Short || type == TagDataType.SShort)
+                else if (type == ExifValueType.Short || type == ExifValueType.SShort)
                 {
                     int byteArrayLength = unchecked((int)count) * sizeof(ushort);
                     bytes = new byte[byteArrayLength];
@@ -565,7 +566,7 @@ namespace AvifFileType.Exif
             {
                 string valueString;
 
-                TagDataType type = this.entry.Type;
+                ExifValueType type = this.entry.Type;
                 uint count = this.entry.Count;
                 uint offset = this.entry.Offset;
 
@@ -574,7 +575,7 @@ namespace AvifFileType.Exif
                     return string.Empty;
                 }
 
-                int typeSizeInBytes = TagDataTypeUtil.GetSizeInBytes(type);
+                int typeSizeInBytes = ExifValueTypeUtil.GetSizeInBytes(type);
 
                 if (typeSizeInBytes == 1)
                 {
@@ -629,7 +630,7 @@ namespace AvifFileType.Exif
                         }
                     }
 
-                    if (type == TagDataType.Ascii)
+                    if (type == ExifValueType.Ascii)
                     {
                         valueString = Encoding.UTF8.GetString(bytes).TrimEnd('\0');
                     }
@@ -639,7 +640,7 @@ namespace AvifFileType.Exif
                     }
                     else
                     {
-                        StringBuilder builder = new StringBuilder();
+                        StringBuilder builder = new();
 
                         uint lastItemIndex = count - 1;
 
@@ -690,10 +691,10 @@ namespace AvifFileType.Exif
                     {
                         switch (type)
                         {
-                            case TagDataType.SShort:
+                            case ExifValueType.SShort:
                                 valueString = ((short)values[0]).ToString(CultureInfo.InvariantCulture);
                                 break;
-                            case TagDataType.Short:
+                            case ExifValueType.Short:
                             default:
                                 valueString = values[0].ToString(CultureInfo.InvariantCulture);
                                 break;
@@ -703,11 +704,11 @@ namespace AvifFileType.Exif
                     {
                         switch (type)
                         {
-                            case TagDataType.SShort:
+                            case ExifValueType.SShort:
                                 valueString = ((short)values[0]).ToString(CultureInfo.InvariantCulture) + "," +
                                               ((short)values[1]).ToString(CultureInfo.InvariantCulture);
                                 break;
-                            case TagDataType.Short:
+                            case ExifValueType.Short:
                             default:
                                 valueString = values[0].ToString(CultureInfo.InvariantCulture) + "," +
                                               values[1].ToString(CultureInfo.InvariantCulture);
@@ -726,13 +727,13 @@ namespace AvifFileType.Exif
 
         private readonly struct MetadataOffset
         {
-            public MetadataOffset(MetadataSection section, uint offset)
+            public MetadataOffset(ExifSection section, uint offset)
             {
                 this.Section = section;
                 this.Offset = offset;
             }
 
-            public MetadataSection Section { get; }
+            public ExifSection Section { get; }
 
             public uint Offset { get; }
         }

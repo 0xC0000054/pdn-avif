@@ -10,6 +10,9 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using PaintDotNet.Imaging;
+using System.Collections.Generic;
+
 namespace AvifFileType.Exif
 {
     internal static class MetadataHelpers
@@ -34,15 +37,18 @@ namespace AvifFileType.Exif
             };
         }
 
-        internal static bool TryDecodeShort(MetadataEntry entry, out ushort value)
+        internal static bool TryDecodeShort(ExifValue entry, out ushort value)
         {
-            if (entry.Type != TagDataType.Short || entry.LengthInBytes != 2)
+            if (entry is null
+                || entry.Type != ExifValueType.Short
+                || entry.Data is null
+                || entry.Data.Count != 2)
             {
                 value = 0;
                 return false;
             }
 
-            byte[] data = entry.GetDataReadOnly();
+            IReadOnlyList<byte> data = entry.Data;
 
             value = (ushort)(data[0] | (data[1] << 8));
 

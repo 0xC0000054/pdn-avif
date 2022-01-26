@@ -15,6 +15,7 @@ using AvifFileType.Exif;
 using AvifFileType.Interop;
 using PaintDotNet;
 using PaintDotNet.AppModel;
+using PaintDotNet.Collections;
 using PaintDotNet.Imaging;
 using PaintDotNet.Rendering;
 using System;
@@ -322,15 +323,17 @@ namespace AvifFileType
 
                     if (exifValues != null)
                     {
-                        exifValues.Remove(MetadataKeys.Image.InterColorProfile);
+                        exifValues.Remove(ExifPropertyKeys.Image.InterColorProfile.Path);
                         // The HEIF specification states that the EXIF orientation tag is only
                         // informational and should not be used to rotate the image.
                         // See https://github.com/strukturag/libheif/issues/227#issuecomment-642165942
-                        exifValues.Remove(MetadataKeys.Image.Orientation);
+                        exifValues.Remove(ExifPropertyKeys.Image.Orientation.Path);
 
-                        foreach (MetadataEntry entry in exifValues)
+                        foreach (KeyValuePair<ExifPropertyPath, ExifValue> item in exifValues)
                         {
-                            doc.Metadata.AddExifPropertyItem(entry.CreateExifPropertyItem());
+                            ExifPropertyPath path = item.Key;
+
+                            doc.Metadata.AddExifPropertyItem(path.Section, path.TagID, item.Value);
                         }
                     }
                 }
@@ -402,29 +405,31 @@ namespace AvifFileType
             byte[] iccProfileBytes = null;
             byte[] xmpBytes = null;
 
-            Dictionary<MetadataKey, MetadataEntry> exifMetadata = GetExifMetadataFromDocument(doc);
+            Dictionary<ExifPropertyPath, ExifValue> exifMetadata = GetExifMetadataFromDocument(doc);
 
             if (exifMetadata != null)
             {
-                Exif.ExifColorSpace exifColorSpace = Exif.ExifColorSpace.Srgb;
+                ExifColorSpace exifColorSpace = ExifColorSpace.Srgb;
 
-                if (exifMetadata.TryGetValue(MetadataKeys.Exif.ColorSpace, out MetadataEntry value))
+                if (exifMetadata.TryGetValue(ExifPropertyKeys.Photo.ColorSpace.Path, out ExifValue value))
                 {
-                    exifMetadata.Remove(MetadataKeys.Exif.ColorSpace);
+                    exifMetadata.Remove(ExifPropertyKeys.Photo.ColorSpace.Path);
 
                     if (MetadataHelpers.TryDecodeShort(value, out ushort colorSpace))
                     {
-                        exifColorSpace = (Exif.ExifColorSpace)colorSpace;
+                        exifColorSpace = (ExifColorSpace)colorSpace;
                     }
                 }
 
-                MetadataKey iccProfileKey = MetadataKeys.Image.InterColorProfile;
+                const ExifColorSpace Uncalibrated = (ExifColorSpace)ushort.MaxValue;
 
-                if (exifMetadata.TryGetValue(iccProfileKey, out MetadataEntry iccProfileItem))
+                ExifPropertyPath iccProfileKey = ExifPropertyKeys.Image.InterColorProfile.Path;
+
+                if (exifMetadata.TryGetValue(iccProfileKey, out ExifValue iccProfileItem))
                 {
-                    iccProfileBytes = iccProfileItem.GetData();
+                    iccProfileBytes = iccProfileItem.Data.ToArrayEx();
                     exifMetadata.Remove(iccProfileKey);
-                    exifColorSpace = Exif.ExifColorSpace.Uncalibrated;
+                    exifColorSpace = Uncalibrated;
                 }
 
                 exifBytes = new ExifWriter(doc, exifMetadata, exifColorSpace).CreateExifBlob();
@@ -441,50 +446,19 @@ namespace AvifFileType
             return new AvifMetadata(exifBytes, iccProfileBytes, xmpBytes);
         }
 
-        private static Dictionary<MetadataKey, MetadataEntry> GetExifMetadataFromDocument(Document doc)
+        private static Dictionary<ExifPropertyPath, ExifValue> GetExifMetadataFromDocument(Document doc)
         {
-            Dictionary<MetadataKey, MetadataEntry> items = null;
+            Dictionary<ExifPropertyPath, ExifValue> items = null;
 
-            Metadata metadata = doc.Metadata;
-
-            ExifPropertyItem[] exifProperties = metadata.GetExifPropertyItems();
+            ExifPropertyItem[] exifProperties = doc.Metadata.GetExifPropertyItems();
 
             if (exifProperties.Length > 0)
             {
-                items = new Dictionary<MetadataKey, MetadataEntry>(exifProperties.Length);
+                items = new Dictionary<ExifPropertyPath, ExifValue>(exifProperties.Length);
 
                 foreach (ExifPropertyItem property in exifProperties)
                 {
-                    MetadataSection section;
-                    switch (property.Path.Section)
-                    {
-                        case ExifSection.Image:
-                            section = MetadataSection.Image;
-                            break;
-                        case ExifSection.Photo:
-                            section = MetadataSection.Exif;
-                            break;
-                        case ExifSection.Interop:
-                            section = MetadataSection.Interop;
-                            break;
-                        case ExifSection.GpsInfo:
-                            section = MetadataSection.Gps;
-                            break;
-                        default:
-                            throw new InvalidOperationException(string.Format(System.Globalization.CultureInfo.InvariantCulture,
-                                                                              "Unexpected {0} type: {1}",
-                                                                              nameof(ExifSection),
-                                                                              (int)property.Path.Section));
-                    }
-
-                    MetadataKey metadataKey = new MetadataKey(section, property.Path.TagID);
-
-                    if (!items.ContainsKey(metadataKey))
-                    {
-                        byte[] clonedData = PaintDotNet.Collections.EnumerableExtensions.ToArrayEx(property.Value.Data);
-
-                        items.Add(metadataKey, new MetadataEntry(metadataKey, (TagDataType)property.Value.Type, clonedData));
-                    }
+                    items.TryAdd(property.Path, property.Value);
                 }
             }
 

@@ -176,7 +176,7 @@ namespace AvifFileType
 
         public struct Enumerator : IEnumerator<CompressedAV1Image>
         {
-            private CompressedAV1ImageCollection items;
+            private readonly CompressedAV1ImageCollection items;
             private int index;
             private readonly int version;
 

@@ -143,14 +143,44 @@ namespace AvifFileType
 
         internal static unsafe void Rotate180(Surface surface)
         {
-            int lastColumn = surface.Width - 1;
-            int lastRow = surface.Height - 1;
+            int width = surface.Width;
+            int height = surface.Height;
 
-            for (int y = 0; y < surface.Height; y++)
+            int halfHeight = height / 2;
+            int lastColumn = width - 1;
+
+            for (int y = 0; y < halfHeight; y++)
             {
-                for (int x = 0; x < surface.Width; x++)
+                ColorBgra* topPtr = surface.GetRowPointerUnchecked(y);
+                ColorBgra* bottomPtr = surface.GetPointPointerUnchecked(lastColumn, height - y - 1);
+
+                for (int x = 0; x < width; x++)
                 {
-                    surface[x, y] = surface[lastColumn - x, lastRow - y];
+                    ColorBgra temp = *bottomPtr;
+                    *bottomPtr = *topPtr;
+                    *topPtr = temp;
+
+                    topPtr++;
+                    bottomPtr--;
+                }
+            }
+
+            // The middle row must be handled separately if the height is odd.
+            if ((height & 1) == 1)
+            {
+                int halfWidth = width / 2;
+
+                ColorBgra* leftPtr = surface.GetRowPointerUnchecked(halfHeight);
+                ColorBgra* rightPtr = surface.GetPointPointerUnchecked(lastColumn, halfHeight);
+
+                for (int x = 0; x < halfWidth; x++)
+                {
+                    ColorBgra temp = *rightPtr;
+                    *rightPtr = *leftPtr;
+                    *leftPtr = temp;
+
+                    leftPtr++;
+                    rightPtr--;
                 }
             }
         }

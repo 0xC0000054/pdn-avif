@@ -35,14 +35,24 @@ extern "C" {
 
 /*!\brief Current ABI version number
  *
+ * \hideinitializer
  * \internal
  * If this file is altered in any way that changes the ABI, this value
  * must be bumped.  Examples include, but are not limited to, changing
  * types, removing or reassigning enums, adding/removing/rearranging
  * fields to structures
+ *
+ * Note: In the definition of AOM_ENCODER_ABI_VERSION, 3 is the value of
+ * AOM_EXT_PART_ABI_VERSION in libaom v3.2.0. The old value of
+ * AOM_EXT_PART_ABI_VERSION is used so as to not break the ABI version check in
+ * aom_codec_enc_init_ver() when an application compiled against libaom v3.2.0
+ * passes the old value of AOM_ENCODER_ABI_VERSION to aom_codec_enc_init_ver().
+ * The external partition API is still experimental. When it is declared stable,
+ * we will replace 3 with AOM_EXT_PART_ABI_VERSION in the definition of
+ * AOM_ENCODER_ABI_VERSION.
  */
 #define AOM_ENCODER_ABI_VERSION \
-  (10 + AOM_CODEC_ABI_VERSION + AOM_EXT_PART_ABI_VERSION) /**<\hideinitializer*/
+  (10 + AOM_CODEC_ABI_VERSION + /*AOM_EXT_PART_ABI_VERSION=*/3)
 
 /*! \brief Encoder capabilities bitfield
  *
@@ -877,28 +887,6 @@ typedef struct aom_codec_enc_cfg {
    * Note: This option is only relevant for --end-usage=q.
    */
   unsigned int use_fixed_qp_offsets;
-
-/*!\brief Number of fixed QP offsets
- *
- * This defines the number of elements in the fixed_qp_offsets array.
- */
-#define FIXED_QP_OFFSET_COUNT 5
-
-  /*!\brief Array of fixed QP offsets
-   *
-   * This array specifies fixed QP offsets (range: 0 to 63) for frames at
-   * different levels of the pyramid. It is a comma-separated list of 5 values:
-   * - QP offset for keyframe
-   * - QP offset for ALTREF frame
-   * - QP offset for 1st level internal ARF
-   * - QP offset for 2nd level internal ARF
-   * - QP offset for 3rd level internal ARF
-   * Notes:
-   * - QP offset for leaf level frames is not explicitly specified. These frames
-   *   use the worst quality allowed (--cq-level).
-   * - This option is only relevant for --end-usage=q.
-   */
-  int fixed_qp_offsets[FIXED_QP_OFFSET_COUNT];
 
   /*!\brief Options defined per config file
    *

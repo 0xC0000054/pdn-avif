@@ -24,6 +24,8 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 
+using ExifColorSpace = AvifFileType.Exif.ExifColorSpace;
+
 namespace AvifFileType
 {
     internal static class AvifFile
@@ -421,15 +423,13 @@ namespace AvifFileType
                     }
                 }
 
-                const ExifColorSpace Uncalibrated = (ExifColorSpace)ushort.MaxValue;
-
                 ExifPropertyPath iccProfileKey = ExifPropertyKeys.Image.InterColorProfile.Path;
 
                 if (exifMetadata.TryGetValue(iccProfileKey, out ExifValue iccProfileItem))
                 {
                     iccProfileBytes = iccProfileItem.Data.ToArrayEx();
                     exifMetadata.Remove(iccProfileKey);
-                    exifColorSpace = Uncalibrated;
+                    exifColorSpace = ExifColorSpace.Uncalibrated;
 
                     // Remove the InteroperabilityIndex and related tags, these tags should
                     // not be written if the image has an ICC color profile.

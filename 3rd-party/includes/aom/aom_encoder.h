@@ -888,6 +888,12 @@ typedef struct aom_codec_enc_cfg {
    */
   unsigned int use_fixed_qp_offsets;
 
+  /*!\brief Deprecated and ignored. DO NOT USE.
+   *
+   * TODO(aomedia:3269): Remove fixed_qp_offsets in libaom v4.0.0.
+   */
+  int fixed_qp_offsets[5];
+
   /*!\brief Options defined per config file
    *
    */
@@ -1015,6 +1021,8 @@ aom_fixed_buf_t *aom_codec_get_global_headers(aom_codec_ctx_t *ctx);
  *
  * \param[in]    ctx       Pointer to this instance's context
  * \param[in]    img       Image data to encode, NULL to flush.
+ *                         Encoding sample values outside the range
+ *                         [0..(1<<img->bit_depth)-1] is undefined behavior.
  * \param[in]    pts       Presentation time stamp, in timebase units. If img
  *                         is NULL, pts is ignored.
  * \param[in]    duration  Duration to show frame, in timebase units. If img

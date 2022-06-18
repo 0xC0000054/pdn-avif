@@ -48,6 +48,9 @@ typedef enum aom_img_fmt {
   AOM_IMG_FMT_AOMI420 = AOM_IMG_FMT_PLANAR | 4,
   AOM_IMG_FMT_I422 = AOM_IMG_FMT_PLANAR | 5,
   AOM_IMG_FMT_I444 = AOM_IMG_FMT_PLANAR | 6,
+/*!\brief Allows detection of the presence of AOM_IMG_FMT_NV12 at compile time.
+ */
+#define AOM_HAVE_IMG_FMT_NV12 1
   AOM_IMG_FMT_NV12 =
       AOM_IMG_FMT_PLANAR | 7, /**< 4:2:0 with U and V interleaved */
   AOM_IMG_FMT_I42016 = AOM_IMG_FMT_I420 | AOM_IMG_FMT_HIGHBITDEPTH,
@@ -126,8 +129,12 @@ typedef enum aom_matrix_coefficients {
 
 /*!\brief List of supported color range */
 typedef enum aom_color_range {
-  AOM_CR_STUDIO_RANGE = 0, /**< Y [16..235], UV [16..240] */
-  AOM_CR_FULL_RANGE = 1    /**< YUV/RGB [0..255] */
+  AOM_CR_STUDIO_RANGE = 0, /**<- Y  [16..235],  UV  [16..240]  (bit depth 8) */
+                           /**<- Y  [64..940],  UV  [64..960]  (bit depth 10) */
+                           /**<- Y [256..3760], UV [256..3840] (bit depth 12) */
+  AOM_CR_FULL_RANGE = 1    /**<- YUV/RGB [0..255]  (bit depth 8) */
+                           /**<- YUV/RGB [0..1023] (bit depth 10) */
+                           /**<- YUV/RGB [0..4095] (bit depth 12) */
 } aom_color_range_t;       /**< alias for enum aom_color_range */
 
 /*!\brief List of chroma sample positions */

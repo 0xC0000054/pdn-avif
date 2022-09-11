@@ -129,19 +129,19 @@
   <data name="ChromaSubsampling_DisplayName" xml:space="preserve">
     <value>Chroma Subsampling</value>
   </data>
-  <data name="CompressionSpeed_DisplayName" xml:space="preserve">
-    <value>Compression Speed</value>
+  <data name="EncoderPreset_DisplayName" xml:space="preserve">
+    <value>Encoder Preset</value>
   </data>
-  <data name="CompressionSpeed_Fast_DisplayName" xml:space="preserve">
+  <data name="EncoderPreset_Fast_DisplayName" xml:space="preserve">
     <value>Fast</value>
   </data>
-  <data name="CompressionSpeed_Medium_DisplayName" xml:space="preserve">
+  <data name="EncoderPreset_Medium_DisplayName" xml:space="preserve">
     <value>Medium</value>
   </data>
-  <data name="CompressionSpeed_Slow_DisplayName" xml:space="preserve">
+  <data name="EncoderPreset_Slow_DisplayName" xml:space="preserve">
     <value>Slow</value>
   </data>
-  <data name="CompressionSpeed_VerySlow_DisplayName" xml:space="preserve">
+  <data name="EncoderPreset_VerySlow_DisplayName" xml:space="preserve">
     <value>Very Slow</value>
   </data>
   <data name="ForumLink_Description" xml:space="preserve">

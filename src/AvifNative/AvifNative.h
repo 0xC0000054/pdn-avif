@@ -20,8 +20,8 @@
 extern "C" {
 #endif // __cplusplus
 
-    // This must be kept in sync with CompressionSpeed.cs
-    enum class CompressionSpeed
+    // This must be kept in sync with EncoderPreset.cs
+    enum class EncoderPreset
     {
         Fast,
         Medium,
@@ -70,7 +70,7 @@ extern "C" {
     {
         int32_t colorQuality;
         int32_t alphaQuality;
-        CompressionSpeed compressionSpeed;
+        EncoderPreset encoderPreset;
         YUVChromaSubsampling yuvFormat;
         int32_t maxThreads;
     };

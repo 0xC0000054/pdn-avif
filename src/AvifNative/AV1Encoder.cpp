@@ -65,23 +65,23 @@ namespace
             quality = ConvertQualityToAOMRange(options, imageType);
             usage = AOM_USAGE_ALL_INTRA;
 
-            switch (options->compressionSpeed)
+            switch (options->encoderPreset)
             {
-            case CompressionSpeed::Fast:
+            case EncoderPreset::Fast:
                 // The AOM version 2.0.0 encoder will crash with an access violation on some images
                 // if the cpuUsed value is above 6.
                 // See https://github.com/0xC0000054/pdn-avif/issues/12
                 cpuUsed = 6;
                 usage = AOM_USAGE_REALTIME;
                 break;
-            case CompressionSpeed::Slow:
-            case CompressionSpeed::VerySlow:
+            case EncoderPreset::Slow:
+            case EncoderPreset::VerySlow:
                 // The slow and very slow compression speeds use the same settings.
                 // The difference between them is that Slow may split the image into smaller tiles
                 // before encoding and Very Slow will always encode the image as a single tile.
                 cpuUsed = 0;
                 break;
-            case CompressionSpeed::Medium:
+            case EncoderPreset::Medium:
             default:
                 cpuUsed = 4;
                 break;

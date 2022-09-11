@@ -31,7 +31,7 @@ namespace AvifFileType
         private enum PropertyNames
         {
             Quality,
-            CompressionSpeed,
+            EncoderPreset,
             YUVChromaSubsampling,
             ForumLink,
             GitHubLink,
@@ -77,7 +77,7 @@ namespace AvifFileType
             {
                 new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
                 new BooleanProperty(PropertyNames.LosslessAlphaCompression, true),
-                StaticListChoiceProperty.CreateForEnum(PropertyNames.CompressionSpeed, CompressionSpeed.Fast),
+                StaticListChoiceProperty.CreateForEnum(PropertyNames.EncoderPreset, EncoderPreset.Fast),
                 CreateChromaSubsampling(),
                 new BooleanProperty(PropertyNames.PreserveExistingTileSize, true),
                 new BooleanProperty(PropertyNames.PremultipliedAlpha, false),
@@ -136,12 +136,12 @@ namespace AvifFileType
             losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
             losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("LosslessAlphaCompression_Description");
 
-            PropertyControlInfo compressionSpeedPCI = configUI.FindControlForPropertyName(PropertyNames.CompressionSpeed);
-            compressionSpeedPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("CompressionSpeed_DisplayName");
-            compressionSpeedPCI.SetValueDisplayName(CompressionSpeed.Fast, this.strings.GetString("CompressionSpeed_Fast_DisplayName"));
-            compressionSpeedPCI.SetValueDisplayName(CompressionSpeed.Medium, this.strings.GetString("CompressionSpeed_Medium_DisplayName"));
-            compressionSpeedPCI.SetValueDisplayName(CompressionSpeed.Slow, this.strings.GetString("CompressionSpeed_Slow_DisplayName"));
-            compressionSpeedPCI.SetValueDisplayName(CompressionSpeed.VerySlow, this.strings.GetString("CompressionSpeed_VerySlow_DisplayName"));
+            PropertyControlInfo encoderPresetPCI = configUI.FindControlForPropertyName(PropertyNames.EncoderPreset);
+            encoderPresetPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("EncoderPreset_DisplayName");
+            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Fast, this.strings.GetString("EncoderPreset_Fast_DisplayName"));
+            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Medium, this.strings.GetString("EncoderPreset_Medium_DisplayName"));
+            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Slow, this.strings.GetString("EncoderPreset_Slow_DisplayName"));
+            encoderPresetPCI.SetValueDisplayName(EncoderPreset.VerySlow, this.strings.GetString("EncoderPreset_VerySlow_DisplayName"));
 
             PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling);
             subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ChromaSubsampling_DisplayName");
@@ -174,7 +174,7 @@ namespace AvifFileType
         protected override void OnSaveT(Document input, Stream output, PropertyBasedSaveConfigToken token, Surface scratchSurface, ProgressEventHandler progressCallback)
         {
             int quality = token.GetProperty<Int32Property>(PropertyNames.Quality).Value;
-            CompressionSpeed compressionSpeed = (CompressionSpeed)token.GetProperty(PropertyNames.CompressionSpeed).Value;
+            EncoderPreset encoderPreset = (EncoderPreset)token.GetProperty(PropertyNames.EncoderPreset).Value;
             YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling).Value;
             bool preserveExistingTileSize = token.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize).Value;
 
@@ -186,7 +186,7 @@ namespace AvifFileType
                           output,
                           quality,
                           losslessAlpha,
-                          compressionSpeed,
+                          encoderPreset,
                           chromaSubsampling,
                           preserveExistingTileSize,
                           premultipliedAlpha,

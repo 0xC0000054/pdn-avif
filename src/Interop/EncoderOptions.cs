@@ -19,7 +19,7 @@ namespace AvifFileType.Interop
     {
         public int colorQuality;
         public int alphaQuality;
-        public CompressionSpeed compressionSpeed;
+        public EncoderPreset encoderPreset;
         public YUVChromaSubsampling yuvFormat;
         public int maxThreads;
     }

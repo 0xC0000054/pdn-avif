@@ -19,7 +19,7 @@ namespace AvifFileType.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -97,47 +97,47 @@ namespace AvifFileType.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Compression Speed.
+        ///   Looks up a localized string similar to Encoder Preset.
         /// </summary>
-        internal static string CompressionSpeed_DisplayName {
+        internal static string EncoderPreset_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionSpeed_DisplayName", resourceCulture);
+                return ResourceManager.GetString("EncoderPreset_DisplayName", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Fast.
         /// </summary>
-        internal static string CompressionSpeed_Fast_DisplayName {
+        internal static string EncoderPreset_Fast_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionSpeed_Fast_DisplayName", resourceCulture);
+                return ResourceManager.GetString("EncoderPreset_Fast_DisplayName", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Medium.
         /// </summary>
-        internal static string CompressionSpeed_Medium_DisplayName {
+        internal static string EncoderPreset_Medium_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionSpeed_Medium_DisplayName", resourceCulture);
+                return ResourceManager.GetString("EncoderPreset_Medium_DisplayName", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Slow.
         /// </summary>
-        internal static string CompressionSpeed_Slow_DisplayName {
+        internal static string EncoderPreset_Slow_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionSpeed_Slow_DisplayName", resourceCulture);
+                return ResourceManager.GetString("EncoderPreset_Slow_DisplayName", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Very Slow.
         /// </summary>
-        internal static string CompressionSpeed_VerySlow_DisplayName {
+        internal static string EncoderPreset_VerySlow_DisplayName {
             get {
-                return ResourceManager.GetString("CompressionSpeed_VerySlow_DisplayName", resourceCulture);
+                return ResourceManager.GetString("EncoderPreset_VerySlow_DisplayName", resourceCulture);
             }
         }
         

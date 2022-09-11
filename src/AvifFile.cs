@@ -77,7 +77,7 @@ namespace AvifFileType
                                 Stream output,
                                 int quality,
                                 bool losslessAlpha,
-                                CompressionSpeed compressionSpeed,
+                                EncoderPreset encoderPreset,
                                 YUVChromaSubsampling chromaSubsampling,
                                 bool preserveExistingTileSize,
                                 bool premultipliedAlpha,
@@ -100,7 +100,7 @@ namespace AvifFileType
             {
                 colorQuality = quality,
                 alphaQuality = losslessAlpha ? 100 : quality,
-                compressionSpeed = compressionSpeed,
+                encoderPreset = encoderPreset,
                 // YUV 4:0:0 is always used for gray-scale images because it
                 // produces the smallest file size with no quality loss.
                 yuvFormat = grayscale ? YUVChromaSubsampling.Subsampling400 : chromaSubsampling,
@@ -153,7 +153,7 @@ namespace AvifFileType
             }
 
             ImageGridMetadata imageGridMetadata = TryGetImageGridMetadata(document,
-                                                                          options.compressionSpeed,
+                                                                          options.encoderPreset,
                                                                           options.yuvFormat,
                                                                           preserveExistingTileSize);
 
@@ -645,7 +645,7 @@ namespace AvifFileType
 
         private static ImageGridMetadata TryCalculateBestTileSize(
             Document document,
-            CompressionSpeed compressionSpeed)
+            EncoderPreset encoderPreset)
         {
             // Although the HEIF specification (ISO/IEC 23008-12:2017) allows an image grid to have up to 256 tiles
             // in each direction (65536 total), the ISO base media file format (ISO/IEC 14496-12:2015) limits
@@ -662,22 +662,22 @@ namespace AvifFileType
 
             int maxTileSize;
 
-            switch (compressionSpeed)
+            switch (encoderPreset)
             {
-                case CompressionSpeed.Fast:
+                case EncoderPreset.Fast:
                     maxTileSize = 512;
                     break;
-                case CompressionSpeed.Medium:
+                case EncoderPreset.Medium:
                     maxTileSize = 1280;
                     break;
-                case CompressionSpeed.Slow:
+                case EncoderPreset.Slow:
                     maxTileSize = 1920;
                     break;
-                case CompressionSpeed.VerySlow:
-                    // Tiles are not used for the very slow compression speed.
+                case EncoderPreset.VerySlow:
+                    // Tiles are not used for the very slow preset.
                     return null;
                 default:
-                    throw new InvalidEnumArgumentException(nameof(compressionSpeed), (int)compressionSpeed, typeof(CompressionSpeed));
+                    throw new InvalidEnumArgumentException(nameof(encoderPreset), (int)encoderPreset, typeof(EncoderPreset));
             }
 
             int bestTileColumnCount = 1;
@@ -759,14 +759,14 @@ namespace AvifFileType
 
         private static ImageGridMetadata TryGetImageGridMetadata(
             Document document,
-            CompressionSpeed compressionSpeed,
+            EncoderPreset encoderPreset,
             YUVChromaSubsampling yuvFormat,
             bool preserveExistingTileSize)
         {
             ImageGridMetadata metadata = null;
 
-            // The VerySlow compression speed always encodes the image as a single tile.
-            if (compressionSpeed != CompressionSpeed.VerySlow)
+            // The VerySlow preset always encodes the image as a single tile.
+            if (encoderPreset != EncoderPreset.VerySlow)
             {
                 // The image must have an even size to be eligible for tiling.
                 if ((document.Width & 1) == 0 && (document.Height & 1) == 0)
@@ -789,7 +789,7 @@ namespace AvifFileType
 
                     if (metadata is null)
                     {
-                        metadata = TryCalculateBestTileSize(document, compressionSpeed);
+                        metadata = TryCalculateBestTileSize(document, encoderPreset);
                     }
                 }
             }

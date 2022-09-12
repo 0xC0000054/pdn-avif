@@ -41,8 +41,6 @@ namespace AvifFileType
             {
                 DisposableUtil.Free(ref this.bufferFromArrayPool);
             }
-
-            base.Dispose(disposing);
         }
 
         protected override Stream GetStreamImpl()

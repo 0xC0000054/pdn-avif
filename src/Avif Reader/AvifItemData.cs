@@ -10,7 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using System;
 using System.IO;
 
 namespace AvifFileType
@@ -18,22 +17,13 @@ namespace AvifFileType
     internal unsafe delegate void UseBufferPointerDelegate(byte* ptr, ulong length);
 
     internal abstract class AvifItemData
-        : IDisposable
+        : Disposable
     {
-        private bool disposed;
-
         protected AvifItemData()
         {
-            this.disposed = false;
         }
 
         public ulong Length { get; protected set; }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
 
         public Stream GetStream()
         {
@@ -54,21 +44,8 @@ namespace AvifFileType
             UseBufferPointerImpl(action);
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            this.disposed = true;
-        }
-
         protected abstract Stream GetStreamImpl();
 
         protected abstract unsafe void UseBufferPointerImpl(UseBufferPointerDelegate action);
-
-        protected void VerifyNotDisposed()
-        {
-            if (this.disposed)
-            {
-                ExceptionUtil.ThrowObjectDisposedException(GetType().Name);
-            }
-        }
     }
 }

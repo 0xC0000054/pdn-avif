@@ -45,8 +45,6 @@ namespace AvifFileType.Interop
             {
                 this.gcHandle.Free();
             }
-
-            base.Dispose(disposing);
         }
 
         protected override IntPtr PinBuffer()

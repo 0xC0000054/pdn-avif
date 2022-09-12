@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 namespace AvifFileType
 {
     internal sealed class BigEndianBinaryWriter
-        : IDisposable
+        : Disposable
     {
         private Stream stream;
         private readonly bool leaveOpen;
@@ -51,19 +51,6 @@ namespace AvifFileType
             {
                 VerifyNotDisposed();
                 this.stream.Position = value;
-            }
-        }
-
-        public void Dispose()
-        {
-            if (this.stream != null)
-            {
-                if (!this.leaveOpen)
-                {
-                    this.stream.Dispose();
-                }
-
-                this.stream = null;
             }
         }
 
@@ -204,11 +191,19 @@ namespace AvifFileType
             }
         }
 
-        private void VerifyNotDisposed()
+        protected override void Dispose(bool disposing)
         {
-            if (this.stream is null)
+            if (disposing)
             {
-                ExceptionUtil.ThrowObjectDisposedException(nameof(BigEndianBinaryWriter));
+                if (this.stream != null)
+                {
+                    if (!this.leaveOpen)
+                    {
+                        this.stream.Dispose();
+                    }
+
+                    this.stream = null;
+                }
             }
         }
     }

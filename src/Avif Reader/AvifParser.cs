@@ -22,7 +22,7 @@ namespace AvifFileType
 {
     [DebuggerTypeProxy(typeof(AvifParserDebugView))]
     internal sealed class AvifParser
-        : IDisposable
+        : Disposable
     {
         private const ulong ManagedAvifItemDataMaxSize = 1024 * 1024;
 
@@ -43,15 +43,6 @@ namespace AvifFileType
             this.reader = new EndianBinaryReader(stream, Endianess.Big, leaveOpen, arrayPool);
             Parse();
             this.fileLength = (ulong)stream.Length;
-        }
-
-        public void Dispose()
-        {
-            if (this.reader != null)
-            {
-                this.reader.Dispose();
-                this.reader = null;
-            }
         }
 
         public IEnumerable<ColorInformationBox> EnumerateColorInformationBoxes(uint itemId)
@@ -374,6 +365,18 @@ namespace AvifFileType
                             }
                         }
                     }
+                }
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (this.reader != null)
+                {
+                    this.reader.Dispose();
+                    this.reader = null;
                 }
             }
         }

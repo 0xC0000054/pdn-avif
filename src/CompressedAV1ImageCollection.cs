@@ -19,16 +19,14 @@ namespace AvifFileType
 {
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(CompressedAV1ImageCollectionDebugView))]
-    internal sealed class CompressedAV1ImageCollection : IList<CompressedAV1Image>, IReadOnlyList<CompressedAV1Image>, IDisposable
+    internal sealed class CompressedAV1ImageCollection : Disposable, IList<CompressedAV1Image>, IReadOnlyList<CompressedAV1Image>
     {
         private readonly List<CompressedAV1Image> items;
-        private bool disposed;
         private int version;
 
         public CompressedAV1ImageCollection(int capacity)
         {
             this.items = new List<CompressedAV1Image>(capacity);
-            this.disposed = false;
         }
 
         public CompressedAV1Image this[int index]
@@ -81,20 +79,6 @@ namespace AvifFileType
         public bool Contains(CompressedAV1Image item)
         {
             return this.items.Contains(item);
-        }
-
-        public void Dispose()
-        {
-            if (!this.disposed)
-            {
-                this.disposed = true;
-
-                for (int i = 0; i < this.items.Count; i++)
-                {
-                    this.items[i]?.Dispose();
-                }
-                this.version++;
-            }
         }
 
         public Enumerator GetEnumerator()
@@ -151,6 +135,18 @@ namespace AvifFileType
             this.version++;
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                for (int i = 0; i < this.items.Count; i++)
+                {
+                    this.items[i]?.Dispose();
+                }
+                this.version++;
+            }
+        }
+
         void ICollection<CompressedAV1Image>.CopyTo(CompressedAV1Image[] array, int arrayIndex)
         {
             throw new NotSupportedException("The items are disposable resources owned by this collection.");
@@ -164,14 +160,6 @@ namespace AvifFileType
         IEnumerator<CompressedAV1Image> IEnumerable<CompressedAV1Image>.GetEnumerator()
         {
             return GetEnumerator();
-        }
-
-        private void VerifyNotDisposed()
-        {
-            if (this.disposed)
-            {
-                ExceptionUtil.ThrowObjectDisposedException(nameof(CompressedAV1ImageCollection));
-            }
         }
 
         public struct Enumerator : IEnumerator<CompressedAV1Image>

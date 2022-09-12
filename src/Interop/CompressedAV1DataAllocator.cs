@@ -22,7 +22,7 @@ namespace AvifFileType.Interop
     internal delegate IntPtr CompressedAV1OutputAlloc(UIntPtr sizeInBytes);
 
     internal sealed class CompressedAV1DataAllocator
-        : IDisposable
+        : Disposable
     {
         private List<CompressedDataState> compressedData;
         private readonly IArrayPoolService arrayPool;
@@ -57,24 +57,6 @@ namespace AvifFileType.Interop
             return nativePointer;
         }
 
-        public void Dispose()
-        {
-            if (this.compressedData != null)
-            {
-                for (int i = 0; i < this.compressedData.Count; i++)
-                {
-                    CompressedDataState state = this.compressedData[i];
-
-                    if (state.OwnsDataBuffer)
-                    {
-                        state.Dispose();
-                    }
-                }
-
-                this.compressedData = null;
-            }
-        }
-
         public CompressedAV1Data GetCompressedAV1Data(IntPtr nativePointer)
         {
             VerifyNotDisposed();
@@ -99,11 +81,24 @@ namespace AvifFileType.Interop
             return data;
         }
 
-        private void VerifyNotDisposed()
+        protected override void Dispose(bool disposing)
         {
-            if (this.compressedData is null)
+            if (disposing)
             {
-                ExceptionUtil.ThrowObjectDisposedException(nameof(CompressedAV1DataAllocator));
+                if (this.compressedData != null)
+                {
+                    for (int i = 0; i < this.compressedData.Count; i++)
+                    {
+                        CompressedDataState state = this.compressedData[i];
+
+                        if (state.OwnsDataBuffer)
+                        {
+                            state.Dispose();
+                        }
+                    }
+
+                    this.compressedData = null;
+                }
             }
         }
 

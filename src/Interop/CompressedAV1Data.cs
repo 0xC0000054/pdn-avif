@@ -17,23 +17,14 @@ namespace AvifFileType.Interop
 {
     [DebuggerDisplay("Length = {ByteLength}")]
     internal abstract class CompressedAV1Data
-        : IDisposable, IPinnableBuffer
+        : Disposable, IPinnableBuffer
     {
-        private bool disposed;
-
         protected CompressedAV1Data(ulong size)
         {
             this.ByteLength = size;
-            this.disposed = false;
         }
 
         public ulong ByteLength { get; }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
 
         public void Write(BigEndianBinaryWriter writer)
         {
@@ -47,24 +38,11 @@ namespace AvifFileType.Interop
             WriteBuffer(writer);
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            this.disposed = true;
-        }
-
         protected abstract IntPtr PinBuffer();
 
         protected abstract void UnpinBuffer();
 
         protected abstract void WriteBuffer(BigEndianBinaryWriter writer);
-
-        private void VerifyNotDisposed()
-        {
-            if (this.disposed)
-            {
-                ExceptionUtil.ThrowObjectDisposedException(GetType().Name);
-            }
-        }
 
         IntPtr IPinnableBuffer.Pin()
         {

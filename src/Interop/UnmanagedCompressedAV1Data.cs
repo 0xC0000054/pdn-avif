@@ -35,8 +35,6 @@ namespace AvifFileType.Interop
                     this.buffer = null;
                 }
             }
-
-            base.Dispose(disposing);
         }
 
         protected override IntPtr PinBuffer()

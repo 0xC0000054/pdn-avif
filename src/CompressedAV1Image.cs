@@ -18,7 +18,7 @@ namespace AvifFileType
 {
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     internal sealed class CompressedAV1Image
-        : IDisposable
+        : Disposable
     {
         private CompressedAV1Data data;
 
@@ -84,20 +84,15 @@ namespace AvifFileType
             }
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            if (this.data != null)
+            if (disposing)
             {
-                this.data.Dispose();
-                this.data = null;
-            }
-        }
-
-        private void VerifyNotDisposed()
-        {
-            if (this.data is null)
-            {
-                ExceptionUtil.ThrowObjectDisposedException(nameof(CompressedAV1Image));
+                if (this.data != null)
+                {
+                    this.data.Dispose();
+                    this.data = null;
+                }
             }
         }
     }

@@ -22,9 +22,8 @@ using System.IO;
 namespace AvifFileType
 {
     internal sealed class AvifReader
-        : IDisposable
+        : Disposable
     {
-        private bool disposed;
         private readonly AvifParser parser;
         private readonly uint primaryItemId;
         private readonly uint alphaItemId;
@@ -146,16 +145,6 @@ namespace AvifFileType
             return surface;
         }
 
-        public void Dispose()
-        {
-            if (!this.disposed)
-            {
-                this.disposed = true;
-
-                this.parser?.Dispose();
-            }
-        }
-
         public AvifItemData GetExifData()
         {
             VerifyNotDisposed();
@@ -189,6 +178,14 @@ namespace AvifFileType
             ItemLocationEntry entry = this.parser.TryGetXmpLocation(this.primaryItemId);
 
             return entry != null ? this.parser.ReadItemData(entry) : null;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.parser?.Dispose();
+            }
         }
 
         private static void CheckImageGridAndTileBounds(uint tileWidth, uint tileHeight, YUVChromaSubsampling tileChroma, ImageGridInfo gridInfo)
@@ -656,14 +653,6 @@ namespace AvifFileType
                     matrixCoefficients = decodeInfo.firstTileColorData.matrixCoefficients,
                     fullRange = decodeInfo.firstTileColorData.fullRange
                 };
-            }
-        }
-
-        private void VerifyNotDisposed()
-        {
-            if (this.disposed)
-            {
-                ExceptionUtil.ThrowObjectDisposedException(nameof(AvifReader));
             }
         }
     }

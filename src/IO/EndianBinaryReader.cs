@@ -22,7 +22,7 @@ namespace AvifFileType
     // https://jacksondunstan.com/articles/3568
 
     internal sealed class EndianBinaryReader
-        : IDisposable
+        : Disposable
     {
         private const int MaxBufferSize = 4096;
 
@@ -30,7 +30,6 @@ namespace AvifFileType
         private Stream stream;
         private int readOffset;
         private int readLength;
-        private bool disposed;
         private IArrayPoolBuffer<byte> bufferFromArrayPool;
         private byte[] buffer;
         private readonly int bufferSize;
@@ -87,7 +86,6 @@ namespace AvifFileType
 
             this.readOffset = 0;
             this.readLength = 0;
-            this.disposed = false;
         }
 
         public Endianess Endianess => this.endianess;
@@ -191,28 +189,6 @@ namespace AvifFileType
             }
 
             return new EndianBinaryReaderSegment(this, startOffset, length);
-        }
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-            if (!this.disposed)
-            {
-                this.disposed = true;
-                DisposableUtil.Free(ref this.bufferFromArrayPool);
-                this.buffer = null;
-
-                if (this.stream != null)
-                {
-                    if (!this.leaveOpen)
-                    {
-                        this.stream.Dispose();
-                    }
-                    this.stream = null;
-                }
-            }
         }
 
         /// <summary>
@@ -617,6 +593,24 @@ namespace AvifFileType
             return (((ulong)hi) << 32) | lo;
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                DisposableUtil.Free(ref this.bufferFromArrayPool);
+                this.buffer = null;
+
+                if (this.stream != null)
+                {
+                    if (!this.leaveOpen)
+                    {
+                        this.stream.Dispose();
+                    }
+                    this.stream = null;
+                }
+            }
+        }
+
         /// <summary>
         /// Ensures that the buffer contains at least the number of bytes requested.
         /// </summary>
@@ -771,18 +765,6 @@ namespace AvifFileType
                 totalBytesRead += this.stream.Read(bytes, offset + bytesUnread, count - bytesUnread);
 
                 return totalBytesRead;
-            }
-        }
-
-        /// <summary>
-        /// Verifies that the <see cref="EndianBinaryReader"/> has not been disposed.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
-        private void VerifyNotDisposed()
-        {
-            if (this.disposed)
-            {
-                throw new ObjectDisposedException(nameof(EndianBinaryReader));
             }
         }
     }

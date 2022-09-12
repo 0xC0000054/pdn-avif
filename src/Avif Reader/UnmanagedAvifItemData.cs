@@ -49,8 +49,6 @@ namespace AvifFileType
                     this.buffer = null;
                 }
             }
-
-            base.Dispose(disposing);
         }
 
         protected override Stream GetStreamImpl()

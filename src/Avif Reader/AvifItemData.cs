@@ -10,13 +10,8 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using AvifFileType.Interop;
-using PaintDotNet;
-using PaintDotNet.AppModel;
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace AvifFileType
 {
@@ -73,111 +68,6 @@ namespace AvifFileType
             if (this.disposed)
             {
                 ExceptionUtil.ThrowObjectDisposedException(GetType().Name);
-            }
-        }
-    }
-
-    internal sealed class ManagedAvifItemData
-        : AvifItemData
-    {
-        private IArrayPoolBuffer<byte> bufferFromArrayPool;
-
-        public ManagedAvifItemData(int length, IArrayPoolService pool)
-            : base()
-        {
-            this.bufferFromArrayPool = pool.Rent<byte>(length);
-            this.Length = (ulong)length;
-        }
-
-        internal byte[] GetBuffer()
-        {
-            VerifyNotDisposed();
-
-            return this.bufferFromArrayPool.Array;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                DisposableUtil.Free(ref this.bufferFromArrayPool);
-            }
-
-            base.Dispose(disposing);
-        }
-
-        protected override Stream GetStreamImpl()
-        {
-            return new MemoryStream(this.bufferFromArrayPool.Array, 0, (int)this.Length, writable: false);
-        }
-
-        protected override unsafe void UseBufferPointerImpl(UseBufferPointerDelegate action)
-        {
-            fixed (byte* ptr = this.bufferFromArrayPool.Array)
-            {
-                action(ptr, this.Length);
-            }
-        }
-    }
-
-    internal sealed class UnmanagedAvifItemData
-        : AvifItemData
-    {
-        private SafeNativeMemoryBuffer buffer;
-
-        public UnmanagedAvifItemData(ulong length)
-            : base()
-        {
-            this.buffer = SafeNativeMemoryBuffer.Create(length);
-            this.Length = length;
-        }
-
-        public SafeBuffer UnmanagedBuffer
-        {
-            get
-            {
-                VerifyNotDisposed();
-
-                return this.buffer;
-            }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (this.buffer != null)
-                {
-                    this.buffer.Dispose();
-                    this.buffer = null;
-                }
-            }
-
-            base.Dispose(disposing);
-        }
-
-        protected override Stream GetStreamImpl()
-        {
-            // The UnmanagedMemoryStream class does not take ownership of the SafeBuffer.
-            return new UnmanagedMemoryStream(this.buffer, 0, checked((long)this.Length), FileAccess.Read);
-        }
-
-        protected override unsafe void UseBufferPointerImpl(UseBufferPointerDelegate action)
-        {
-            byte* ptr = null;
-            RuntimeHelpers.PrepareDelegate(action);
-            try
-            {
-                this.buffer.AcquirePointer(ref ptr);
-
-                action(ptr, this.Length);
-            }
-            finally
-            {
-                if (ptr != null)
-                {
-                    this.buffer.ReleasePointer();
-                }
             }
         }
     }

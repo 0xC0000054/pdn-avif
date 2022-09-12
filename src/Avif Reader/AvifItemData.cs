@@ -23,7 +23,7 @@ namespace AvifFileType
         {
         }
 
-        public ulong Length { get; protected set; }
+        public ulong Length { get; init; }
 
         public Stream GetStream()
         {

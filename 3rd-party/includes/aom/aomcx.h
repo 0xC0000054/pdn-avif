@@ -191,8 +191,8 @@ enum aome_enc_control_id {
 
   /* NOTE: enum 10 unused */
 
-  /*!\brief Codec control function to set encoder scaling mode,
-   * aom_scaling_mode_t* parameter.
+  /*!\brief Codec control function to set encoder scaling mode for the next
+   * frame to be coded, aom_scaling_mode_t* parameter.
    */
   AOME_SET_SCALEMODE = 11,
 
@@ -1373,6 +1373,9 @@ enum aome_enc_control_id {
   AV1E_SET_ENABLE_DIRECTIONAL_INTRA = 145,
 
   /*!\brief Control to turn on / off transform size search.
+   * Note: it can not work with non RD pick mode in real-time encoding,
+   * where the max transform size is only 16x16.
+   * It will be ignored if non RD pick mode is set.
    *
    * - 0 = disable, transforms always have the largest possible size
    * - 1 = enable, search for the best transform size for each block (default)

@@ -72,7 +72,41 @@ namespace AvifFileType
             }
             else
             {
-                this.alphaGridInfo = null;
+                if (this.colorGridInfo != null)
+                {
+                    // Some images may associate the alpha image with the individual grid images
+                    // instead of using a separate alpha image grid.
+                    // See https://github.com/AOMediaCodec/libavif/issues/1203
+
+                    List<uint> alphaImageIds = new List<uint>();
+
+                    foreach (uint colorItem in this.colorGridInfo.ChildImageIds)
+                    {
+                        uint alphaItem = this.parser.GetAlphaItemId(colorItem);
+
+                        if (alphaItem != 0)
+                        {
+                            alphaImageIds.Add(alphaItem);
+                        }
+                        else
+                        {
+                            // The first image in the grid does not have an associated alpha image
+                            // or only some of the grid images do.
+                            //
+                            // The image will be treated as not having an alpha channel.
+                            break;
+                        }
+                    }
+
+                    if (alphaImageIds.Count == this.colorGridInfo.ChildImageIds.Count)
+                    {
+                        this.alphaGridInfo = new ImageGridInfo(alphaImageIds, this.colorGridInfo);
+                    }
+                }
+                else
+                {
+                    this.alphaGridInfo = null;
+                }
             }
 
             // The HEIF specification allows an image to have up to one color information box of each type (ICC and/or NCLX).
@@ -119,7 +153,7 @@ namespace AvifFileType
             try
             {
                 ProcessColorImage(surface);
-                if (this.alphaItemId != 0)
+                if (this.alphaItemId != 0 || this.alphaGridInfo != null)
                 {
                     ProcessAlphaImage(surface);
                 }
@@ -268,61 +302,43 @@ namespace AvifFileType
             }
         }
 
-        private void CheckImageItemType(uint itemId, ImageGridInfo gridInfo, string imageName, bool checkingGridChildren = false)
+        private void CheckImageItemType(uint itemId, ImageGridInfo gridInfo, string imageName)
         {
-            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+            if (gridInfo != null)
+            {
+                IReadOnlyList<uint> childImageIds = gridInfo.ChildImageIds;
 
-            if (entry is null)
-            {
-                ExceptionUtil.ThrowFormatException($"The { imageName } image does not exist.");
-            }
-            else if (entry.ItemType != ItemInfoEntryTypes.AV01)
-            {
-                if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
+                for (int i = 0; i < childImageIds.Count; i++)
                 {
-                    if (checkingGridChildren)
+                    CheckImageItemType(childImageIds[i], null, imageName);
+                }
+            }
+            else
+            {
+                IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+
+                if (entry is null)
+                {
+                    ExceptionUtil.ThrowFormatException($"The {imageName} image does not exist.");
+                }
+                else if (entry.ItemType != ItemInfoEntryTypes.AV01)
+                {
+                    if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
                     {
                         ExceptionUtil.ThrowFormatException("Nested image grids are not supported.");
                     }
-
-                    if (gridInfo is null)
+                    else
                     {
-                        ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
+                        ExceptionUtil.ThrowFormatException($"The {imageName} image is not a supported format.");
                     }
-
-                    IReadOnlyList<uint> childImageIds = gridInfo.ChildImageIds;
-
-                    for (int i = 0; i < childImageIds.Count; i++)
-                    {
-                        CheckImageItemType(childImageIds[i], null, imageName, true);
-                    }
-                }
-                else
-                {
-                    ExceptionUtil.ThrowFormatException($"The { imageName } image is not a supported format.");
                 }
             }
         }
 
         private void CheckRequiredImageProperties(uint itemId, ImageGridInfo gridInfo, string imageName)
         {
-            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
-
-            if (entry is null)
+            if (gridInfo != null)
             {
-                ExceptionUtil.ThrowFormatException($"The { imageName } image does not exist.");
-            }
-            else if (entry.ItemType == ItemInfoEntryTypes.AV01)
-            {
-                this.parser.ValidateRequiredImageProperties(itemId);
-            }
-            else if (entry.ItemType == ItemInfoEntryTypes.ImageGrid)
-            {
-                if (gridInfo is null)
-                {
-                    ExceptionUtil.ThrowFormatException($"The { imageName } image does not have any image grid information.");
-                }
-
                 IReadOnlyList<uint> childImageIds = gridInfo.ChildImageIds;
 
                 for (int i = 0; i < childImageIds.Count; i++)
@@ -332,7 +348,20 @@ namespace AvifFileType
             }
             else
             {
-                ExceptionUtil.ThrowFormatException($"The { imageName } image is not a supported format.");
+                IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+
+                if (entry is null)
+                {
+                    ExceptionUtil.ThrowFormatException($"The {imageName} image does not exist.");
+                }
+                else if (entry.ItemType == ItemInfoEntryTypes.AV01)
+                {
+                    this.parser.ValidateRequiredImageProperties(itemId);
+                }
+                else
+                {
+                    ExceptionUtil.ThrowFormatException($"The {imageName} image is not a supported format.");
+                }
             }
         }
 
@@ -404,7 +433,7 @@ namespace AvifFileType
         {
             CheckImageItemType(this.primaryItemId, this.colorGridInfo, "color");
 
-            if (this.alphaItemId != 0)
+            if (this.alphaItemId != 0 || this.alphaGridInfo != null)
             {
                 CheckImageItemType(this.alphaItemId, this.alphaGridInfo, "alpha");
             }
@@ -428,7 +457,7 @@ namespace AvifFileType
         {
             CheckRequiredImageProperties(this.primaryItemId, this.colorGridInfo, "color");
 
-            if (this.alphaItemId != 0)
+            if (this.alphaItemId != 0 || this.alphaGridInfo != null)
             {
                 CheckRequiredImageProperties(this.alphaItemId, this.alphaGridInfo, "alpha");
             }

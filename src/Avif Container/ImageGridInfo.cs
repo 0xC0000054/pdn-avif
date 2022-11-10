@@ -37,6 +37,25 @@ namespace AvifFileType.AvifContainer
             this.OutputHeight = grid.OutputHeight;
         }
 
+        public ImageGridInfo(IReadOnlyList<uint> alphaImageIds, ImageGridInfo colorGridInfo)
+        {
+            if (alphaImageIds is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(alphaImageIds));
+            }
+
+            if (colorGridInfo is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(colorGridInfo));
+            }
+
+            this.ChildImageIds = alphaImageIds;
+            this.TileColumnCount = colorGridInfo.TileColumnCount;
+            this.TileRowCount = colorGridInfo.TileRowCount;
+            this.OutputWidth = colorGridInfo.OutputWidth;
+            this.OutputHeight = colorGridInfo.OutputHeight;
+        }
+
         public IReadOnlyList<uint> ChildImageIds { get; }
 
         public int TileColumnCount { get; }

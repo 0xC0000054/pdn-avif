@@ -33,7 +33,7 @@ namespace AvifFileType
             }
         }
 
-        private bool IsDisposed => Volatile.Read(ref this.isDisposed) == 1;
+        public bool IsDisposed => Volatile.Read(ref this.isDisposed) == 1;
 
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.

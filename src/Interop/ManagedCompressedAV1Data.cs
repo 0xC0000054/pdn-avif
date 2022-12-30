@@ -18,7 +18,7 @@ using System.Runtime.InteropServices;
 namespace AvifFileType.Interop
 {
     internal sealed class ManagedCompressedAV1Data
-        : CompressedAV1Data
+        : CompressedAV1Data, IEquatable<ManagedCompressedAV1Data>
     {
         private IArrayPoolBuffer<byte> buffer;
         private GCHandle gcHandle;
@@ -34,6 +34,34 @@ namespace AvifFileType.Interop
             Dispose(false);
         }
 
+        public override bool Equals(object obj)
+        {
+            return obj is ManagedCompressedAV1Data other && Equals(other);
+        }
+
+        public bool Equals(ManagedCompressedAV1Data other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (this.ByteLength != other.ByteLength || this.IsDisposed || other.IsDisposed)
+            {
+                return false;
+            }
+
+            IArrayPoolBuffer<byte> firstBuffer = this.buffer;
+            IArrayPoolBuffer<byte> secondBuffer = other.buffer;
+
+            return firstBuffer.AsSpan().SequenceEqual(secondBuffer.AsSpan());
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -45,6 +73,14 @@ namespace AvifFileType.Interop
             {
                 this.gcHandle.Free();
             }
+        }
+
+        protected override bool EqualsCore(CompressedAV1Data other)
+        {
+            IArrayPoolBuffer<byte> firstBuffer = this.buffer;
+            IArrayPoolBuffer<byte> secondBuffer = ((ManagedCompressedAV1Data)other).buffer;
+
+            return firstBuffer.AsSpan().SequenceEqual(secondBuffer.AsSpan());
         }
 
         protected override IntPtr PinBuffer()
@@ -68,6 +104,26 @@ namespace AvifFileType.Interop
         protected override void WriteBuffer(BigEndianBinaryWriter writer)
         {
             writer.Write(this.buffer.Array, 0, this.buffer.RequestedLength);
+        }
+
+        public static bool operator ==(ManagedCompressedAV1Data left, ManagedCompressedAV1Data right)
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            if (left is null || right is null)
+            {
+                return false;
+            }
+
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(ManagedCompressedAV1Data left, ManagedCompressedAV1Data right)
+        {
+            return !(left == right);
         }
     }
 }

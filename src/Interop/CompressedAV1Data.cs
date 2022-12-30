@@ -17,7 +17,7 @@ namespace AvifFileType.Interop
 {
     [DebuggerDisplay("Length = {ByteLength}")]
     internal abstract class CompressedAV1Data
-        : Disposable, IPinnableBuffer
+        : Disposable, IEquatable<CompressedAV1Data>, IPinnableBuffer
     {
         protected CompressedAV1Data(ulong size)
         {
@@ -25,6 +25,60 @@ namespace AvifFileType.Interop
         }
 
         public ulong ByteLength { get; }
+
+        public override bool Equals(object obj)
+        {
+            return obj is CompressedAV1Data other && Equals(other);
+        }
+
+        public bool Equals(CompressedAV1Data other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (this.ByteLength != other.ByteLength || this.IsDisposed || other.IsDisposed)
+            {
+                return false;
+            }
+
+            bool result;
+
+            if (GetType() == other.GetType())
+            {
+                result = EqualsCore(other);
+            }
+            else
+            {
+                IntPtr firstPinnedBuffer = PinBuffer();
+
+                try
+                {
+                    IntPtr secondPinnedBuffer = other.PinBuffer();
+
+                    try
+                    {
+                        result = AvifNative.MemoryBlocksAreEqual(firstPinnedBuffer, secondPinnedBuffer, this.ByteLength);
+                    }
+                    finally
+                    {
+                        other.UnpinBuffer();
+                    }
+                }
+                finally
+                {
+                    UnpinBuffer();
+                }
+            }
+
+            return result;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.ByteLength.GetHashCode();
+        }
 
         public void Write(BigEndianBinaryWriter writer)
         {
@@ -37,6 +91,8 @@ namespace AvifFileType.Interop
 
             WriteBuffer(writer);
         }
+
+        protected abstract bool EqualsCore(CompressedAV1Data other);
 
         protected abstract IntPtr PinBuffer();
 
@@ -54,6 +110,26 @@ namespace AvifFileType.Interop
         void IPinnableBuffer.Unpin()
         {
             UnpinBuffer();
+        }
+
+        public static bool operator ==(CompressedAV1Data left, CompressedAV1Data right)
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            if (left is null || right is null)
+            {
+                return false;
+            }
+
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(CompressedAV1Data left, CompressedAV1Data right)
+        {
+            return !(left == right);
         }
     }
 }

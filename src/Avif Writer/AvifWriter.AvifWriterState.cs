@@ -137,50 +137,21 @@ namespace AvifFileType
                         }
 
                         CompressedAV1Data firstImageData = alphaImages[firstTileIndex].Data;
-                        IPinnableBuffer firstPinnable = firstImageData;
 
-                        IntPtr firstBuffer = IntPtr.Zero;
-                        try
+                        for (int j = i + 1; j < duplicateTileSearchSpace.Count; j++)
                         {
-                            for (int j = i + 1; j < duplicateTileSearchSpace.Count; j++)
+                            int secondTileIndex = duplicateTileSearchSpace[j];
+
+                            if (this.duplicateAlphaTiles.ContainsKey(secondTileIndex))
                             {
-                                int secondTileIndex = duplicateTileSearchSpace[j];
-
-                                if (this.duplicateAlphaTiles.ContainsKey(secondTileIndex))
-                                {
-                                    continue;
-                                }
-
-                                CompressedAV1Data secondImageData = alphaImages[secondTileIndex].Data;
-
-                                if (firstImageData.ByteLength == secondImageData.ByteLength)
-                                {
-                                    IPinnableBuffer secondPinnable = secondImageData;
-
-                                    if (firstBuffer == IntPtr.Zero)
-                                    {
-                                        firstBuffer = firstPinnable.Pin();
-                                    }
-                                    IntPtr secondBuffer = secondPinnable.Pin();
-                                    try
-                                    {
-                                        if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
-                                        {
-                                            this.duplicateAlphaTiles.Add(secondTileIndex, firstTileIndex);
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        secondPinnable.Unpin();
-                                    }
-                                }
+                                continue;
                             }
-                        }
-                        finally
-                        {
-                            if (firstBuffer != IntPtr.Zero)
+
+                            CompressedAV1Data secondImageData = alphaImages[secondTileIndex].Data;
+
+                            if (firstImageData.Equals(secondImageData))
                             {
-                                firstPinnable.Unpin();
+                                this.duplicateAlphaTiles.Add(secondTileIndex, firstTileIndex);
                             }
                         }
                     }
@@ -211,50 +182,21 @@ namespace AvifFileType
                         }
 
                         CompressedAV1Data firstImageData = colorImages[firstTileIndex].Data;
-                        IPinnableBuffer firstPinnable = firstImageData;
 
-                        IntPtr firstBuffer = IntPtr.Zero;
-                        try
+                        for (int j = i + 1; j < duplicateTileSearchSpace.Count; j++)
                         {
-                            for (int j = i + 1; j < duplicateTileSearchSpace.Count; j++)
+                            int secondTileIndex = duplicateTileSearchSpace[j];
+
+                            if (this.duplicateColorTiles.ContainsKey(secondTileIndex))
                             {
-                                int secondTileIndex = duplicateTileSearchSpace[j];
-
-                                if (this.duplicateColorTiles.ContainsKey(secondTileIndex))
-                                {
-                                    continue;
-                                }
-
-                                CompressedAV1Data secondImageData = colorImages[secondTileIndex].Data;
-
-                                if (firstImageData.ByteLength == secondImageData.ByteLength)
-                                {
-                                    IPinnableBuffer secondPinnable = secondImageData;
-
-                                    if (firstBuffer == IntPtr.Zero)
-                                    {
-                                        firstBuffer = firstPinnable.Pin();
-                                    }
-                                    IntPtr secondBuffer = secondPinnable.Pin();
-                                    try
-                                    {
-                                        if (AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, firstImageData.ByteLength))
-                                        {
-                                            this.duplicateColorTiles.Add(secondTileIndex, firstTileIndex);
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        secondPinnable.Unpin();
-                                    }
-                                }
+                                continue;
                             }
-                        }
-                        finally
-                        {
-                            if (firstBuffer != IntPtr.Zero)
+
+                            CompressedAV1Data secondImageData = colorImages[secondTileIndex].Data;
+
+                            if (firstImageData.Equals(secondImageData))
                             {
-                                firstPinnable.Unpin();
+                                this.duplicateColorTiles.Add(secondTileIndex, firstTileIndex);
                             }
                         }
                     }

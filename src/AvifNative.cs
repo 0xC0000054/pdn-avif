@@ -54,14 +54,6 @@ namespace AvifFileType
                                                               outputAllocDelegate,
                                                               out alphaImage);
                 }
-                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
-                {
-                    status = AvifNative_86.CompressAlphaImage(ref bitmapData,
-                                                              options,
-                                                              progressContext,
-                                                              outputAllocDelegate,
-                                                              out alphaImage);
-                }
                 else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                 {
                     status = AvifNative_ARM64.CompressAlphaImage(ref bitmapData,
@@ -117,15 +109,6 @@ namespace AvifFileType
                 if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
                 {
                     status = AvifNative_64.CompressColorImage(ref bitmapData,
-                                                              options,
-                                                              progressContext,
-                                                              ref colorInfo,
-                                                              outputAllocDelegate,
-                                                              out colorImage);
-                }
-                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
-                {
-                    status = AvifNative_86.CompressColorImage(ref bitmapData,
                                                               options,
                                                               progressContext,
                                                               ref colorInfo,
@@ -207,14 +190,6 @@ namespace AvifFileType
                                                                         decodeInfo,
                                                                         ref bitmapData);
                         }
-                        else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
-                        {
-                            status = AvifNative_86.DecompressColorImage(ptr,
-                                                                        colorImageSize,
-                                                                        ref colorData,
-                                                                        decodeInfo,
-                                                                        ref bitmapData);
-                        }
                         else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                         {
                             status = AvifNative_ARM64.DecompressColorImage(ptr,
@@ -233,14 +208,6 @@ namespace AvifFileType
                         if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
                         {
                             status = AvifNative_64.DecompressColorImage(ptr,
-                                                                        colorImageSize,
-                                                                        IntPtr.Zero,
-                                                                        decodeInfo,
-                                                                        ref bitmapData);
-                        }
-                        else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
-                        {
-                            status = AvifNative_86.DecompressColorImage(ptr,
                                                                         colorImageSize,
                                                                         IntPtr.Zero,
                                                                         decodeInfo,
@@ -310,13 +277,6 @@ namespace AvifFileType
                                                                         decodeInfo,
                                                                         ref bitmapData);
                         }
-                        else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
-                        {
-                            status = AvifNative_86.DecompressAlphaImage(ptr,
-                                                                        alphaImageSize,
-                                                                        decodeInfo,
-                                                                        ref bitmapData);
-                        }
                         else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                         {
                             status = AvifNative_ARM64.DecompressAlphaImage(ptr,
@@ -344,10 +304,6 @@ namespace AvifFileType
             if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
             {
                 result = AvifNative_64.MemoryBlocksAreEqual(buffer1, buffer2, new UIntPtr(length));
-            }
-            else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
-            {
-                result = AvifNative_86.MemoryBlocksAreEqual(buffer1, buffer2, new UIntPtr(length));
             }
             else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
             {

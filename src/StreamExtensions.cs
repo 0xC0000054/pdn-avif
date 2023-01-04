@@ -10,39 +10,23 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System;
+using System.Buffers.Binary;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace AvifFileType
 {
     internal static class StreamExtensions
     {
+        [SkipLocalsInit]
         public static long TryReadUInt32BigEndian(this Stream stream)
         {
-            int byte1 = stream.ReadByte();
-            if (byte1 == -1)
-            {
-                return -1;
-            }
+            Span<byte> bytes = stackalloc byte[sizeof(uint)];
 
-            int byte2 = stream.ReadByte();
-            if (byte2 == -1)
-            {
-                return -1;
-            }
+            int bytesRead = stream.ReadAtLeast(bytes, sizeof(uint), throwOnEndOfStream: false);
 
-            int byte3 = stream.ReadByte();
-            if (byte3 == -1)
-            {
-                return -1;
-            }
-
-            int byte4 = stream.ReadByte();
-            if (byte4 == -1)
-            {
-                return -1;
-            }
-
-            return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
+            return bytesRead == sizeof(uint) ? BinaryPrimitives.ReadUInt32BigEndian(bytes) : -1;
         }
     }
 }

@@ -47,6 +47,9 @@ csharp_style_prefer_range_operator = false
 # IDE0066: Convert switch statement to expression
 csharp_style_prefer_switch_expression = false
 
+# IDE0230: Use UTF-8 string literal
+csharp_style_prefer_utf8_string_literals = false
+
 [*.{cpp,h}]
 indent_size              = 4
 indent_style             = space

@@ -108,7 +108,9 @@ namespace AvifFileType
 
             LayerSelectorInfo layerSelectorInfo = null;
 
-            if (layerSelectorBox != null)
+            // The 0xffff layer id is a marker value used to indicate support for progressive rendering.
+            // We treat these images as having a single full-resolution frame.
+            if (layerSelectorBox != null && layerSelectorBox.LayerId != 0xffff)
             {
                 layerSelectorInfo = new LayerSelectorInfo(layeredImageIndexingBox,
                                                           totalItemSize,

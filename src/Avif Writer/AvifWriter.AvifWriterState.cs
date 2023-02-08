@@ -14,7 +14,6 @@ using AvifFileType.AvifContainer;
 using AvifFileType.Interop;
 using PaintDotNet;
 using PaintDotNet.AppModel;
-using System;
 using System.Collections.Generic;
 using System.IO;
 

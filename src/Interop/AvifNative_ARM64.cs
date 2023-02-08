@@ -16,52 +16,58 @@ using System.Runtime.InteropServices;
 namespace AvifFileType.Interop
 {
     [System.Security.SuppressUnmanagedCodeSecurity]
-    internal static class AvifNative_ARM64
+    internal static partial class AvifNative_ARM64
     {
         private const string DllName = "AvifNative_ARM64.dll";
 
-        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static extern unsafe EncoderStatus CompressColorImage(
-            [In] ref BitmapData image,
-            EncoderOptions options,
-            [In, Out] ProgressContext progressContext,
-            [In] ref CICPColorData colorInfo,
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+        internal static unsafe partial EncoderStatus CompressColorImage(
+            in BitmapData image,
+            in EncoderOptions options,
+            ref ProgressContext progressContext,
+            in NativeCICPColorData colorInfo,
             [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
             out IntPtr colorImage);
 
-        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static extern unsafe EncoderStatus CompressAlphaImage(
-            [In] ref BitmapData image,
-            EncoderOptions options,
-            [In, Out] ProgressContext progressContext,
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+        internal static unsafe partial EncoderStatus CompressAlphaImage(
+            in BitmapData image,
+            in EncoderOptions options,
+            ref ProgressContext progressContext,
             [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
             out IntPtr alphaImage);
 
-        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static extern unsafe DecoderStatus DecompressColorImage(
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+        internal static unsafe partial DecoderStatus DecompressColorImage(
             byte* compressedColorImage,
             UIntPtr compressedColorImageSize,
-            [In] ref CICPColorData colorInfo,
-            [In, Out] DecodeInfo decodeInfo,
-            [In] ref BitmapData fullImage);
+            in NativeCICPColorData colorInfo,
+            ref NativeDecodeInfo decodeInfo,
+            in BitmapData fullImage);
 
-        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static extern unsafe DecoderStatus DecompressColorImage(
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+        internal static unsafe partial DecoderStatus DecompressColorImage(
             byte* compressedColorImage,
             UIntPtr compressedColorImageSize,
             IntPtr colorInfo_MustBeZero,
-            [In, Out] DecodeInfo decodeInfo,
-            [In] ref BitmapData fullImage);
+            ref NativeDecodeInfo decodeInfo,
+            in BitmapData fullImage);
 
-        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
-        internal static extern unsafe DecoderStatus DecompressAlphaImage(
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+        internal static unsafe partial DecoderStatus DecompressAlphaImage(
             byte* compressedAlphaImage,
             UIntPtr compressedAlphaImageSize,
-            [In, Out] DecodeInfo decodeInfo,
-            [In] ref BitmapData fullImage);
+            ref NativeDecodeInfo decodeInfo,
+            in BitmapData fullImage);
 
-        [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
         [return: MarshalAs(UnmanagedType.U1)]
-        internal static extern bool MemoryBlocksAreEqual(IntPtr buffer1, IntPtr buffer2, UIntPtr length);
+        internal static partial bool MemoryBlocksAreEqual(IntPtr buffer1, IntPtr buffer2, UIntPtr length);
     }
 }

@@ -11,7 +11,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
-using AvifFileType.Interop;
 using System;
 using System.Globalization;
 

@@ -11,7 +11,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
-using AvifFileType.Interop;
 using PaintDotNet;
 using PaintDotNet.Rendering;
 using System;

@@ -19,16 +19,15 @@ namespace AvifFileType.Interop
     internal delegate bool AvifProgressCallback(uint done, uint total);
 
     [StructLayout(LayoutKind.Sequential)]
-    internal sealed class ProgressContext
+    internal ref struct ProgressContext
     {
-        [MarshalAs(UnmanagedType.FunctionPtr)]
-        public AvifProgressCallback progressCallback;
+        public nint progressCallback;
         public uint progressDone;
         public uint progressTotal;
 
         public ProgressContext(AvifProgressCallback progressCallback, uint progressDone, uint progressTotal)
         {
-            this.progressCallback = progressCallback;
+            this.progressCallback = Marshal.GetFunctionPointerForDelegate(progressCallback);
             this.progressDone = progressDone;
             this.progressTotal = progressTotal;
         }

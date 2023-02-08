@@ -15,7 +15,7 @@ using System.Runtime.InteropServices;
 namespace AvifFileType.Interop
 {
     [StructLayout(LayoutKind.Sequential)]
-    internal sealed class EncoderOptions
+    internal ref struct EncoderOptions
     {
         public int colorQuality;
         public int alphaQuality;

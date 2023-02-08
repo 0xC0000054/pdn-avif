@@ -11,16 +11,28 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
-using System.Runtime.InteropServices;
+using AvifFileType.Interop;
 
-namespace AvifFileType.Interop
+namespace AvifFileType
 {
     internal struct CICPColorData
     {
         public CICPColorPrimaries colorPrimaries;
         public CICPTransferCharacteristics transferCharacteristics;
         public CICPMatrixCoefficients matrixCoefficients;
-        [MarshalAs(UnmanagedType.U1)]
         public bool fullRange;
+
+        public CICPColorData(NativeCICPColorData native)
+        {
+            this.colorPrimaries = native.colorPrimaries;
+            this.transferCharacteristics = native.transferCharacteristics;
+            this.matrixCoefficients = native.matrixCoefficients;
+            this.fullRange = native.fullRange != 0;
+        }
+
+        public NativeCICPColorData ToNative()
+        {
+            return new NativeCICPColorData(this);
+        }
     }
 }

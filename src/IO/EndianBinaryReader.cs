@@ -13,7 +13,9 @@
 using PaintDotNet;
 using PaintDotNet.AppModel;
 using System;
+using System.Buffers.Binary;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace AvifFileType
@@ -509,15 +511,21 @@ namespace AvifFileType
 
             EnsureBuffer(sizeof(ushort));
 
-            ushort val;
+            ushort value = Unsafe.ReadUnaligned<ushort>(ref this.buffer[this.readOffset]);
 
             switch (this.endianess)
             {
                 case Endianess.Big:
-                    val = (ushort)((this.buffer[this.readOffset] << 8) | this.buffer[this.readOffset + 1]);
+                    if (BitConverter.IsLittleEndian)
+                    {
+                        value = BinaryPrimitives.ReverseEndianness(value);
+                    }
                     break;
                 case Endianess.Little:
-                    val = (ushort)(this.buffer[this.readOffset] | (this.buffer[this.readOffset + 1] << 8));
+                    if (!BitConverter.IsLittleEndian)
+                    {
+                        value = BinaryPrimitives.ReverseEndianness(value);
+                    }
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported byte order: " + this.endianess.ToString());
@@ -525,7 +533,7 @@ namespace AvifFileType
 
             this.readOffset += sizeof(ushort);
 
-            return val;
+            return value;
         }
 
         /// <summary>
@@ -540,15 +548,21 @@ namespace AvifFileType
 
             EnsureBuffer(sizeof(uint));
 
-            uint val;
+            uint value = Unsafe.ReadUnaligned<uint>(ref this.buffer[this.readOffset]);
 
             switch (this.endianess)
             {
                 case Endianess.Big:
-                    val = (uint)((this.buffer[this.readOffset] << 24) | (this.buffer[this.readOffset + 1] << 16) | (this.buffer[this.readOffset + 2] << 8) | this.buffer[this.readOffset + 3]);
+                    if (BitConverter.IsLittleEndian)
+                    {
+                        value = BinaryPrimitives.ReverseEndianness(value);
+                    }
                     break;
                 case Endianess.Little:
-                    val = (uint)(this.buffer[this.readOffset] | (this.buffer[this.readOffset + 1] << 8) | (this.buffer[this.readOffset + 2] << 16) | (this.buffer[this.readOffset + 3] << 24));
+                    if (!BitConverter.IsLittleEndian)
+                    {
+                        value = BinaryPrimitives.ReverseEndianness(value);
+                    }
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported byte order: " + this.endianess.ToString());
@@ -556,7 +570,7 @@ namespace AvifFileType
 
             this.readOffset += sizeof(uint);
 
-            return val;
+            return value;
         }
 
         /// <summary>
@@ -571,18 +585,21 @@ namespace AvifFileType
 
             EnsureBuffer(sizeof(ulong));
 
-            uint hi;
-            uint lo;
+            ulong value = Unsafe.ReadUnaligned<ulong>(ref this.buffer[this.readOffset]);
 
             switch (this.endianess)
             {
                 case Endianess.Big:
-                    hi = (uint)((this.buffer[this.readOffset] << 24) | (this.buffer[this.readOffset + 1] << 16) | (this.buffer[this.readOffset + 2] << 8) | this.buffer[this.readOffset + 3]);
-                    lo = (uint)((this.buffer[this.readOffset + 4] << 24) | (this.buffer[this.readOffset + 5] << 16) | (this.buffer[this.readOffset + 6] << 8) | this.buffer[this.readOffset + 7]);
+                    if (BitConverter.IsLittleEndian)
+                    {
+                        value = BinaryPrimitives.ReverseEndianness(value);
+                    }
                     break;
                 case Endianess.Little:
-                    lo = (uint)(this.buffer[this.readOffset] | (this.buffer[this.readOffset + 1] << 8) | (this.buffer[this.readOffset + 2] << 16) | (this.buffer[this.readOffset + 3] << 24));
-                    hi = (uint)(this.buffer[this.readOffset + 4] | (this.buffer[this.readOffset + 5] << 8) | (this.buffer[this.readOffset + 6] << 16) | (this.buffer[this.readOffset + 7] << 24));
+                    if (!BitConverter.IsLittleEndian)
+                    {
+                        value = BinaryPrimitives.ReverseEndianness(value);
+                    }
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported byte order: " + this.endianess.ToString());
@@ -590,7 +607,7 @@ namespace AvifFileType
 
             this.readOffset += sizeof(ulong);
 
-            return (((ulong)hi) << 32) | lo;
+            return value;
         }
 
         protected override void Dispose(bool disposing)

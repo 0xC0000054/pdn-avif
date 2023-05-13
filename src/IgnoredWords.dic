@@ -4,7 +4,9 @@ cicp
 config
 deserialize
 exif
+gps
 idx
+ifd
 Interop
 irot
 ispe

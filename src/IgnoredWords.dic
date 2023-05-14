@@ -4,6 +4,7 @@ cicp
 config
 deserialize
 exif
+github
 gps
 idx
 ifd
@@ -13,6 +14,7 @@ ispe
 Metadata
 nclx
 nq
+plugin
 Premultiplied
 ptr
 serialize

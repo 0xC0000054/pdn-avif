@@ -37,7 +37,8 @@ namespace AvifFileType
             GitHubLink,
             PreserveExistingTileSize,
             PremultipliedAlpha,
-            LosslessAlphaCompression
+            LosslessAlphaCompression,
+            Lossless
         }
 
         /// <summary>
@@ -76,6 +77,7 @@ namespace AvifFileType
             Property[] props = new Property[]
             {
                 new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
+                new BooleanProperty(PropertyNames.Lossless, false),
                 new BooleanProperty(PropertyNames.LosslessAlphaCompression, true),
                 StaticListChoiceProperty.CreateForEnum(PropertyNames.EncoderPreset, EncoderPreset.Fast),
                 CreateChromaSubsampling(),
@@ -87,18 +89,10 @@ namespace AvifFileType
 
             List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>
             {
-                new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.PremultipliedAlpha,
-                                                                 PropertyNames.Quality,
-                                                                 100,
-                                                                 false),
-                new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.YUVChromaSubsampling,
-                                                                 PropertyNames.Quality,
-                                                                 100,
-                                                                 false),
-                new ReadOnlyBoundToValueRule<int, Int32Property>(PropertyNames.LosslessAlphaCompression,
-                                                                 PropertyNames.Quality,
-                                                                 100,
-                                                                 false)
+                new ReadOnlyBoundToBooleanRule(PropertyNames.Quality, PropertyNames.Lossless, false),
+                new ReadOnlyBoundToBooleanRule(PropertyNames.LosslessAlphaCompression, PropertyNames.Lossless, false),
+                new ReadOnlyBoundToBooleanRule(PropertyNames.YUVChromaSubsampling, PropertyNames.Lossless, false),
+                new ReadOnlyBoundToBooleanRule(PropertyNames.PremultipliedAlpha, PropertyNames.Lossless, false)
             };
 
             return new PropertyCollection(props, rules);
@@ -131,6 +125,10 @@ namespace AvifFileType
             PropertyControlInfo qualityPCI = configUI.FindControlForPropertyName(PropertyNames.Quality);
             qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("Quality_DisplayName");
             qualityPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = string.Empty;
+
+            PropertyControlInfo losslessPCI = configUI.FindControlForPropertyName(PropertyNames.Lossless);
+            losslessPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
+            losslessPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("Lossless_Description");
 
             PropertyControlInfo losslessAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.LosslessAlphaCompression);
             losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
@@ -174,17 +172,17 @@ namespace AvifFileType
         protected override void OnSaveT(Document input, Stream output, PropertyBasedSaveConfigToken token, Surface scratchSurface, ProgressEventHandler progressCallback)
         {
             int quality = token.GetProperty<Int32Property>(PropertyNames.Quality).Value;
+            bool lossless = token.GetProperty<BooleanProperty>(PropertyNames.Lossless).Value;
+            bool losslessAlpha = token.GetProperty<BooleanProperty>(PropertyNames.LosslessAlphaCompression).Value;
             EncoderPreset encoderPreset = (EncoderPreset)token.GetProperty(PropertyNames.EncoderPreset).Value;
             YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling).Value;
             bool preserveExistingTileSize = token.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize).Value;
-
-            // The premultiplied alpha conversion can cause the colors to drift, so it is disabled for lossless encoding.
-            bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha).Value && quality < 100;
-            bool losslessAlpha = token.GetProperty<BooleanProperty>(PropertyNames.LosslessAlphaCompression).Value;
+            bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha).Value;
 
             AvifFile.Save(input,
                           output,
                           quality,
+                          lossless,
                           losslessAlpha,
                           encoderPreset,
                           chromaSubsampling,

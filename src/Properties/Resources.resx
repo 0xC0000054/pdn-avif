@@ -153,6 +153,9 @@
   <data name="LosslessAlphaCompression_Description" xml:space="preserve">
     <value>Lossless Alpha Compression</value>
   </data>
+  <data name="Lossless_Description" xml:space="preserve">
+    <value>Lossless</value>
+  </data>
   <data name="PremultipliedAlpha_Description" xml:space="preserve">
     <value>Premultiplied Alpha</value>
   </data>

@@ -76,6 +76,7 @@ namespace AvifFileType
         public static void Save(Document document,
                                 Stream output,
                                 int quality,
+                                bool lossless,
                                 bool losslessAlpha,
                                 EncoderPreset encoderPreset,
                                 YUVChromaSubsampling chromaSubsampling,
@@ -90,6 +91,13 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
             }
 
+            if (lossless)
+            {
+                losslessAlpha = true;
+                // The premultiplied alpha conversion can cause the colors to drift, so it is disabled for lossless encoding.
+                premultipliedAlpha = false;
+            }
+
             scratchSurface.Fill(ColorBgra.TransparentBlack);
             document.CreateRenderer().Render(scratchSurface);
 
@@ -98,13 +106,14 @@ namespace AvifFileType
             AvifMetadata metadata = CreateAvifMetadata(document);
             EncoderOptions options = new EncoderOptions
             {
-                colorQuality = quality,
-                alphaQuality = losslessAlpha ? 100 : quality,
+                quality = quality,
                 encoderPreset = encoderPreset,
                 // YUV 4:0:0 is always used for gray-scale images because it
                 // produces the smallest file size with no quality loss.
                 yuvFormat = grayscale ? YUVChromaSubsampling.Subsampling400 : chromaSubsampling,
-                maxThreads = Environment.ProcessorCount
+                maxThreads = Environment.ProcessorCount,
+                lossless = lossless,
+                losslessAlpha = losslessAlpha,
             };
 
             // Use BT.709 with sRGB transfer characteristics as the default.
@@ -116,7 +125,7 @@ namespace AvifFileType
                 fullRange = true
             };
 
-            if (quality == 100 && !grayscale)
+            if (lossless && !grayscale)
             {
                 // The Identity matrix coefficient places the RGB values into the YUV planes without any conversion.
                 // This reduces the compression efficiency, but allows for fully lossless encoding.

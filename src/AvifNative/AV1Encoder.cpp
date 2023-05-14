@@ -58,12 +58,14 @@ namespace
         int quality;
         int cpuUsed;
         int usage;
+        bool lossless;
 
         AvifEncoderOptions(const EncoderOptions* options, ImageType imageType)
         {
             threadCount = ClampThreadCount(options->maxThreads);
             quality = ConvertQualityToAOMRange(options, imageType);
             usage = AOM_USAGE_ALL_INTRA;
+            lossless = options->lossless || imageType == ImageType::Alpha && options->losslessAlpha;
 
             switch (options->encoderPreset)
             {
@@ -127,16 +129,23 @@ namespace
 
         static int ConvertQualityToAOMRange(const EncoderOptions* options, ImageType imageType)
         {
-            int32_t quality = imageType == ImageType::Color ? options->colorQuality : options->alphaQuality;
+            int32_t quality = options->quality;
 
-            // Clamp the quality value to the lookup table range
-            if (quality < 0)
-            {
-                quality = 0;
-            }
-            else if (quality > 100)
+            if (options->lossless || imageType == ImageType::Alpha && options->losslessAlpha)
             {
                 quality = 100;
+            }
+            else
+            {
+                // Clamp the quality value to the lookup table range
+                if (quality < 0)
+                {
+                    quality = 0;
+                }
+                else if (quality > 100)
+                {
+                    quality = 100;
+                }
             }
 
             static constexpr std::array<int, 101> qualityTable = BuildAOMQualityLookupTable();
@@ -167,7 +176,7 @@ namespace
             throw_on_error(aom_codec_control(&codec, AOME_SET_CPUUSED, encodeOptions.cpuUsed));
             throw_on_error(aom_codec_control(&codec, AOME_SET_CQ_LEVEL, encodeOptions.quality));
 
-            if (encodeOptions.quality == 0)
+            if (encodeOptions.lossless)
             {
                 throw_on_error(aom_codec_control(&codec, AV1E_SET_LOSSLESS, 1));
             }

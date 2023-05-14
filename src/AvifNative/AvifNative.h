@@ -65,14 +65,15 @@ extern "C" {
         TileFormatMismatch
     };
 
-    // This must be kept in sync with EncoderOptions.cs
+    // This must be kept in sync with EncoderOptions.cs and NativeEncoderOptions.cs
     struct EncoderOptions
     {
-        int32_t colorQuality;
-        int32_t alphaQuality;
+        int32_t quality;
         EncoderPreset encoderPreset;
         YUVChromaSubsampling yuvFormat;
         int32_t maxThreads;
+        bool lossless;
+        bool losslessAlpha;
     };
 
     struct CICPColorData

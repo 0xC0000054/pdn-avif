@@ -15,12 +15,23 @@ using System.Runtime.InteropServices;
 namespace AvifFileType.Interop
 {
     [StructLayout(LayoutKind.Sequential)]
-    internal ref struct EncoderOptions
+    internal struct EncoderOptions
     {
-        public int colorQuality;
-        public int alphaQuality;
+        public int quality;
         public EncoderPreset encoderPreset;
         public YUVChromaSubsampling yuvFormat;
         public int maxThreads;
+        public bool lossless;
+        public bool losslessAlpha;
+
+        public readonly NativeEncoderOptions ToNative()
+        {
+            return new NativeEncoderOptions(this.quality,
+                                            this.encoderPreset,
+                                            this.yuvFormat,
+                                            this.maxThreads,
+                                            this.lossless,
+                                            this.losslessAlpha);
+        }
     }
 }

@@ -26,7 +26,7 @@ namespace AvifFileType.Interop
             this.colorPrimaries = managed.colorPrimaries;
             this.transferCharacteristics = managed.transferCharacteristics;
             this.matrixCoefficients = managed.matrixCoefficients;
-            this.fullRange = (byte)(managed.fullRange ? 1 : 0);
+            this.fullRange = managed.fullRange.ToByte();
         }
     }
 }

@@ -24,7 +24,7 @@ namespace AvifFileType.Interop
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
         internal static unsafe partial EncoderStatus CompressColorImage(
             in BitmapData image,
-            in EncoderOptions options,
+            in NativeEncoderOptions options,
             ref ProgressContext progressContext,
             in NativeCICPColorData colorInfo,
             [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
@@ -34,7 +34,7 @@ namespace AvifFileType.Interop
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
         internal static unsafe partial EncoderStatus CompressAlphaImage(
             in BitmapData image,
-            in EncoderOptions options,
+            in NativeEncoderOptions options,
             ref ProgressContext progressContext,
             [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
             out IntPtr alphaImage);

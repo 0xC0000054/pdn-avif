@@ -1,5 +1,6 @@
 alloc
 avif
+bgr
 bitstream
 ccw
 cicp
@@ -25,8 +26,11 @@ plugin
 Premultiplied
 ptr
 rdf
+rect
+rects
 serialize
 serializer
 subsampling
 xml
 Xmp
+yuv

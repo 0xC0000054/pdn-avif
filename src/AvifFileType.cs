@@ -38,7 +38,9 @@ namespace AvifFileType
             PreserveExistingTileSize,
             PremultipliedAlpha,
             LosslessAlphaCompression,
-            Lossless
+            Lossless,
+            PluginVersion,
+            AOMVersion
         }
 
         /// <summary>
@@ -84,7 +86,9 @@ namespace AvifFileType
                 new BooleanProperty(PropertyNames.PreserveExistingTileSize, true),
                 new BooleanProperty(PropertyNames.PremultipliedAlpha, false),
                 new UriProperty(PropertyNames.ForumLink, new Uri("https://forums.getpaint.net/topic/116233-avif-filetype")),
-                new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif"))
+                new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif")),
+                new StringProperty(PropertyNames.PluginVersion),
+                new StringProperty(PropertyNames.AOMVersion),
             };
 
             List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>
@@ -162,6 +166,16 @@ namespace AvifFileType
             PropertyControlInfo githubLinkPCI = configUI.FindControlForPropertyName(PropertyNames.GitHubLink);
             githubLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
             githubLinkPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = "GitHub"; // GitHub is a brand name that should not be localized.
+
+            PropertyControlInfo pluginVersionPCI = configUI.FindControlForPropertyName(PropertyNames.PluginVersion);
+            pluginVersionPCI.ControlType.Value = PropertyControlType.Label;
+            pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
+            pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = "AvifFileType v" + VersionInfo.PluginVersion;
+
+            PropertyControlInfo aomVersionPCI = configUI.FindControlForPropertyName(PropertyNames.AOMVersion);
+            aomVersionPCI.ControlType.Value = PropertyControlType.Label;
+            aomVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
+            aomVersionPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = "AOM v" + VersionInfo.AOMVersion;
 
             return configUI;
         }

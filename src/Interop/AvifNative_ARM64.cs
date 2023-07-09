@@ -12,6 +12,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace AvifFileType.Interop
 {
@@ -69,5 +70,10 @@ namespace AvifFileType.Interop
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool MemoryBlocksAreEqual(IntPtr buffer1, IntPtr buffer2, UIntPtr length);
+
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+        [return: MarshalUsing(typeof(NativeOwnedAsciiString))]
+        internal static partial string GetAOMVersionString();
     }
 }

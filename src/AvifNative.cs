@@ -329,6 +329,26 @@ namespace AvifFileType
             return result;
         }
 
+        public static string GetAOMVersionString()
+        {
+            string result;
+
+            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+            {
+                result = AvifNative_64.GetAOMVersionString();
+            }
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            {
+                result = AvifNative_ARM64.GetAOMVersionString();
+            }
+            else
+            {
+                throw new PlatformNotSupportedException();
+            }
+
+            return result;
+        }
+
         private static void HandleError(EncoderStatus status, ExceptionDispatchInfo exceptionDispatchInfo)
         {
             if (exceptionDispatchInfo != null)

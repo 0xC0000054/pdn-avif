@@ -15,6 +15,7 @@
 #include "ChromaSubsampling.h"
 #include "AV1Decoder.h"
 #include "AV1Encoder.h"
+#include "aom/aom.h"
 #include "aom/aom_image.h"
 #include <memory>
 
@@ -131,4 +132,9 @@ EncoderStatus __stdcall CompressAlphaImage(
 bool __stdcall MemoryBlocksAreEqual(const void* buffer1, const void* buffer2, size_t size)
 {
     return std::memcmp(buffer1, buffer2, size) == 0;
+}
+
+const char* const __stdcall GetAOMVersionString()
+{
+    return aom_codec_version_str();
 }

@@ -123,7 +123,7 @@ namespace AvifFileType
         }
 
         /// <summary>
-        /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
+        /// Reads a sequence of bytes from the stream, starting from a specified point in the byte array.
         /// </summary>
         /// <param name="bytes">The bytes.</param>
         /// <param name="offset">The starting offset in the array.</param>
@@ -146,9 +146,22 @@ namespace AvifFileType
                 throw new ArgumentOutOfRangeException(nameof(count));
             }
 
-            CheckReadBounds(count);
+            return Read(new Span<byte>(bytes, offset, count));
+        }
 
-            return this.reader.Read(bytes, offset, count);
+        /// <summary>
+        /// Reads a sequence of bytes from the stream.
+        /// </summary>
+        /// <param name="buffer">The destination buffer.</param>
+        /// <returns>The number of bytes read from the stream.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="FormatException">The requested number of bytes is greater than the segment length.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public int Read(Span<byte> buffer)
+        {
+            CheckReadBounds(buffer.Length);
+
+            return this.reader.Read(buffer);
         }
 
         /// <summary>
@@ -212,6 +225,46 @@ namespace AvifFileType
             CheckReadBounds(sizeof(double));
 
             return this.reader.ReadDouble();
+        }
+
+        /// <summary>
+        /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <param name="offset">The starting offset in the array.</param>
+        /// <param name="count">The count.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is negative.</exception>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="FormatException">The requested number of bytes is greater than the segment length.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public unsafe void ReadExactly(byte[] bytes, int offset, int count)
+        {
+            if (bytes is null)
+            {
+                throw new ArgumentNullException(nameof(bytes));
+            }
+
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            ReadExactly(new Span<byte>(bytes, offset, count));
+        }
+
+        /// <summary>
+        /// Reads the specified number of bytes from the stream.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="FormatException">The requested number of bytes is greater than the segment length.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public unsafe void ReadExactly(Span<byte> buffer)
+        {
+            CheckReadBounds(buffer.Length);
+
+            this.reader.ReadExactly(buffer);
         }
 
         /// <summary>

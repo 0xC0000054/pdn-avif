@@ -194,7 +194,7 @@ namespace AvifFileType
         }
 
         /// <summary>
-        /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
+        /// Reads a sequence of bytes from the stream, starting from a specified point in the byte array.
         /// </summary>
         /// <param name="bytes">The bytes.</param>
         /// <param name="offset">The starting offset in the array.</param>
@@ -214,9 +214,22 @@ namespace AvifFileType
             {
                 throw new ArgumentOutOfRangeException(nameof(count));
             }
+
+            return Read(new Span<byte>(bytes, offset, count));
+        }
+
+        /// <summary>
+        /// Reads a sequence of bytes from the stream.
+        /// </summary>
+        /// <param name="buffer">The destination buffer.</param>
+        /// <returns>The number of bytes read from the stream.</returns>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public int Read(Span<byte> buffer)
+        {
             VerifyNotDisposed();
 
-            return ReadInternal(bytes, offset, count);
+            return ReadInternal(buffer);
         }
 
         /// <summary>
@@ -258,9 +271,11 @@ namespace AvifFileType
                 {
                     using (IArrayPoolBuffer<byte> bytes = this.arrayPool.Rent<byte>(length))
                     {
-                        ReadExactly(bytes.Array, 0, bytes.RequestedLength);
+                        Span<byte> buffer = bytes.AsSpan();
 
-                        result = System.Text.Encoding.UTF8.GetString(bytes.Array, 0, bytes.RequestedLength);
+                        ReadExactlyInternal(buffer);
+
+                        result = System.Text.Encoding.UTF8.GetString(buffer);
                     }
                 }
             }
@@ -309,19 +324,7 @@ namespace AvifFileType
 
             byte[] bytes = new byte[count];
 
-            int totalBytesRead = 0;
-
-            while (totalBytesRead < count)
-            {
-                int bytesRead = ReadInternal(bytes, totalBytesRead, count - totalBytesRead);
-
-                if (bytesRead == 0)
-                {
-                    throw new EndOfStreamException();
-                }
-
-                totalBytesRead += bytesRead;
-            }
+            ReadExactlyInternal(bytes);
 
             return bytes;
         }
@@ -359,26 +362,21 @@ namespace AvifFileType
             {
                 throw new ArgumentOutOfRangeException(nameof(count));
             }
+
+            ReadExactly(new Span<byte>(bytes, offset, count));
+        }
+
+        /// <summary>
+        /// Reads the specified number of bytes from the stream.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public unsafe void ReadExactly(Span<byte> buffer)
+        {
             VerifyNotDisposed();
 
-            if (count == 0)
-            {
-                return;
-            }
-
-            int totalBytesRead = 0;
-
-            while (totalBytesRead < count)
-            {
-                int bytesRead = ReadInternal(bytes, offset + totalBytesRead, count - totalBytesRead);
-
-                if (bytesRead == 0)
-                {
-                    throw new EndOfStreamException();
-                }
-
-                totalBytesRead += bytesRead;
-            }
+            ReadExactlyInternal(buffer);
         }
 
         /// <summary>
@@ -408,30 +406,27 @@ namespace AvifFileType
 
             using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))
             {
-                byte[] readBuffer = poolBuffer.Array;
+                Span<byte> readBuffer = poolBuffer.Array.AsSpan();
 
                 byte* writePtr = null;
                 try
                 {
                     buffer.AcquirePointer(ref writePtr);
 
-                    fixed (byte* readPtr = readBuffer)
+                    ulong totalBytesRead = 0;
+
+                    while (totalBytesRead < count)
                     {
-                        ulong totalBytesRead = 0;
+                        int bytesRead = ReadInternal(readBuffer.Slice(0, (int)Math.Min(count - totalBytesRead, MaxReadBufferSize)));
 
-                        while (totalBytesRead < count)
+                        if (bytesRead == 0)
                         {
-                            ulong bytesRead = (ulong)ReadInternal(readBuffer, 0, (int)Math.Min(count - totalBytesRead, MaxReadBufferSize));
-
-                            if (bytesRead == 0)
-                            {
-                                throw new EndOfStreamException();
-                            }
-
-                            Buffer.MemoryCopy(readPtr, writePtr + offset + totalBytesRead, bytesRead, bytesRead);
-
-                            totalBytesRead += bytesRead;
+                            throw new EndOfStreamException();
                         }
+
+                        readBuffer.Slice(0, bytesRead).CopyTo(new Span<byte>(writePtr + offset + totalBytesRead, bytesRead));
+
+                        totalBytesRead += (ulong)bytesRead;
                     }
                 }
                 finally
@@ -740,13 +735,34 @@ namespace AvifFileType
         /// <summary>
         /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
         /// </summary>
-        /// <param name="bytes">The bytes.</param>
-        /// <param name="offset">The starting offset in the array.</param>
-        /// <param name="count">The count.</param>
+        /// <param name="buffer">The destination buffer.</param>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        public unsafe void ReadExactlyInternal(Span<byte> buffer)
+        {
+            Span<byte> destination = buffer;
+
+            while (destination.Length > 0)
+            {
+                int bytesRead = ReadInternal(destination);
+
+                if (bytesRead == 0)
+                {
+                    throw new EndOfStreamException();
+                }
+
+                destination = destination.Slice(bytesRead);
+            }
+        }
+
+        /// <summary>
+        /// Reads a sequence of bytes from the stream.
+        /// </summary>
+        /// <param name="buffer">The destination buffer.</param>
         /// <returns>The number of bytes read from the stream.</returns>
         /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        private int ReadInternal(byte[] bytes, int offset, int count)
+        private int ReadInternal(Span<byte> buffer)
         {
+            int count = buffer.Length;
             if (count == 0)
             {
                 return 0;
@@ -754,18 +770,7 @@ namespace AvifFileType
 
             if ((this.readOffset + count) <= this.readLength)
             {
-                if (count <= 8)
-                {
-                    // Use a for loop when copying a small number of bytes.
-                    for (int i = 0; i < count; i++)
-                    {
-                        bytes[offset + i] = this.buffer[this.readOffset + i];
-                    }
-                }
-                else
-                {
-                    Buffer.BlockCopy(this.buffer, this.readOffset, bytes, offset, count);
-                }
+                new ReadOnlySpan<byte>(this.buffer, this.readOffset, count).CopyTo(buffer);
                 this.readOffset += count;
 
                 return count;
@@ -777,7 +782,7 @@ namespace AvifFileType
 
                 if (bytesUnread > 0)
                 {
-                    Buffer.BlockCopy(this.buffer, this.readOffset, bytes, offset, bytesUnread);
+                    new ReadOnlySpan<byte>(this.buffer, this.readOffset, bytesUnread).CopyTo(buffer);
                 }
 
                 // Invalidate the existing buffer.
@@ -786,7 +791,7 @@ namespace AvifFileType
 
                 int totalBytesRead = bytesUnread;
 
-                totalBytesRead += this.stream.Read(bytes, offset + bytesUnread, count - bytesUnread);
+                totalBytesRead += this.stream.Read(buffer.Slice(bytesUnread));
 
                 return totalBytesRead;
             }

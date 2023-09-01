@@ -24,7 +24,7 @@ namespace AvifFileType
     internal sealed class BigEndianBinaryWriter
         : Disposable
     {
-        private Stream stream;
+        private readonly Stream stream;
         private readonly bool leaveOpen;
         private readonly IArrayPoolService arrayPool;
 

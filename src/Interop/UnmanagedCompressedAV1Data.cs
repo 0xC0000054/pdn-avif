@@ -17,7 +17,7 @@ namespace AvifFileType.Interop
     internal sealed class UnmanagedCompressedAV1Data
         : CompressedAV1Data, IEquatable<UnmanagedCompressedAV1Data>
     {
-        private SafeNativeMemoryBuffer buffer;
+        private readonly SafeNativeMemoryBuffer buffer;
 
         public UnmanagedCompressedAV1Data(ulong size)
             : base(size)

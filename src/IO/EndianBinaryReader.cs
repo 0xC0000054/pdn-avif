@@ -29,11 +29,11 @@ namespace AvifFileType
         private const int MaxBufferSize = 4096;
 
 #pragma warning disable IDE0032 // Use auto property
-        private Stream stream;
+        private readonly Stream stream;
         private int readOffset;
         private int readLength;
         private IArrayPoolBuffer<byte>? bufferFromArrayPool;
-        private byte[] buffer;
+        private readonly byte[] buffer;
         private readonly int bufferSize;
         private readonly Endianess endianess;
         private readonly bool leaveOpen;

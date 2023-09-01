@@ -24,7 +24,7 @@ namespace AvifFileType.Interop
     internal sealed class CompressedAV1DataAllocator
         : Disposable
     {
-        private List<CompressedDataState> compressedData;
+        private readonly List<CompressedDataState> compressedData;
         private readonly IArrayPoolService arrayPool;
 
         public CompressedAV1DataAllocator(int capacity, IArrayPoolService arrayPool)

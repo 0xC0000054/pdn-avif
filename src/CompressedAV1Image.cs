@@ -20,7 +20,7 @@ namespace AvifFileType
     internal sealed class CompressedAV1Image
         : Disposable
     {
-        private CompressedAV1Data data;
+        private readonly CompressedAV1Data data;
 
         public CompressedAV1Image(CompressedAV1Data data, int width, int height, YUVChromaSubsampling format)
         {

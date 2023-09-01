@@ -20,7 +20,7 @@ namespace AvifFileType
 {
     internal sealed class StreamSegment : Stream
     {
-        private Stream stream;
+        private readonly Stream stream;
         private bool isOpen;
         private readonly long origin;
         private readonly long length;

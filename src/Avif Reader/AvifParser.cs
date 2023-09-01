@@ -28,7 +28,7 @@ namespace AvifFileType
 
         private FileTypeBox? fileTypeBox;
         private MetaBox? metaBox;
-        private EndianBinaryReader reader;
+        private readonly EndianBinaryReader reader;
         private readonly ulong fileLength;
         private readonly IArrayPoolService arrayPool;
 

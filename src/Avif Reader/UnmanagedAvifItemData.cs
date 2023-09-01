@@ -20,7 +20,7 @@ namespace AvifFileType
     internal sealed class UnmanagedAvifItemData
         : AvifItemData
     {
-        private SafeNativeMemoryBuffer buffer;
+        private readonly SafeNativeMemoryBuffer buffer;
 
         public UnmanagedAvifItemData(ulong length)
             : base()

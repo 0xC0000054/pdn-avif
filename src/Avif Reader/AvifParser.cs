@@ -192,7 +192,7 @@ namespace AvifFileType
 
                     try
                     {
-                        this.reader.ProperRead(managedItemData.GetBuffer(), 0, (int)managedItemData.Length);
+                        this.reader.ReadExactly(managedItemData.GetBuffer(), 0, (int)managedItemData.Length);
 
                         data = managedItemData;
                         managedItemData = null;
@@ -208,7 +208,7 @@ namespace AvifFileType
 
                     try
                     {
-                        this.reader.ProperRead(unmanagedItemData.UnmanagedBuffer, 0, totalItemSize);
+                        this.reader.ReadExactly(unmanagedItemData.UnmanagedBuffer, 0, totalItemSize);
 
                         data = unmanagedItemData;
                         unmanagedItemData = null;
@@ -578,7 +578,7 @@ namespace AvifFileType
                         }
 
                         this.reader.Position = itemOffset;
-                        this.reader.ProperRead(bytes, offset, length);
+                        this.reader.ReadExactly(bytes, offset, length);
 
                         offset += length;
                         remainingBytes -= length;
@@ -621,7 +621,7 @@ namespace AvifFileType
                         }
 
                         this.reader.Position = itemOffset;
-                        this.reader.ProperRead(unmanagedItemData.UnmanagedBuffer, offset, length);
+                        this.reader.ReadExactly(unmanagedItemData.UnmanagedBuffer, offset, length);
 
                         offset += length;
                         remainingBytes -= length;

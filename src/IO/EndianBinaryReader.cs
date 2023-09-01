@@ -199,111 +199,6 @@ namespace AvifFileType
         /// <param name="bytes">The bytes.</param>
         /// <param name="offset">The starting offset in the array.</param>
         /// <param name="count">The count.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is negative.</exception>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
-        public unsafe void ProperRead(byte[] bytes, int offset, int count)
-        {
-            if (bytes is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(bytes));
-            }
-            if (count < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(count));
-            }
-            VerifyNotDisposed();
-
-            if (count == 0)
-            {
-                return;
-            }
-
-            int totalBytesRead = 0;
-
-            while (totalBytesRead < count)
-            {
-                int bytesRead = ReadInternal(bytes, offset + totalBytesRead, count - totalBytesRead);
-
-                if (bytesRead == 0)
-                {
-                    throw new EndOfStreamException();
-                }
-
-                totalBytesRead += bytesRead;
-            }
-        }
-
-        /// <summary>
-        /// Reads the specified number of bytes from the stream, starting from a specified point in the SafeBuffer.
-        /// </summary>
-        /// <param name="buffer">The buffer.</param>
-        /// <param name="offset">The starting offset in the buffer.</param>
-        /// <param name="count">The count.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="buffer"/> is null.</exception>
-        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
-        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
-        public unsafe void ProperRead(SafeBuffer buffer, ulong offset, ulong count)
-        {
-            if (buffer is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
-            }
-            VerifyNotDisposed();
-
-            if (count == 0)
-            {
-                return;
-            }
-
-            const int MaxReadBufferSize = 1024 * 1024;
-            int bufferSize = (int)Math.Min(count, MaxReadBufferSize);
-
-            using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))
-            {
-                byte[] readBuffer = poolBuffer.Array;
-
-                byte* writePtr = null;
-                try
-                {
-                    buffer.AcquirePointer(ref writePtr);
-
-                    fixed (byte* readPtr = readBuffer)
-                    {
-                        ulong totalBytesRead = 0;
-
-                        while (totalBytesRead < count)
-                        {
-                            ulong bytesRead = (ulong)ReadInternal(readBuffer, 0, (int)Math.Min(count - totalBytesRead, MaxReadBufferSize));
-
-                            if (bytesRead == 0)
-                            {
-                                throw new EndOfStreamException();
-                            }
-
-                            Buffer.MemoryCopy(readPtr, writePtr + offset + totalBytesRead, bytesRead, bytesRead);
-
-                            totalBytesRead += bytesRead;
-                        }
-                    }
-                }
-                finally
-                {
-                    if (writePtr != null)
-                    {
-                        buffer.ReleasePointer();
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
-        /// </summary>
-        /// <param name="bytes">The bytes.</param>
-        /// <param name="offset">The starting offset in the array.</param>
-        /// <param name="count">The count.</param>
         /// <returns>The number of bytes read from the stream.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is negative.</exception>
@@ -363,7 +258,7 @@ namespace AvifFileType
                 {
                     using (IArrayPoolBuffer<byte> bytes = this.arrayPool.Rent<byte>(length))
                     {
-                        ProperRead(bytes.Array, 0, bytes.RequestedLength);
+                        ReadExactly(bytes.Array, 0, bytes.RequestedLength);
 
                         result = System.Text.Encoding.UTF8.GetString(bytes.Array, 0, bytes.RequestedLength);
                     }
@@ -442,6 +337,111 @@ namespace AvifFileType
             ulong temp = ReadUInt64();
 
             return *(double*)&temp;
+        }
+
+        /// <summary>
+        /// Reads the specified number of bytes from the stream, starting from a specified point in the byte array.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <param name="offset">The starting offset in the array.</param>
+        /// <param name="count">The count.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is negative.</exception>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public unsafe void ReadExactly(byte[] bytes, int offset, int count)
+        {
+            if (bytes is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(bytes));
+            }
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+            VerifyNotDisposed();
+
+            if (count == 0)
+            {
+                return;
+            }
+
+            int totalBytesRead = 0;
+
+            while (totalBytesRead < count)
+            {
+                int bytesRead = ReadInternal(bytes, offset + totalBytesRead, count - totalBytesRead);
+
+                if (bytesRead == 0)
+                {
+                    throw new EndOfStreamException();
+                }
+
+                totalBytesRead += bytesRead;
+            }
+        }
+
+        /// <summary>
+        /// Reads the specified number of bytes from the stream, starting from a specified point in the SafeBuffer.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <param name="offset">The starting offset in the buffer.</param>
+        /// <param name="count">The count.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+        /// <exception cref="EndOfStreamException">The end of the stream has been reached.</exception>
+        /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
+        public unsafe void ReadExactly(SafeBuffer buffer, ulong offset, ulong count)
+        {
+            if (buffer is null)
+            {
+                ExceptionUtil.ThrowArgumentNullException(nameof(buffer));
+            }
+            VerifyNotDisposed();
+
+            if (count == 0)
+            {
+                return;
+            }
+
+            const int MaxReadBufferSize = 1024 * 1024;
+            int bufferSize = (int)Math.Min(count, MaxReadBufferSize);
+
+            using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))
+            {
+                byte[] readBuffer = poolBuffer.Array;
+
+                byte* writePtr = null;
+                try
+                {
+                    buffer.AcquirePointer(ref writePtr);
+
+                    fixed (byte* readPtr = readBuffer)
+                    {
+                        ulong totalBytesRead = 0;
+
+                        while (totalBytesRead < count)
+                        {
+                            ulong bytesRead = (ulong)ReadInternal(readBuffer, 0, (int)Math.Min(count - totalBytesRead, MaxReadBufferSize));
+
+                            if (bytesRead == 0)
+                            {
+                                throw new EndOfStreamException();
+                            }
+
+                            Buffer.MemoryCopy(readPtr, writePtr + offset + totalBytesRead, bytesRead, bytesRead);
+
+                            totalBytesRead += bytesRead;
+                        }
+                    }
+                }
+                finally
+                {
+                    if (writePtr != null)
+                    {
+                        buffer.ReleasePointer();
+                    }
+                }
+            }
         }
 
         /// <summary>

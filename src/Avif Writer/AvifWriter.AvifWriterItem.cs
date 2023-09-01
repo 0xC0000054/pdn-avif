@@ -12,6 +12,7 @@
 
 using AvifFileType.AvifContainer;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -130,13 +131,16 @@ namespace AvifFileType
 
             public static AvifWriterItem CreateFromExif(uint itemId, ReadOnlyMemory<byte> exif)
             {
-                // The AVIF format includes the offset to the start of the TIFF header
-                // before the EXIF data.
+                // The EXIF data block has a header consisting of a big-endian 4-byte unsigned integer
+                // that indicates the number of bytes that come before the start of the TIFF header.
+                // See ISO/IEC 23008-12:2017 section A.2.1.
+                //
                 // The EXIF blob that this plug-in creates will always have the TIFF header
-                // at offset 0, so we only need to copy the EXIF data to a new byte array.
+                // at offset 0 (i.e. immediately after the offset value).
 
-                byte[] contentBytes = new byte[sizeof(uint) + exif.Length];
-                exif.CopyTo(contentBytes.AsMemory(4, exif.Length));
+                Memory<byte> contentBytes = GC.AllocateUninitializedArray<byte>(checked(sizeof(uint) + exif.Length));
+                BinaryPrimitives.WriteUInt32BigEndian(contentBytes.Span, 0);
+                exif.CopyTo(contentBytes.Slice(4));
 
                 ExifItemInfoEntry exifItemInfo = new ExifItemInfoEntry(itemId);
 

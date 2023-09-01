@@ -149,7 +149,7 @@ namespace AvifFileType
             }
         }
 
-        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)
         {
             VerifyNotDisposed();
 
@@ -166,7 +166,7 @@ namespace AvifFileType
             return this.stream.BeginRead(buffer, offset, count, callback, state);
         }
 
-        public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)
         {
             VerifyNotDisposed();
             throw new NotSupportedException("The StreamSegment is read-only.");
@@ -361,10 +361,9 @@ namespace AvifFileType
             {
                 this.isOpen = false;
 
-                if (this.stream != null && !this.leaveOpen)
+                if (!this.leaveOpen)
                 {
                     this.stream.Dispose();
-                    this.stream = null;
                 }
             }
 

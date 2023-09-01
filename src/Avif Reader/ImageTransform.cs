@@ -57,7 +57,7 @@ namespace AvifFileType
             // Check that the crop rectangle is within the surface bounds.
             if (cropRect.IntersectsWith(surface.Bounds))
             {
-                Surface temp = new Surface(cropWidth, cropHeight);
+                Surface? temp = new Surface(cropWidth, cropHeight);
                 try
                 {
                     temp.CopySurface(surface, cropRect);
@@ -111,7 +111,7 @@ namespace AvifFileType
 
         internal static unsafe void Rotate90CCW(ref Surface surface)
         {
-            Surface temp = null;
+            Surface? temp = null;
             try
             {
                 temp = new Surface(surface.Height, surface.Width);
@@ -187,7 +187,7 @@ namespace AvifFileType
 
         internal static unsafe void Rotate270CCW(ref Surface surface)
         {
-            Surface temp = null;
+            Surface? temp = null;
             try
             {
                 temp = new Surface(surface.Height, surface.Width);

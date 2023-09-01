@@ -10,14 +10,17 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System;
+
 namespace AvifFileType.AvifContainer
 {
     internal sealed class ItemDataBox : Box
     {
-        private readonly byte[] dataToWrite;
+        private readonly byte[] data;
 
         public ItemDataBox(Box header) : base(header)
         {
+            this.data = Array.Empty<byte>();
         }
 
         public ItemDataBox(byte[] dataToWrite)
@@ -28,7 +31,7 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowArgumentNullException(nameof(dataToWrite));
             }
 
-            this.dataToWrite = dataToWrite;
+            this.data = dataToWrite;
         }
 
         public long Offset => this.DataStartOffset;
@@ -39,12 +42,12 @@ namespace AvifFileType.AvifContainer
         {
             base.Write(writer);
 
-            writer.Write(this.dataToWrite, 0, this.dataToWrite.Length);
+            writer.Write(this.data, 0, this.data.Length);
         }
 
         protected override ulong GetTotalBoxSize()
         {
-            return base.GetTotalBoxSize() + (ulong)this.dataToWrite.Length;
+            return base.GetTotalBoxSize() + (ulong)this.data.Length;
         }
     }
 }

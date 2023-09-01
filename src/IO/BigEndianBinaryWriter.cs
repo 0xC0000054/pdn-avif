@@ -197,14 +197,9 @@ namespace AvifFileType
         {
             if (disposing)
             {
-                if (this.stream != null)
+                if (!this.leaveOpen)
                 {
-                    if (!this.leaveOpen)
-                    {
-                        this.stream.Dispose();
-                    }
-
-                    this.stream = null;
+                    this.stream.Dispose();
                 }
             }
         }

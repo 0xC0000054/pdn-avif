@@ -86,7 +86,7 @@ namespace AvifFileType.AvifContainer
                    && IsValidForYUVFormat(yuvFormat);
         }
 
-        public static ImageGridMetadata TryDeserialize(string value)
+        public static ImageGridMetadata? TryDeserialize(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
             {

@@ -26,12 +26,12 @@ namespace AvifFileType.Interop
 
         public ulong ByteLength { get; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is CompressedAV1Data other && Equals(other);
         }
 
-        public bool Equals(CompressedAV1Data other)
+        public bool Equals(CompressedAV1Data? other)
         {
             if (other is null)
             {

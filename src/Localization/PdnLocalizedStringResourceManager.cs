@@ -38,7 +38,7 @@ namespace AvifFileType
             this.strings = strings;
         }
 
-        public string GetString(string name)
+        public string? GetString(string name)
         {
             if (pdnLocalizedStringMap.TryGetValue(name, out AvifFileTypeStringNames value))
             {

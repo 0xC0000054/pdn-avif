@@ -13,6 +13,7 @@
 using AvifFileType.AvifContainer;
 using PaintDotNet;
 using PaintDotNet.AppModel;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -27,19 +28,19 @@ namespace AvifFileType
         private readonly bool colorImageIsGrayscale;
         private readonly IArrayPoolService arrayPool;
 
-        private readonly ProgressEventHandler progressCallback;
+        private readonly ProgressEventHandler? progressCallback;
         private uint progressDone;
         private readonly uint progressTotal;
 
         public AvifWriter(IReadOnlyList<CompressedAV1Image> colorImages,
-                          IReadOnlyList<CompressedAV1Image> alphaImages,
+                          IReadOnlyList<CompressedAV1Image>? alphaImages,
                           HomogeneousTileInfo homogeneousTiles,
                           bool premultipliedAlpha,
                           AvifMetadata metadata,
-                          ImageGridMetadata imageGridMetadata,
+                          ImageGridMetadata? imageGridMetadata,
                           YUVChromaSubsampling chromaSubsampling,
                           IReadOnlyList<ColorInformationBox> colorInformationBoxes,
-                          ProgressEventHandler progressEventHandler,
+                          ProgressEventHandler? progressEventHandler,
                           uint progressDone,
                           uint progressTotal,
                           IArrayPoolService arrayPool)
@@ -87,19 +88,19 @@ namespace AvifFileType
                 // See the following link for a discussion on alpha image data being written before color
                 // image data: https://github.com/AOMediaCodec/libavif/issues/287
 
-                WriteMediaDataBoxItems(writer, this.state.MediaDataBoxMetadataItemIndexes);
+                WriteMediaDataBoxItems(writer, this.state.MediaDataBoxMetadataItemIndexes!);
                 if (this.state.AlphaItemId != 0)
                 {
-                    WriteMediaDataBoxItems(writer, this.state.MediaDataBoxAlphaItemIndexes);
+                    WriteMediaDataBoxItems(writer, this.state.MediaDataBoxAlphaItemIndexes!);
                 }
-                WriteMediaDataBoxItems(writer, this.state.MediaDataBoxColorItemIndexes);
+                WriteMediaDataBoxItems(writer, this.state.MediaDataBoxColorItemIndexes!);
             }
         }
 
         private void PopulateItemInfos()
         {
             IReadOnlyList<AvifWriterItem> items = this.state.Items;
-            ItemInfoBox itemInfoBox = this.metaBox.ItemInfo;
+            ItemInfoBox itemInfoBox = this.metaBox!.ItemInfo!;
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -114,7 +115,7 @@ namespace AvifFileType
         private void PopulateItemLocations()
         {
             IReadOnlyList<AvifWriterItem> items = this.state.Items;
-            ItemLocationBox itemLocationBox = this.metaBox.ItemLocations;
+            ItemLocationBox itemLocationBox = this.metaBox!.ItemLocations!;
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -129,7 +130,7 @@ namespace AvifFileType
         private void PopulateItemProperties()
         {
             IReadOnlyList<AvifWriterItem> items = this.state.Items;
-            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
+            ItemPropertiesBox itemPropertiesBox = this.metaBox!.ItemProperties!;
 
             // The property association ids are 1-based
             ushort propertyAssociationIndex = 1;
@@ -269,7 +270,7 @@ namespace AvifFileType
         private void PopulateItemReferences()
         {
             IReadOnlyList<AvifWriterItem> items = this.state.Items;
-            ItemReferenceBox itemReferenceBox = this.metaBox.ItemReferences;
+            ItemReferenceBox itemReferenceBox = this.metaBox!.ItemReferences!;
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -291,6 +292,8 @@ namespace AvifFileType
 
         private void WriteMediaDataBoxItems(BigEndianBinaryWriter writer, IReadOnlyList<int> itemIndexes)
         {
+            ArgumentNullException.ThrowIfNull(itemIndexes, nameof(itemIndexes));
+
             IReadOnlyList<AvifWriterItem> items = this.state.Items;
 
             for (int i = 0; i < itemIndexes.Count; i++)

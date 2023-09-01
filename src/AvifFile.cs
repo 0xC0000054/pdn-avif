@@ -43,11 +43,11 @@ namespace AvifFileType
                 ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
             }
 
-            Document doc = null;
+            Document? doc = null;
 
             using (AvifReader reader = new AvifReader(input, leaveOpen: true, arrayPool))
             {
-                Surface surface = null;
+                Surface? surface = null;
                 bool disposeSurface = true;
 
                 try
@@ -148,7 +148,7 @@ namespace AvifFileType
                 // Look for NCLX meta-data if the CICP meta-data was not found.
                 // This preserves backwards compatibility with PDN files created by
                 // previous versions of this plugin.
-                string serializedData = docMetadata.GetUserValue(CICPMetadataName) ?? docMetadata.GetUserValue(NclxMetadataName);
+                string? serializedData = docMetadata.GetUserValue(CICPMetadataName) ?? docMetadata.GetUserValue(NclxMetadataName);
 
                 if (serializedData != null)
                 {
@@ -161,10 +161,10 @@ namespace AvifFileType
                 }
             }
 
-            ImageGridMetadata imageGridMetadata = TryGetImageGridMetadata(document,
-                                                                          options.encoderPreset,
-                                                                          options.yuvFormat,
-                                                                          preserveExistingTileSize);
+            ImageGridMetadata? imageGridMetadata = TryGetImageGridMetadata(document,
+                                                                           options.encoderPreset,
+                                                                           options.yuvFormat,
+                                                                           preserveExistingTileSize);
 
             bool hasTransparency = HasTransparency(scratchSurface);
 
@@ -174,7 +174,7 @@ namespace AvifFileType
             }
 
             CompressedAV1ImageCollection colorImages = new CompressedAV1ImageCollection(imageGridMetadata?.TileCount ?? 1);
-            CompressedAV1ImageCollection alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
+            CompressedAV1ImageCollection? alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
 
             // Progress is reported at the following stages:
             // 1. Before compressing the color image
@@ -211,7 +211,7 @@ namespace AvifFileType
                     }
                     else
                     {
-                        CompressedAV1Image color = null;
+                        CompressedAV1Image? color = null;
 
                         try
                         {
@@ -237,7 +237,7 @@ namespace AvifFileType
                         }
                     }
 
-                    if (hasTransparency)
+                    if (alphaImages != null)
                     {
                         if (homogeneousTileInfo.DuplicateAlphaTileMap.TryGetValue(i, out duplicateTileIndex))
                         {
@@ -248,7 +248,7 @@ namespace AvifFileType
                         }
                         else
                         {
-                            CompressedAV1Image alpha = null;
+                            CompressedAV1Image? alpha = null;
 
                             try
                             {
@@ -324,13 +324,13 @@ namespace AvifFileType
 
         private static void AddAvifMetadataToDocument(Document doc, AvifReader reader, IArrayPoolService arrayPool)
         {
-            AvifItemData exif = reader.GetExifData();
+            AvifItemData? exif = reader.GetExifData();
 
             if (exif != null)
             {
                 try
                 {
-                    ExifValueCollection exifValues = ExifParser.Parse(exif, arrayPool);
+                    ExifValueCollection? exifValues = ExifParser.Parse(exif, arrayPool);
 
                     if (exifValues != null)
                     {
@@ -358,7 +358,7 @@ namespace AvifFileType
 
             if (imageColorData.HasValue)
             {
-                string serializedValue = CICPSerializer.TrySerialize(imageColorData.Value);
+                string? serializedValue = CICPSerializer.TrySerialize(imageColorData.Value);
 
                 if (serializedValue != null)
                 {
@@ -366,7 +366,7 @@ namespace AvifFileType
                 }
             }
 
-            ImageGridMetadata imageGridMetadata = reader.ImageGridMetadata;
+            ImageGridMetadata? imageGridMetadata = reader.ImageGridMetadata;
 
             if (imageGridMetadata != null)
             {
@@ -388,7 +388,7 @@ namespace AvifFileType
                                                                iccProfileBytes.Span));
             }
 
-            AvifItemData xmp = reader.GetXmpData();
+            AvifItemData? xmp = reader.GetXmpData();
 
             if (xmp != null)
             {
@@ -396,7 +396,7 @@ namespace AvifFileType
                 {
                     using (Stream stream = xmp.GetStream())
                     {
-                        XmpPacket xmpPacket = XmpPacket.TryParse(stream);
+                        XmpPacket? xmpPacket = XmpPacket.TryParse(stream);
                         if (xmpPacket != null)
                         {
                             doc.Metadata.SetXmpPacket(xmpPacket);
@@ -412,17 +412,17 @@ namespace AvifFileType
 
         private static AvifMetadata CreateAvifMetadata(Document doc)
         {
-            byte[] exifBytes = null;
-            byte[] iccProfileBytes = null;
-            byte[] xmpBytes = null;
+            byte[]? exifBytes = null;
+            byte[]? iccProfileBytes = null;
+            byte[]? xmpBytes = null;
 
-            Dictionary<ExifPropertyPath, ExifValue> exifMetadata = GetExifMetadataFromDocument(doc);
+            Dictionary<ExifPropertyPath, ExifValue>? exifMetadata = GetExifMetadataFromDocument(doc);
 
             if (exifMetadata != null)
             {
                 ExifColorSpace exifColorSpace = ExifColorSpace.Srgb;
 
-                if (exifMetadata.TryGetValue(ExifPropertyKeys.Photo.ColorSpace.Path, out ExifValue value))
+                if (exifMetadata.TryGetValue(ExifPropertyKeys.Photo.ColorSpace.Path, out ExifValue? value))
                 {
                     exifMetadata.Remove(ExifPropertyKeys.Photo.ColorSpace.Path);
 
@@ -434,7 +434,7 @@ namespace AvifFileType
 
                 ExifPropertyPath iccProfileKey = ExifPropertyKeys.Image.InterColorProfile.Path;
 
-                if (exifMetadata.TryGetValue(iccProfileKey, out ExifValue iccProfileItem))
+                if (exifMetadata.TryGetValue(iccProfileKey, out ExifValue? iccProfileItem))
                 {
                     iccProfileBytes = iccProfileItem.Data.ToArrayEx();
                     exifMetadata.Remove(iccProfileKey);
@@ -449,7 +449,7 @@ namespace AvifFileType
                 exifBytes = new ExifWriter(doc, exifMetadata, exifColorSpace).CreateExifBlob();
             }
 
-            XmpPacket xmpPacket = doc.Metadata.TryGetXmpPacket();
+            XmpPacket? xmpPacket = doc.Metadata.TryGetXmpPacket();
             if (xmpPacket != null)
             {
                 string packetAsString = xmpPacket.ToString(XmpPacketWrapperType.ReadOnly);
@@ -460,9 +460,9 @@ namespace AvifFileType
             return new AvifMetadata(exifBytes, iccProfileBytes, xmpBytes);
         }
 
-        private static Dictionary<ExifPropertyPath, ExifValue> GetExifMetadataFromDocument(Document doc)
+        private static Dictionary<ExifPropertyPath, ExifValue>? GetExifMetadataFromDocument(Document doc)
         {
-            Dictionary<ExifPropertyPath, ExifValue> items = null;
+            Dictionary<ExifPropertyPath, ExifValue>? items = null;
 
             ExifPropertyItem[] exifProperties = doc.Metadata.GetExifPropertyItems();
 
@@ -532,7 +532,7 @@ namespace AvifFileType
                                            homogeneousAlphaTiles);
         }
 
-        private static Rectangle[] GetTileWindowRectangles(ImageGridMetadata imageGridMetadata, Document document)
+        private static Rectangle[] GetTileWindowRectangles(ImageGridMetadata? imageGridMetadata, Document document)
         {
             Rectangle[] rects;
 
@@ -652,9 +652,7 @@ namespace AvifFileType
             return true;
         }
 
-        private static ImageGridMetadata TryCalculateBestTileSize(
-            Document document,
-            EncoderPreset encoderPreset)
+        private static ImageGridMetadata? TryCalculateBestTileSize(Document document, EncoderPreset encoderPreset)
         {
             // Although the HEIF specification (ISO/IEC 23008-12:2017) allows an image grid to have up to 256 tiles
             // in each direction (65536 total), the ISO base media file format (ISO/IEC 14496-12:2015) limits
@@ -751,7 +749,7 @@ namespace AvifFileType
                 }
             }
 
-            ImageGridMetadata metadata = null;
+            ImageGridMetadata? metadata = null;
 
             if (bestTileColumnCount > 1 || bestTileRowCount > 1)
             {
@@ -766,13 +764,13 @@ namespace AvifFileType
             return metadata;
         }
 
-        private static ImageGridMetadata TryGetImageGridMetadata(
+        private static ImageGridMetadata? TryGetImageGridMetadata(
             Document document,
             EncoderPreset encoderPreset,
             YUVChromaSubsampling yuvFormat,
             bool preserveExistingTileSize)
         {
-            ImageGridMetadata metadata = null;
+            ImageGridMetadata? metadata = null;
 
             // The VerySlow preset always encodes the image as a single tile.
             if (encoderPreset != EncoderPreset.VerySlow)
@@ -782,11 +780,11 @@ namespace AvifFileType
                 {
                     if (preserveExistingTileSize)
                     {
-                        string value = document.Metadata.GetUserValue(ImageGridName);
+                        string? value = document.Metadata.GetUserValue(ImageGridName);
 
                         if (!string.IsNullOrEmpty(value))
                         {
-                            ImageGridMetadata serializedData = ImageGridMetadata.TryDeserialize(value);
+                            ImageGridMetadata? serializedData = ImageGridMetadata.TryDeserialize(value);
 
                             if (serializedData != null
                                 && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height, yuvFormat))

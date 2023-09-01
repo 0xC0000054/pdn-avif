@@ -78,7 +78,7 @@ namespace AvifFileType
                         yuvFormat = "Unknown";
                         break;
                 }
-                string dataLength = this.data != null ? $"{ this.data.ByteLength } bytes" : "Disposed";
+                string dataLength = this.data.IsDisposed ? "Disposed" : $"{ this.data.ByteLength } bytes";
 
                 return $"Width: { this.Width }, Height: { this.Height }, Format: { yuvFormat }, Data: { dataLength }";
             }
@@ -88,11 +88,7 @@ namespace AvifFileType
         {
             if (disposing)
             {
-                if (this.data != null)
-                {
-                    this.data.Dispose();
-                    this.data = null;
-                }
+                this.data.Dispose();
             }
         }
     }

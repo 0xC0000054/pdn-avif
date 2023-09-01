@@ -37,16 +37,16 @@ namespace AvifFileType.Exif
         ///
         /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        internal static ExifValueCollection Parse(AvifItemData exif, PaintDotNet.AppModel.IArrayPoolService arrayPool)
+        internal static ExifValueCollection? Parse(AvifItemData exif, PaintDotNet.AppModel.IArrayPoolService arrayPool)
         {
             if (exif is null)
             {
                 throw new ArgumentNullException(nameof(exif));
             }
 
-            ExifValueCollection metadataEntries = null;
+            ExifValueCollection? metadataEntries = null;
 
-            StreamSegment stream = TryParseExifMetadataHeader(exif);
+            StreamSegment? stream = TryParseExifMetadataHeader(exif);
 
             if (stream != null)
             {
@@ -95,7 +95,7 @@ namespace AvifFileType.Exif
             {
                 ParserIFDEntry entry = entries[i];
 
-                byte[] propertyData;
+                byte[]? propertyData;
                 if (entry.OffsetFieldContainsValue)
                 {
                     propertyData = entry.GetValueBytesFromOffset();
@@ -338,14 +338,14 @@ namespace AvifFileType.Exif
             }
         }
 
-        private static StreamSegment TryParseExifMetadataHeader(AvifItemData data)
+        private static StreamSegment? TryParseExifMetadataHeader(AvifItemData data)
         {
             // The EXIF data block has a header consisting of a big-endian 4-byte unsigned integer
             // that indicates the number of bytes that come before the start of the TIFF header.
             // See ISO/IEC 23008-12:2017 section A.2.1.
 
-            StreamSegment stream = null;
-            Stream avifItemStream = null;
+            StreamSegment? stream = null;
+            Stream? avifItemStream = null;
 
             try
             {
@@ -409,7 +409,7 @@ namespace AvifFileType.Exif
             public ExifSection Section => this.section;
 #pragma warning restore IDE0032 // Use auto property
 
-            public unsafe byte[] GetValueBytesFromOffset()
+            public unsafe byte[]? GetValueBytesFromOffset()
             {
                 if (!this.OffsetFieldContainsValue)
                 {

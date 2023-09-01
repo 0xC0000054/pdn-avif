@@ -24,7 +24,7 @@ namespace AvifFileType
     public sealed class AvifFileTypePlugin
         : PropertyBasedFileType
     {
-        private readonly IArrayPoolService arrayPoolService;
+        private readonly IArrayPoolService? arrayPoolService;
         private readonly IAvifStringResourceManager strings;
 
         // Names of the properties
@@ -59,7 +59,7 @@ namespace AvifFileType
                 })
         {
             this.arrayPoolService = host?.Services.GetService<IArrayPoolService>();
-            PaintDotNet.Avif.IAvifFileTypeStrings avifFileTypeStrings = host?.Services.GetService<PaintDotNet.Avif.IAvifFileTypeStrings>();
+            PaintDotNet.Avif.IAvifFileTypeStrings? avifFileTypeStrings = host?.Services.GetService<PaintDotNet.Avif.IAvifFileTypeStrings>();
 
             if (avifFileTypeStrings != null)
             {
@@ -126,56 +126,56 @@ namespace AvifFileType
         {
             ControlInfo configUI = CreateDefaultSaveConfigUI(props);
 
-            PropertyControlInfo qualityPCI = configUI.FindControlForPropertyName(PropertyNames.Quality);
-            qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("Quality_DisplayName");
-            qualityPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = string.Empty;
+            PropertyControlInfo qualityPCI = configUI.FindControlForPropertyName(PropertyNames.Quality)!;
+            qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.strings.GetString("Quality_DisplayName");
+            qualityPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = string.Empty;
 
-            PropertyControlInfo losslessPCI = configUI.FindControlForPropertyName(PropertyNames.Lossless);
-            losslessPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            losslessPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("Lossless_Description");
+            PropertyControlInfo losslessPCI = configUI.FindControlForPropertyName(PropertyNames.Lossless)!;
+            losslessPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+            losslessPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("Lossless_Description");
 
-            PropertyControlInfo losslessAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.LosslessAlphaCompression);
-            losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("LosslessAlphaCompression_Description");
+            PropertyControlInfo losslessAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.LosslessAlphaCompression)!;
+            losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+            losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("LosslessAlphaCompression_Description");
 
-            PropertyControlInfo encoderPresetPCI = configUI.FindControlForPropertyName(PropertyNames.EncoderPreset);
-            encoderPresetPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("EncoderPreset_DisplayName");
-            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Fast, this.strings.GetString("EncoderPreset_Fast_DisplayName"));
-            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Medium, this.strings.GetString("EncoderPreset_Medium_DisplayName"));
-            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Slow, this.strings.GetString("EncoderPreset_Slow_DisplayName"));
-            encoderPresetPCI.SetValueDisplayName(EncoderPreset.VerySlow, this.strings.GetString("EncoderPreset_VerySlow_DisplayName"));
+            PropertyControlInfo encoderPresetPCI = configUI.FindControlForPropertyName(PropertyNames.EncoderPreset)!;
+            encoderPresetPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.strings.GetString("EncoderPreset_DisplayName");
+            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Fast, this.strings.GetString("EncoderPreset_Fast_DisplayName")!);
+            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Medium, this.strings.GetString("EncoderPreset_Medium_DisplayName")!);
+            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Slow, this.strings.GetString("EncoderPreset_Slow_DisplayName")!);
+            encoderPresetPCI.SetValueDisplayName(EncoderPreset.VerySlow, this.strings.GetString("EncoderPreset_VerySlow_DisplayName")!);
 
-            PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling);
-            subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ChromaSubsampling_DisplayName");
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling420, this.strings.GetString("ChromaSubsampling_420_DisplayName"));
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling422, this.strings.GetString("ChromaSubsampling_422_DisplayName"));
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling444, this.strings.GetString("ChromaSubsampling_444_DisplayName"));
+            PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling)!;
+            subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.strings.GetString("ChromaSubsampling_DisplayName");
+            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling420, this.strings.GetString("ChromaSubsampling_420_DisplayName")!);
+            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling422, this.strings.GetString("ChromaSubsampling_422_DisplayName")!);
+            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling444, this.strings.GetString("ChromaSubsampling_444_DisplayName")!);
 
-            PropertyControlInfo preserveExistingTileSizePCI = configUI.FindControlForPropertyName(PropertyNames.PreserveExistingTileSize);
-            preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("PreserveExistingTileSize_Description");
+            PropertyControlInfo preserveExistingTileSizePCI = configUI.FindControlForPropertyName(PropertyNames.PreserveExistingTileSize)!;
+            preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+            preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("PreserveExistingTileSize_Description");
 
-            PropertyControlInfo premultipliedAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.PremultipliedAlpha);
-            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("PremultipliedAlpha_Description");
+            PropertyControlInfo premultipliedAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.PremultipliedAlpha)!;
+            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("PremultipliedAlpha_Description");
 
-            PropertyControlInfo forumLinkPCI = configUI.FindControlForPropertyName(PropertyNames.ForumLink);
-            forumLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = this.strings.GetString("ForumLink_DisplayName");
-            forumLinkPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = this.strings.GetString("ForumLink_Description");
+            PropertyControlInfo forumLinkPCI = configUI.FindControlForPropertyName(PropertyNames.ForumLink)!;
+            forumLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.strings.GetString("ForumLink_DisplayName");
+            forumLinkPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("ForumLink_Description");
 
-            PropertyControlInfo githubLinkPCI = configUI.FindControlForPropertyName(PropertyNames.GitHubLink);
-            githubLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            githubLinkPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = "GitHub"; // GitHub is a brand name that should not be localized.
+            PropertyControlInfo githubLinkPCI = configUI.FindControlForPropertyName(PropertyNames.GitHubLink)!;
+            githubLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+            githubLinkPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "GitHub"; // GitHub is a brand name that should not be localized.
 
-            PropertyControlInfo pluginVersionPCI = configUI.FindControlForPropertyName(PropertyNames.PluginVersion);
+            PropertyControlInfo pluginVersionPCI = configUI.FindControlForPropertyName(PropertyNames.PluginVersion)!;
             pluginVersionPCI.ControlType.Value = PropertyControlType.Label;
-            pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = "AvifFileType v" + VersionInfo.PluginVersion;
+            pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+            pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "AvifFileType v" + VersionInfo.PluginVersion;
 
-            PropertyControlInfo aomVersionPCI = configUI.FindControlForPropertyName(PropertyNames.AOMVersion);
+            PropertyControlInfo aomVersionPCI = configUI.FindControlForPropertyName(PropertyNames.AOMVersion)!;
             aomVersionPCI.ControlType.Value = PropertyControlType.Label;
-            aomVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-            aomVersionPCI.ControlProperties[ControlInfoPropertyNames.Description].Value = "AOM v" + VersionInfo.AOMVersion;
+            aomVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+            aomVersionPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "AOM v" + VersionInfo.AOMVersion;
 
             return configUI;
         }
@@ -185,13 +185,13 @@ namespace AvifFileType
         /// </summary>
         protected override void OnSaveT(Document input, Stream output, PropertyBasedSaveConfigToken token, Surface scratchSurface, ProgressEventHandler progressCallback)
         {
-            int quality = token.GetProperty<Int32Property>(PropertyNames.Quality).Value;
-            bool lossless = token.GetProperty<BooleanProperty>(PropertyNames.Lossless).Value;
-            bool losslessAlpha = token.GetProperty<BooleanProperty>(PropertyNames.LosslessAlphaCompression).Value;
-            EncoderPreset encoderPreset = (EncoderPreset)token.GetProperty(PropertyNames.EncoderPreset).Value;
-            YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling).Value;
-            bool preserveExistingTileSize = token.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize).Value;
-            bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha).Value;
+            int quality = token.GetProperty<Int32Property>(PropertyNames.Quality)!.Value;
+            bool lossless = token.GetProperty<BooleanProperty>(PropertyNames.Lossless)!.Value;
+            bool losslessAlpha = token.GetProperty<BooleanProperty>(PropertyNames.LosslessAlphaCompression)!.Value;
+            EncoderPreset encoderPreset = (EncoderPreset)token.GetProperty(PropertyNames.EncoderPreset)!.Value!;
+            YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling)!.Value!;
+            bool preserveExistingTileSize = token.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize)!.Value;
+            bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha)!.Value;
 
             AvifFile.Save(input,
                           output,
@@ -204,7 +204,7 @@ namespace AvifFileType
                           premultipliedAlpha,
                           scratchSurface,
                           progressCallback,
-                          this.arrayPoolService);
+                          this.arrayPoolService!);
         }
 
         /// <summary>
@@ -212,7 +212,7 @@ namespace AvifFileType
         /// </summary>
         protected override Document OnLoad(Stream input)
         {
-            return AvifFile.Load(input, this.arrayPoolService);
+            return AvifFile.Load(input, this.arrayPoolService!);
         }
     }
 }

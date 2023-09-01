@@ -36,12 +36,12 @@ namespace AvifFileType.AvifContainer
 
         public string Value { get; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is BoxString other && Equals(other);
         }
 
-        public bool Equals(BoxString other)
+        public bool Equals(BoxString? other)
         {
             if (other is null)
             {
@@ -84,7 +84,7 @@ namespace AvifFileType.AvifContainer
                 const int MaxStackBufferSize = 256;
 
                 Span<byte> buffer = stackalloc byte[MaxStackBufferSize];
-                byte[] arrayFromPool = null;
+                byte[]? arrayFromPool = null;
 
                 try
                 {
@@ -112,7 +112,7 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public static bool operator ==(BoxString left, BoxString right)
+        public static bool operator ==(BoxString? left, BoxString? right)
         {
             if (ReferenceEquals(left, right))
             {
@@ -127,17 +127,17 @@ namespace AvifFileType.AvifContainer
             return left.Equals(right);
         }
 
-        public static bool operator !=(BoxString left, BoxString right)
+        public static bool operator !=(BoxString? left, BoxString? right)
         {
             return !(left == right);
         }
 
-        public static implicit operator BoxString(string value)
+        public static implicit operator BoxString?(string? value)
         {
             return value is null ? null : new BoxString(value);
         }
 
-        public static implicit operator string(BoxString value)
+        public static implicit operator string?(BoxString? value)
         {
             return value?.Value;
         }

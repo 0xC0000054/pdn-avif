@@ -30,6 +30,6 @@ namespace AvifFileType
             => AvifNative.GetAOMVersionString();
 
         private static string GetPluginVersion()
-            => typeof(VersionInfo).Assembly.GetName().Version.ToString();
+            => typeof(VersionInfo).Assembly.GetName().Version!.ToString();
     }
 }

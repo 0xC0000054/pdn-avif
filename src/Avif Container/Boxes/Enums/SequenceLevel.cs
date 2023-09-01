@@ -72,7 +72,7 @@ namespace AvifFileType.AvifContainer
         {
             byte value = (byte)(seqProfileAndSeqLevelIdx0 & 0x1f);
 
-            if (SequenceLevelMap.Instance.TryGetValue(value, out SequenceLevel level))
+            if (SequenceLevelMap.Instance.TryGetValue(value, out SequenceLevel? level))
             {
                 return level;
             }
@@ -89,12 +89,12 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is SequenceLevel sequenceLevel && Equals(sequenceLevel);
         }
 
-        public bool Equals(SequenceLevel other)
+        public bool Equals(SequenceLevel? other)
         {
             if (other is null)
             {
@@ -109,12 +109,12 @@ namespace AvifFileType.AvifContainer
             return this.Value.GetHashCode();
         }
 
-        public static bool operator ==(SequenceLevel left, SequenceLevel right)
+        public static bool operator ==(SequenceLevel? left, SequenceLevel? right)
         {
             return EqualityComparer<SequenceLevel>.Default.Equals(left, right);
         }
 
-        public static bool operator !=(SequenceLevel left, SequenceLevel right)
+        public static bool operator !=(SequenceLevel? left, SequenceLevel? right)
         {
             return !(left == right);
         }
@@ -134,7 +134,7 @@ namespace AvifFileType.AvifContainer
                     FieldInfo fieldInfo = fieldInfos[i];
                     if (fieldInfo.FieldType == typeof(SequenceLevel))
                     {
-                        SequenceLevel item = (SequenceLevel)fieldInfo.GetValue(null);
+                        SequenceLevel item = (SequenceLevel)fieldInfo.GetValue(null)!;
 
                         map.Add(item.Value, item);
                     }

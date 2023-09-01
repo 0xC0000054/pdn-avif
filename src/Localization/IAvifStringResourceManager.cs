@@ -14,6 +14,6 @@ namespace AvifFileType
 {
     internal interface IAvifStringResourceManager
     {
-        string GetString(string name);
+        string? GetString(string name);
     }
 }

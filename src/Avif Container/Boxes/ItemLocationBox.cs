@@ -77,7 +77,7 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public ItemLocationBox(bool use64BitOffsets, int itemCount, ItemDataBox itemDataBox)
+        public ItemLocationBox(bool use64BitOffsets, int itemCount, ItemDataBox? itemDataBox)
             : base(CalculateBoxVersion(itemCount, itemDataBox), 0, BoxTypes.ItemLocation)
         {
             if (use64BitOffsets)
@@ -117,7 +117,7 @@ namespace AvifFileType.AvifContainer
             this.items.Add(item);
         }
 
-        public ItemLocationEntry TryFindItem(uint itemId)
+        public ItemLocationEntry? TryFindItem(uint itemId)
         {
             for (int i = 0; i < this.items.Count; i++)
             {
@@ -166,7 +166,7 @@ namespace AvifFileType.AvifContainer
                    + ((ulong)this.items.Count * (ulong)ItemLocationEntry.GetSize(this));
         }
 
-        private static byte CalculateBoxVersion(int itemCount, ItemDataBox itemDataBox)
+        private static byte CalculateBoxVersion(int itemCount, ItemDataBox? itemDataBox)
         {
             if (itemCount > ushort.MaxValue)
             {

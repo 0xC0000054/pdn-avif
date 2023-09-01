@@ -23,9 +23,9 @@ namespace AvifFileType.AvifContainer
             this.transformPropertySeen = false;
         }
 
-        internal IItemProperty TryCreate(in EndianBinaryReaderSegment reader, Box header)
+        internal IItemProperty? TryCreate(in EndianBinaryReaderSegment reader, Box header)
         {
-            IItemProperty property;
+            IItemProperty? property;
 
             if (header.Type == BoxTypes.ImageSpatialExtents)
             {

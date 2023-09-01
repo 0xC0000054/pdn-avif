@@ -22,7 +22,7 @@ namespace AvifFileType.Interop
     [CustomMarshaller(typeof(string), MarshalMode.ManagedToUnmanagedOut, typeof(NativeOwnedAsciiString))]
     internal static class NativeOwnedAsciiString
     {
-        public static string ConvertToManaged(nint unmanaged)
+        public static string? ConvertToManaged(nint unmanaged)
         {
             return Marshal.PtrToStringAnsi(unmanaged);
         }

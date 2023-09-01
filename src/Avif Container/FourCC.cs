@@ -43,7 +43,7 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is FourCC other && Equals(other);
         }

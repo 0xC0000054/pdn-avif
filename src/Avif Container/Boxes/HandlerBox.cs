@@ -59,7 +59,7 @@ namespace AvifFileType.AvifContainer
             this.name = BoxString.Empty;
         }
 
-        public string Name => this.name?.Value;
+        public string? Name => this.name?.Value;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay

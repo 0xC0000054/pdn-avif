@@ -97,7 +97,7 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowInvalidOperationException("The property index must be <= 32767.");
             }
 
-            List<ItemPropertyAssociationEntry> itemProperties;
+            List<ItemPropertyAssociationEntry>? itemProperties;
 
             if (this.entries.TryGetValue(itemId, out itemProperties))
             {
@@ -129,9 +129,9 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public IReadOnlyList<ItemPropertyAssociationEntry> TryGetAssociatedProperties(uint toItemId)
+        public IReadOnlyList<ItemPropertyAssociationEntry>? TryGetAssociatedProperties(uint toItemId)
         {
-            if (this.entries.TryGetValue(toItemId, out List<ItemPropertyAssociationEntry> values))
+            if (this.entries.TryGetValue(toItemId, out List<ItemPropertyAssociationEntry>? values))
             {
                 return values;
             }

@@ -23,9 +23,9 @@ namespace AvifFileType
 
         public string Author => "null54";
 
-        public string Copyright => typeof(PluginSupportInfo).Assembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
+        public string Copyright => typeof(PluginSupportInfo).Assembly.GetCustomAttribute<AssemblyCopyrightAttribute>()!.Copyright;
 
-        public Version Version => typeof(PluginSupportInfo).Assembly.GetName().Version;
+        public Version Version => typeof(PluginSupportInfo).Assembly.GetName().Version!;
 
         public Uri WebsiteUri => new Uri(@"https://forums.getpaint.net/topic/116233-avif-filetype");
     }

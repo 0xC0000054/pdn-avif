@@ -42,7 +42,7 @@ namespace AvifFileType.AvifContainer
                                     ushort itemProtectionIndex,
                                     string name,
                                     string contentType,
-                                    string contentEncoding)
+                                    string? contentEncoding)
             : base(itemId, hiddenItem, itemProtectionIndex, ItemInfoEntryTypes.Mime, name)
         {
             if (contentType is null)
@@ -56,7 +56,7 @@ namespace AvifFileType.AvifContainer
 
         internal BoxString ContentType { get; }
 
-        internal BoxString ContentEncoding { get; }
+        internal BoxString? ContentEncoding { get; }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay

@@ -20,7 +20,7 @@ namespace AvifFileType.Interop
     internal sealed class ManagedCompressedAV1Data
         : CompressedAV1Data, IEquatable<ManagedCompressedAV1Data>
     {
-        private IArrayPoolBuffer<byte> buffer;
+        private readonly IArrayPoolBuffer<byte> buffer;
         private GCHandle gcHandle;
 
         public ManagedCompressedAV1Data(ulong size, IArrayPoolService arrayPool)
@@ -34,12 +34,12 @@ namespace AvifFileType.Interop
             Dispose(false);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is ManagedCompressedAV1Data other && Equals(other);
         }
 
-        public bool Equals(ManagedCompressedAV1Data other)
+        public bool Equals(ManagedCompressedAV1Data? other)
         {
             if (other is null)
             {
@@ -66,7 +66,7 @@ namespace AvifFileType.Interop
         {
             if (disposing)
             {
-                DisposableUtil.Free(ref this.buffer);
+                this.buffer.Dispose();
             }
 
             if (this.gcHandle.IsAllocated)

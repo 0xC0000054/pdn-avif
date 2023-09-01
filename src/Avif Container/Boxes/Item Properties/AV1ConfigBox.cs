@@ -79,9 +79,9 @@ namespace AvifFileType.AvifContainer
         {
         }
 
-        public SequenceProfile SeqProfile { get; set; }
+        public SequenceProfile? SeqProfile { get; set; }
 
-        public SequenceLevel SeqLevelIdx0 { get; set; }
+        public SequenceLevel? SeqLevelIdx0 { get; set; }
 
         public bool SeqTier0 { get; set; }
 
@@ -101,7 +101,7 @@ namespace AvifFileType.AvifContainer
         {
             base.Write(writer);
 
-            byte seqProfileAndSeqLevelIdx0 = (byte)((this.SeqProfile.Value << 5) | (this.SeqLevelIdx0.Value & 0x1f));
+            byte seqProfileAndSeqLevelIdx0 = (byte)((this.SeqProfile!.Value << 5) | (this.SeqLevelIdx0!.Value & 0x1f));
 
             byte configurationParameters = (byte)(SetConfigurationOption(8, this.SeqTier0)
                                                 | SetConfigurationOption(7, this.HighBitDepth)
@@ -149,9 +149,9 @@ namespace AvifFileType.AvifContainer
                 this.configBox = configBox;
             }
 
-            public SequenceProfile SeqProfile => this.configBox.SeqProfile;
+            public SequenceProfile? SeqProfile => this.configBox.SeqProfile;
 
-            public SequenceLevel SeqLevelIdx0 => this.configBox.SeqLevelIdx0;
+            public SequenceLevel? SeqLevelIdx0 => this.configBox.SeqLevelIdx0;
 
             public bool SeqTier0 => this.configBox.SeqTier0;
 

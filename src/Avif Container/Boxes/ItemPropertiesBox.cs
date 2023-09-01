@@ -59,12 +59,12 @@ namespace AvifFileType.AvifContainer
             this.itemPropertyAssociation.Add(itemId, essential, propertyIndex);
         }
 
-        public IReadOnlyList<ItemPropertyAssociationEntry> TryGetAssociatedProperties(uint itemId)
+        public IReadOnlyList<ItemPropertyAssociationEntry>? TryGetAssociatedProperties(uint itemId)
         {
             return this.itemPropertyAssociation.TryGetAssociatedProperties(itemId);
         }
 
-        public IItemProperty TryGetProperty(uint propertyIndex)
+        public IItemProperty? TryGetProperty(uint propertyIndex)
         {
             return this.itemPropertyContainer.TryGetProperty(propertyIndex);
         }

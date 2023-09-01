@@ -43,11 +43,7 @@ namespace AvifFileType
         {
             if (disposing)
             {
-                if (this.buffer != null)
-                {
-                    this.buffer.Dispose();
-                    this.buffer = null;
-                }
+                this.buffer?.Dispose();
             }
         }
 

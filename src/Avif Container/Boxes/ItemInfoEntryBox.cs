@@ -56,12 +56,12 @@ namespace AvifFileType.AvifContainer
             this.Name = header.Name;
         }
 
-        protected ItemInfoEntryBox(uint itemId, ushort itemProtectionIndex, FourCC itemType, string name)
+        protected ItemInfoEntryBox(uint itemId, ushort itemProtectionIndex, FourCC itemType, string? name)
             : this(itemId, hiddenItem: false, itemProtectionIndex, itemType, name)
         {
         }
 
-        protected ItemInfoEntryBox(uint itemId, bool hiddenItem, ushort itemProtectionIndex, FourCC itemType, string name)
+        protected ItemInfoEntryBox(uint itemId, bool hiddenItem, ushort itemProtectionIndex, FourCC itemType, string? name)
             : base((byte)(itemId > ushort.MaxValue ? 3 : 2), hiddenItem ? HiddenItemFlag : 0, BoxTypes.ItemInfoEntry)
         {
             this.ItemId = itemId;

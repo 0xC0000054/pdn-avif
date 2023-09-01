@@ -16,7 +16,7 @@ namespace AvifFileType.AvifContainer
 {
     internal sealed class LayerSelectorInfo
     {
-        public LayerSelectorInfo(AV1LayeredImageIndexingBox layeredImageIndexingBox,
+        public LayerSelectorInfo(AV1LayeredImageIndexingBox? layeredImageIndexingBox,
                                  ulong totalItemSize,
                                  ushort spatialLayerId)
         {
@@ -62,7 +62,7 @@ namespace AvifFileType.AvifContainer
             return layerSizes;
         }
 
-        private static ulong? TryGetLayerDataSize(AV1LayeredImageIndexingBox layeredImageIndexingBox,
+        private static ulong? TryGetLayerDataSize(AV1LayeredImageIndexingBox? layeredImageIndexingBox,
                                                   ulong totalItemSize,
                                                   uint layerId)
         {

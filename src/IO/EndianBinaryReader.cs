@@ -32,7 +32,7 @@ namespace AvifFileType
         private Stream stream;
         private int readOffset;
         private int readLength;
-        private IArrayPoolBuffer<byte> bufferFromArrayPool;
+        private IArrayPoolBuffer<byte>? bufferFromArrayPool;
         private byte[] buffer;
         private readonly int bufferSize;
         private readonly Endianess endianess;
@@ -249,21 +249,17 @@ namespace AvifFileType
 
             VerifyNotDisposed();
 
-            AvifContainer.BoxString result;
+            AvifContainer.BoxString result = AvifContainer.BoxString.Empty;
 
             int length = GetStringLength(endOffset, out bool hasNullTerminator);
 
-            if (length == 0)
-            {
-                result = AvifContainer.BoxString.Empty;
-            }
-            else
+            if (length > 0)
             {
                 if (length < this.bufferSize)
                 {
                     EnsureBuffer(length);
 
-                    result = System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length);
+                    result = new AvifContainer.BoxString(System.Text.Encoding.UTF8.GetString(this.buffer, this.readOffset, length));
 
                     this.readOffset += length;
                 }
@@ -275,7 +271,7 @@ namespace AvifFileType
 
                         ReadExactlyInternal(buffer);
 
-                        result = System.Text.Encoding.UTF8.GetString(buffer);
+                        result = new AvifContainer.BoxString(System.Text.Encoding.UTF8.GetString(buffer));
                     }
                 }
             }
@@ -610,15 +606,10 @@ namespace AvifFileType
             if (disposing)
             {
                 DisposableUtil.Free(ref this.bufferFromArrayPool);
-                this.buffer = null;
 
-                if (this.stream != null)
+                if (!this.leaveOpen)
                 {
-                    if (!this.leaveOpen)
-                    {
-                        this.stream.Dispose();
-                    }
-                    this.stream = null;
+                    this.stream.Dispose();
                 }
             }
         }

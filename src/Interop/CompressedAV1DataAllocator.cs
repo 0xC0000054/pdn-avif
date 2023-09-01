@@ -33,7 +33,7 @@ namespace AvifFileType.Interop
             this.arrayPool = arrayPool;
         }
 
-        public ExceptionDispatchInfo ExceptionInfo { get; private set; }
+        public ExceptionDispatchInfo? ExceptionInfo { get; private set; }
 
         public IntPtr Allocate(UIntPtr sizeInBytes)
         {
@@ -61,7 +61,7 @@ namespace AvifFileType.Interop
         {
             VerifyNotDisposed();
 
-            CompressedAV1Data data = null;
+            CompressedAV1Data? data = null;
 
             for (int i = 0; i < this.compressedData.Count; i++)
             {
@@ -85,19 +85,14 @@ namespace AvifFileType.Interop
         {
             if (disposing)
             {
-                if (this.compressedData != null)
+                for (int i = 0; i < this.compressedData.Count; i++)
                 {
-                    for (int i = 0; i < this.compressedData.Count; i++)
+                    CompressedDataState state = this.compressedData[i];
+
+                    if (state.OwnsDataBuffer)
                     {
-                        CompressedDataState state = this.compressedData[i];
-
-                        if (state.OwnsDataBuffer)
-                        {
-                            state.Dispose();
-                        }
+                        state.Dispose();
                     }
-
-                    this.compressedData = null;
                 }
             }
         }

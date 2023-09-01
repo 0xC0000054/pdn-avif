@@ -32,10 +32,10 @@ namespace AvifFileType
             private readonly Dictionary<int, int> duplicateColorTiles;
 
             public AvifWriterState(IReadOnlyList<CompressedAV1Image> colorImages,
-                                   IReadOnlyList<CompressedAV1Image> alphaImages,
+                                   IReadOnlyList<CompressedAV1Image>? alphaImages,
                                    HomogeneousTileInfo homogeneousTiles,
                                    bool premultipliedAlpha,
-                                   ImageGridMetadata imageGridMetadata,
+                                   ImageGridMetadata? imageGridMetadata,
                                    AvifMetadata metadata,
                                    IArrayPoolService arrayPool)
             {
@@ -70,19 +70,19 @@ namespace AvifFileType
 
             public uint AlphaItemId { get; private set; }
 
-            public ImageGridMetadata ImageGrid { get; }
+            public ImageGridMetadata? ImageGrid { get; }
 
-            public ItemDataBox ItemDataBox { get; private set; }
+            public ItemDataBox? ItemDataBox { get; private set; }
 
             public IReadOnlyList<AvifWriterItem> Items => this.items;
 
-            public IReadOnlyList<int> MediaDataBoxAlphaItemIndexes { get; private set; }
+            public IReadOnlyList<int>? MediaDataBoxAlphaItemIndexes { get; private set; }
 
-            public IReadOnlyList<int> MediaDataBoxColorItemIndexes { get; private set; }
+            public IReadOnlyList<int>? MediaDataBoxColorItemIndexes { get; private set; }
 
             public ulong MediaDataBoxContentSize { get; private set; }
 
-            public IReadOnlyList<int> MediaDataBoxMetadataItemIndexes { get; private set; }
+            public IReadOnlyList<int>? MediaDataBoxMetadataItemIndexes { get; private set; }
 
             public uint PrimaryItemId { get; private set; }
 
@@ -92,7 +92,7 @@ namespace AvifFileType
 
                 byte[] dataBoxBuffer = new byte[imageGridDescriptor.GetSize()];
 
-                MemoryStream stream = null;
+                MemoryStream? stream = null;
                 try
                 {
                     stream = new MemoryStream(dataBoxBuffer);
@@ -225,9 +225,9 @@ namespace AvifFileType
             }
 
             private void Initialize(IReadOnlyList<CompressedAV1Image> colorImages,
-                                    IReadOnlyList<CompressedAV1Image> alphaImages,
+                                    IReadOnlyList<CompressedAV1Image>? alphaImages,
                                     bool premultipliedAlpha,
-                                    ImageGridMetadata imageGridMetadata,
+                                    ImageGridMetadata? imageGridMetadata,
                                     AvifMetadata metadata,
                                     IArrayPoolService arrayPool)
             {
@@ -277,7 +277,7 @@ namespace AvifFileType
             }
 
             private ImageStateInfo InitializeFromImageGrid(IReadOnlyList<CompressedAV1Image> colorImages,
-                                                           IReadOnlyList<CompressedAV1Image> alphaImages,
+                                                           IReadOnlyList<CompressedAV1Image>? alphaImages,
                                                            bool premultipliedAlpha,
                                                            ImageGridMetadata imageGridMetadata)
             {
@@ -285,7 +285,7 @@ namespace AvifFileType
                 uint itemId = FirstItemId;
 
                 List<uint> colorImageIds = new List<uint>(colorImages.Count);
-                List<uint> alphaImageIds = alphaImages != null ? new List<uint>(alphaImages.Count) : null;
+                List<uint>? alphaImageIds = alphaImages != null ? new List<uint>(alphaImages.Count) : null;
 
                 List<int> mediaDataBoxColorItemIndexes = new List<int>(colorImages.Count);
                 List<int> mediaBoxAlphaItemIndexes = new List<int>(alphaImages != null ? alphaImages.Count : 0);
@@ -334,7 +334,7 @@ namespace AvifFileType
                                                                                    alphaItem.Id));
                         }
 
-                        alphaImageIds.Add(alphaItem.Id);
+                        alphaImageIds!.Add(alphaItem.Id);
                         mediaBoxAlphaItemIndexes.Add(this.items.Count);
                         this.items.Add(alphaItem);
 
@@ -370,7 +370,7 @@ namespace AvifFileType
                     AvifWriterItem alphaGridItem = AvifWriterItem.CreateFromImageGrid(itemId, "Alpha", 0, gridDescriptorLength);
                     itemId++;
                     alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.AuxiliaryImage, colorGridItem.Id));
-                    alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.DerivedImage, alphaImageIds));
+                    alphaGridItem.ItemReferences.Add(new ItemReferenceEntryBox(alphaGridItem.Id, ReferenceTypes.DerivedImage, alphaImageIds!));
 
                     if (premultipliedAlpha)
                     {
@@ -389,7 +389,7 @@ namespace AvifFileType
                 return new ImageStateInfo(mediaDataBoxContentSize, itemId);
             }
 
-            private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image alpha, bool premultipliedAlpha)
+            private ImageStateInfo InitializeFromSingleImage(CompressedAV1Image color, CompressedAV1Image? alpha, bool premultipliedAlpha)
             {
                 ulong mediaDataBoxContentSize = color.Data.ByteLength;
                 uint itemId = FirstItemId;
@@ -428,7 +428,7 @@ namespace AvifFileType
                 return new ImageStateInfo(mediaDataBoxContentSize, itemId);
             }
 
-            private static int GetItemCount(IReadOnlyList<CompressedAV1Image> colorImages, IReadOnlyList<CompressedAV1Image> alphaImages, AvifMetadata metadata)
+            private static int GetItemCount(IReadOnlyList<CompressedAV1Image> colorImages, IReadOnlyList<CompressedAV1Image>? alphaImages, AvifMetadata metadata)
             {
                 int count;
 

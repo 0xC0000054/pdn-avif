@@ -34,12 +34,12 @@ namespace AvifFileType.AvifContainer
 
         public TValue Value { get; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is StronglyTypedEnumeration<TEnum, TValue> other && Equals(other);
         }
 
-        public bool Equals(StronglyTypedEnumeration<TEnum, TValue> other)
+        public bool Equals(StronglyTypedEnumeration<TEnum, TValue>? other)
         {
             if (other is null)
             {
@@ -59,7 +59,7 @@ namespace AvifFileType.AvifContainer
             return this.Name;
         }
 
-        public static bool operator ==(StronglyTypedEnumeration<TEnum, TValue> left, StronglyTypedEnumeration<TEnum, TValue> right)
+        public static bool operator ==(StronglyTypedEnumeration<TEnum, TValue>? left, StronglyTypedEnumeration<TEnum, TValue>? right)
         {
             if (ReferenceEquals(left, right))
             {
@@ -74,7 +74,7 @@ namespace AvifFileType.AvifContainer
             return left.Value.Equals(right.Value);
         }
 
-        public static bool operator !=(StronglyTypedEnumeration<TEnum, TValue> left, StronglyTypedEnumeration<TEnum, TValue> right)
+        public static bool operator !=(StronglyTypedEnumeration<TEnum, TValue>? left, StronglyTypedEnumeration<TEnum, TValue>? right)
         {
             return !(left == right);
         }

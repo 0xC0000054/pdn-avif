@@ -26,8 +26,8 @@ namespace AvifFileType
     {
         private const ulong ManagedAvifItemDataMaxSize = 1024 * 1024;
 
-        private FileTypeBox fileTypeBox;
-        private MetaBox metaBox;
+        private FileTypeBox? fileTypeBox;
+        private MetaBox? metaBox;
         private EndianBinaryReader reader;
         private readonly ulong fileLength;
         private readonly IArrayPoolService arrayPool;
@@ -47,14 +47,14 @@ namespace AvifFileType
 
         public IEnumerable<ColorInformationBox> EnumerateColorInformationBoxes(uint itemId)
         {
-            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
-            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+            ItemPropertiesBox itemPropertiesBox = this.metaBox!.ItemProperties!;
+            IReadOnlyList<ItemPropertyAssociationEntry>? items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
                 for (int i = 0; i < items.Count; i++)
                 {
-                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
+                    IItemProperty? property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
 
                     if (property is ColorInformationBox colorInformationBox)
                     {
@@ -68,7 +68,7 @@ namespace AvifFileType
         {
             uint alphaImageItemId = 0;
 
-            IItemReferenceEntry entry = GetMatchingReferences(primaryItemId, ReferenceTypes.AuxiliaryImage).FirstOrDefault();
+            IItemReferenceEntry? entry = GetMatchingReferences(primaryItemId, ReferenceTypes.AuxiliaryImage).FirstOrDefault();
 
             if (entry != null && IsAlphaChannelItem(entry.FromItemId))
             {
@@ -78,19 +78,19 @@ namespace AvifFileType
             return alphaImageItemId;
         }
 
-        public LayerSelectorInfo GetLayerSelectorInfo(uint itemId, ulong totalItemSize)
+        public LayerSelectorInfo? GetLayerSelectorInfo(uint itemId, ulong totalItemSize)
         {
-            AV1LayeredImageIndexingBox layeredImageIndexingBox = null;
-            LayerSelectorBox layerSelectorBox = null;
+            AV1LayeredImageIndexingBox? layeredImageIndexingBox = null;
+            LayerSelectorBox? layerSelectorBox = null;
 
-            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
-            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+            ItemPropertiesBox itemPropertiesBox = this.metaBox!.ItemProperties!;
+            IReadOnlyList<ItemPropertyAssociationEntry>? items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
                 for (int i = 0; i < items.Count; i++)
                 {
-                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
+                    IItemProperty? property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
 
                     if (property != null)
                     {
@@ -106,7 +106,7 @@ namespace AvifFileType
                 }
             }
 
-            LayerSelectorInfo layerSelectorInfo = null;
+            LayerSelectorInfo? layerSelectorInfo = null;
 
             // The 0xffff layer id is a marker value used to indicate support for progressive rendering.
             // We treat these images as having a single full-resolution frame.
@@ -122,26 +122,26 @@ namespace AvifFileType
 
         public uint GetPrimaryItemId()
         {
-            return this.metaBox.PrimaryItem?.ItemId ?? 1;
+            return this.metaBox!.PrimaryItem?.ItemId ?? 1;
         }
 
         public void GetTransformationProperties(uint itemId,
-                                                out CleanApertureBox cleanAperture,
-                                                out ImageRotateBox imageRotate,
-                                                out ImageMirrorBox imageMirror)
+                                                out CleanApertureBox? cleanAperture,
+                                                out ImageRotateBox? imageRotate,
+                                                out ImageMirrorBox? imageMirror)
         {
             cleanAperture = null;
             imageRotate = null;
             imageMirror = null;
 
-            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
-            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+            ItemPropertiesBox itemPropertiesBox = this.metaBox!.ItemProperties!;
+            IReadOnlyList<ItemPropertyAssociationEntry>? items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
                 for (int i = 0; i < items.Count; i++)
                 {
-                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
+                    IItemProperty? property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
 
                     if (property != null)
                     {
@@ -164,7 +164,7 @@ namespace AvifFileType
 
         public bool IsAlphaPremultiplied(uint primaryItemId, uint alphaItemId)
         {
-            IItemReferenceEntry entry = GetMatchingReferences(alphaItemId, ReferenceTypes.PremultipliedAlphaImage).FirstOrDefault();
+            IItemReferenceEntry? entry = GetMatchingReferences(alphaItemId, ReferenceTypes.PremultipliedAlphaImage).FirstOrDefault();
 
             return entry != null && entry.FromItemId == primaryItemId;
         }
@@ -188,7 +188,7 @@ namespace AvifFileType
 
                 if (totalItemSize <= ManagedAvifItemDataMaxSize)
                 {
-                    ManagedAvifItemData managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
+                    ManagedAvifItemData? managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
 
                     try
                     {
@@ -204,7 +204,7 @@ namespace AvifFileType
                 }
                 else
                 {
-                    UnmanagedAvifItemData unmanagedItemData = new UnmanagedAvifItemData(totalItemSize);
+                    UnmanagedAvifItemData? unmanagedItemData = new UnmanagedAvifItemData(totalItemSize);
 
                     try
                     {
@@ -227,21 +227,21 @@ namespace AvifFileType
             return data;
         }
 
-        public TProperty TryGetAssociatedItemProperty<TProperty>(uint itemId) where TProperty : class, IItemProperty
+        public TProperty? TryGetAssociatedItemProperty<TProperty>(uint itemId) where TProperty : class, IItemProperty
         {
             if (typeof(TProperty).IsAbstract)
             {
                 ExceptionUtil.ThrowInvalidOperationException($"Cannot call this method with an abstract type, type: { typeof(TProperty).Name }.");
             }
 
-            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
-            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+            ItemPropertiesBox itemPropertiesBox = this.metaBox!.ItemProperties!;
+            IReadOnlyList<ItemPropertyAssociationEntry>? items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
                 for (int i = 0; i < items.Count; i++)
                 {
-                    IItemProperty property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
+                    IItemProperty? property = itemPropertiesBox.TryGetProperty(items[i].PropertyIndex);
 
                     if (property is TProperty requestedProperty)
                     {
@@ -253,11 +253,11 @@ namespace AvifFileType
             return null;
         }
 
-        public ItemLocationEntry TryGetExifLocation(uint itemId)
+        public ItemLocationEntry? TryGetExifLocation(uint itemId)
         {
             foreach (IItemReferenceEntry item in GetMatchingReferences(itemId, ReferenceTypes.ContentDescription))
             {
-                IItemInfoEntry entry = TryGetItemInfoEntry(item.FromItemId);
+                IItemInfoEntry? entry = TryGetItemInfoEntry(item.FromItemId);
 
                 if (entry != null && entry.ItemType == ItemInfoEntryTypes.Exif)
                 {
@@ -268,13 +268,13 @@ namespace AvifFileType
             return null;
         }
 
-        public ImageGridInfo TryGetImageGridInfo(uint itemId)
+        public ImageGridInfo? TryGetImageGridInfo(uint itemId)
         {
-            ImageGridDescriptor gridDescriptor = TryGetImageGridDescriptor(itemId);
+            ImageGridDescriptor? gridDescriptor = TryGetImageGridDescriptor(itemId);
 
             if (gridDescriptor != null)
             {
-                IItemReferenceEntry derivedImageProperty = GetMatchingReferences(itemId, ReferenceTypes.DerivedImage).FirstOrDefault();
+                IItemReferenceEntry? derivedImageProperty = GetMatchingReferences(itemId, ReferenceTypes.DerivedImage).FirstOrDefault();
 
                 if (derivedImageProperty is null)
                 {
@@ -287,21 +287,21 @@ namespace AvifFileType
             return null;
         }
 
-        public IItemInfoEntry TryGetItemInfoEntry(uint itemId)
+        public IItemInfoEntry? TryGetItemInfoEntry(uint itemId)
         {
-            return this.metaBox.ItemInfo.TryGetEntry(itemId);
+            return this.metaBox!.ItemInfo!.TryGetEntry(itemId);
         }
 
-        public ItemLocationEntry TryGetItemLocation(uint itemId)
+        public ItemLocationEntry? TryGetItemLocation(uint itemId)
         {
-            return this.metaBox.ItemLocations.TryFindItem(itemId);
+            return this.metaBox!.ItemLocations!.TryFindItem(itemId);
         }
 
-        public ItemLocationEntry TryGetXmpLocation(uint itemId)
+        public ItemLocationEntry? TryGetXmpLocation(uint itemId)
         {
             foreach (IItemReferenceEntry item in GetMatchingReferences(itemId, ReferenceTypes.ContentDescription))
             {
-                IItemInfoEntry entry = TryGetItemInfoEntry(item.FromItemId);
+                IItemInfoEntry? entry = TryGetItemInfoEntry(item.FromItemId);
 
                 if (entry != null && entry.ItemType == ItemInfoEntryTypes.Mime)
                 {
@@ -320,8 +320,8 @@ namespace AvifFileType
 
         public void ValidateRequiredImageProperties(uint itemId)
         {
-            ItemPropertiesBox itemPropertiesBox = this.metaBox.ItemProperties;
-            IReadOnlyList<ItemPropertyAssociationEntry> items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
+            ItemPropertiesBox itemPropertiesBox = this.metaBox!.ItemProperties!;
+            IReadOnlyList<ItemPropertyAssociationEntry>? items = itemPropertiesBox.TryGetAssociatedProperties(itemId);
 
             if (items != null)
             {
@@ -336,7 +336,7 @@ namespace AvifFileType
                 for (int i = 0; i < items.Count; i++)
                 {
                     ItemPropertyAssociationEntry entry = items[i];
-                    IItemProperty property = itemPropertiesBox.TryGetProperty(entry.PropertyIndex);
+                    IItemProperty? property = itemPropertiesBox.TryGetProperty(entry.PropertyIndex);
 
                     if (entry.Essential)
                     {
@@ -375,11 +375,7 @@ namespace AvifFileType
         {
             if (disposing)
             {
-                if (this.reader != null)
-                {
-                    this.reader.Dispose();
-                    this.reader = null;
-                }
+                this.reader?.Dispose();
             }
         }
 
@@ -408,7 +404,7 @@ namespace AvifFileType
                 }
                 else if (constructionMethod == ConstructionMethod.IDatBoxOffset)
                 {
-                    ItemDataBox dataBox = this.metaBox.ItemData;
+                    ItemDataBox? dataBox = this.metaBox!.ItemData;
 
                     if (dataBox is null)
                     {
@@ -478,7 +474,7 @@ namespace AvifFileType
 
         private IEnumerable<IItemReferenceEntry> GetMatchingReferences(uint itemId, FourCC requiredReferenceType)
         {
-            ItemReferenceBox itemReferenceBox = this.metaBox.ItemReferences;
+            ItemReferenceBox? itemReferenceBox = this.metaBox!.ItemReferences;
 
             if (itemReferenceBox != null)
             {
@@ -492,7 +488,7 @@ namespace AvifFileType
 
         private bool IsAlphaChannelItem(uint itemId)
         {
-            AuxiliaryTypePropertyBox auxiliaryTypeBox = TryGetAssociatedItemProperty<AuxiliaryTypePropertyBox>(itemId);
+            AuxiliaryTypePropertyBox? auxiliaryTypeBox = TryGetAssociatedItemProperty<AuxiliaryTypePropertyBox>(itemId);
 
             if (auxiliaryTypeBox != null)
             {
@@ -556,7 +552,7 @@ namespace AvifFileType
 
             if (totalItemSize <= ManagedAvifItemDataMaxSize)
             {
-                ManagedAvifItemData managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
+                ManagedAvifItemData? managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
 
                 try
                 {
@@ -600,7 +596,7 @@ namespace AvifFileType
             }
             else
             {
-                UnmanagedAvifItemData unmanagedItemData = new UnmanagedAvifItemData(totalItemSize);
+                UnmanagedAvifItemData? unmanagedItemData = new UnmanagedAvifItemData(totalItemSize);
 
                 try
                 {
@@ -645,13 +641,13 @@ namespace AvifFileType
             return data;
         }
 
-        private ImageGridDescriptor TryGetImageGridDescriptor(uint itemId)
+        private ImageGridDescriptor? TryGetImageGridDescriptor(uint itemId)
         {
-            IItemInfoEntry entry = TryGetItemInfoEntry(itemId);
+            IItemInfoEntry? entry = TryGetItemInfoEntry(itemId);
 
             if (entry != null && entry.ItemType == ItemInfoEntryTypes.ImageGrid)
             {
-                ItemLocationEntry locationEntry = TryGetItemLocation(itemId);
+                ItemLocationEntry? locationEntry = TryGetItemLocation(itemId);
 
                 if (locationEntry != null)
                 {
@@ -662,7 +658,7 @@ namespace AvifFileType
 
                     using (AvifItemData itemData = ReadItemData(locationEntry))
                     {
-                        Stream stream = null;
+                        Stream? stream = null;
 
                         try
                         {
@@ -695,9 +691,9 @@ namespace AvifFileType
                 this.parser = parser;
             }
 
-            public FileTypeBox FileTypeBox => this.parser.fileTypeBox;
+            public FileTypeBox? FileTypeBox => this.parser.fileTypeBox;
 
-            public MetaBox MetaBox => this.parser.metaBox;
+            public MetaBox? MetaBox => this.parser.metaBox;
         }
     }
 }

@@ -173,7 +173,7 @@ namespace AvifFileType
                 this.items = items;
                 this.index = 0;
                 this.version = items.version;
-                this.Current = default;
+                this.Current = default!;
             }
 
             public CompressedAV1Image Current { get; private set; }
@@ -187,7 +187,7 @@ namespace AvifFileType
                         ExceptionUtil.ThrowInvalidOperationException("The enumeration has not started or has reached the end of the collection.");
                     }
 
-                    return this.Current;
+                    return this.Current!;
                 }
             }
 
@@ -214,7 +214,7 @@ namespace AvifFileType
                     }
 
                     this.index = localItems.Count;
-                    this.Current = default;
+                    this.Current = default!;
 
                     return false;
                 }
@@ -223,7 +223,7 @@ namespace AvifFileType
             public void Reset()
             {
                 this.index = 0;
-                this.Current = default;
+                this.Current = default!;
             }
         }
 

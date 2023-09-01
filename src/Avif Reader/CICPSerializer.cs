@@ -51,7 +51,7 @@ namespace AvifFileType
             };
         }
 
-        public static string TrySerialize(CICPColorData cicpColor)
+        public static string? TrySerialize(CICPColorData cicpColor)
         {
             // The identity matrix coefficient is never serialized.
             if (cicpColor.matrixCoefficients == CICPMatrixCoefficients.Identity)

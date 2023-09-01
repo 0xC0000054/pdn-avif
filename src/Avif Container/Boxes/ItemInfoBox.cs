@@ -84,7 +84,7 @@ namespace AvifFileType.AvifContainer
             this.itemInfoEntries.Add(itemInfo);
         }
 
-        public IItemInfoEntry TryGetEntry(uint itemId)
+        public IItemInfoEntry? TryGetEntry(uint itemId)
         {
             for (int i = 0; i < this.itemInfoEntries.Count; i++)
             {

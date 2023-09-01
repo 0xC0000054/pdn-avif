@@ -44,7 +44,7 @@ namespace AvifFileType.Exif
 
         public uint Offset { get; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is IFDEntry entry && Equals(entry);
         }

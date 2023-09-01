@@ -25,12 +25,12 @@ namespace AvifFileType.Interop
             this.buffer = SafeNativeMemoryBuffer.Create(size);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is UnmanagedCompressedAV1Data other && Equals(other);
         }
 
-        public bool Equals(UnmanagedCompressedAV1Data other)
+        public bool Equals(UnmanagedCompressedAV1Data? other)
         {
             if (other is null)
             {
@@ -57,11 +57,7 @@ namespace AvifFileType.Interop
         {
             if (disposing)
             {
-                if (this.buffer != null)
-                {
-                    this.buffer.Dispose();
-                    this.buffer = null;
-                }
+                this.buffer?.Dispose();
             }
         }
 
@@ -87,7 +83,7 @@ namespace AvifFileType.Interop
             writer.Write(this.buffer);
         }
 
-        public static bool operator ==(UnmanagedCompressedAV1Data left, UnmanagedCompressedAV1Data right)
+        public static bool operator ==(UnmanagedCompressedAV1Data? left, UnmanagedCompressedAV1Data? right)
         {
             if (ReferenceEquals(left, right))
             {
@@ -102,7 +98,7 @@ namespace AvifFileType.Interop
             return left.Equals(right);
         }
 
-        public static bool operator !=(UnmanagedCompressedAV1Data left, UnmanagedCompressedAV1Data right)
+        public static bool operator !=(UnmanagedCompressedAV1Data? left, UnmanagedCompressedAV1Data? right)
         {
             return !(left == right);
         }

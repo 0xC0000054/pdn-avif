@@ -97,7 +97,7 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public MetaBox(uint primaryItemId, int itemCount, bool use64BitFileOffsets, ItemDataBox itemDataBox)
+        public MetaBox(uint primaryItemId, int itemCount, bool use64BitFileOffsets, ItemDataBox? itemDataBox)
             : base(0, 0, BoxTypes.Meta)
         {
             this.Handler = new HandlerBox();
@@ -109,33 +109,33 @@ namespace AvifFileType.AvifContainer
             this.ItemProperties = new ItemPropertiesBox();
         }
 
-        public HandlerBox Handler { get; }
+        public HandlerBox? Handler { get; }
 
-        public PrimaryItemBox PrimaryItem { get; }
+        public PrimaryItemBox? PrimaryItem { get; }
 
-        public ItemDataBox ItemData { get; }
+        public ItemDataBox? ItemData { get; }
 
-        public ItemLocationBox ItemLocations { get; }
+        public ItemLocationBox? ItemLocations { get; }
 
-        public ItemInfoBox ItemInfo { get; }
+        public ItemInfoBox? ItemInfo { get; }
 
-        public ItemReferenceBox ItemReferences { get; }
+        public ItemReferenceBox? ItemReferences { get; }
 
-        public ItemPropertiesBox ItemProperties { get; }
+        public ItemPropertiesBox? ItemProperties { get; }
 
         public override void Write(BigEndianBinaryWriter writer)
         {
             base.Write(writer);
 
-            this.Handler.Write(writer);
-            this.PrimaryItem.Write(writer);
-            this.ItemLocations.Write(writer);
-            this.ItemInfo.Write(writer);
-            if (this.ItemReferences.Count > 0)
+            this.Handler!.Write(writer);
+            this.PrimaryItem!.Write(writer);
+            this.ItemLocations!.Write(writer);
+            this.ItemInfo!.Write(writer);
+            if (this.ItemReferences!.Count > 0)
             {
                 this.ItemReferences.Write(writer);
             }
-            this.ItemProperties.Write(writer);
+            this.ItemProperties!.Write(writer);
             if (this.ItemData != null)
             {
                 this.ItemData.Write(writer);
@@ -145,12 +145,12 @@ namespace AvifFileType.AvifContainer
         protected override ulong GetTotalBoxSize()
         {
             return base.GetTotalBoxSize()
-                   + this.Handler.GetSize()
-                   + this.PrimaryItem.GetSize()
-                   + this.ItemLocations.GetSize()
-                   + this.ItemInfo.GetSize()
-                   + (this.ItemReferences.Count > 0 ? this.ItemReferences.GetSize() : 0)
-                   + this.ItemProperties.GetSize()
+                   + this.Handler!.GetSize()
+                   + this.PrimaryItem!.GetSize()
+                   + this.ItemLocations!.GetSize()
+                   + this.ItemInfo!.GetSize()
+                   + (this.ItemReferences!.Count > 0 ? this.ItemReferences.GetSize() : 0)
+                   + this.ItemProperties!.GetSize()
                    + (this.ItemData != null ? this.ItemData.GetSize() : 0);
         }
     }

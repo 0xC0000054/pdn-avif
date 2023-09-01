@@ -24,7 +24,7 @@ namespace AvifFileType
         private sealed class AvifWriterItem
         {
             private AvifWriterItem(uint id,
-                                   string name,
+                                   string? name,
                                    CompressedAV1Image image,
                                    bool isAlphaImage,
                                    int duplicateImageIndex)
@@ -35,7 +35,7 @@ namespace AvifFileType
                 }
 
                 this.Id = id;
-                this.Name = name;
+                this.Name = name ?? string.Empty;
                 this.Image = image;
                 this.IsAlphaImage = isAlphaImage;
                 this.DuplicateImageIndex = duplicateImageIndex;
@@ -63,7 +63,7 @@ namespace AvifFileType
                 this.ItemReferences = new List<ItemReferenceEntryBox>();
             }
 
-            private AvifWriterItem(uint id, string name, ulong dataBoxOffset, ulong length)
+            private AvifWriterItem(uint id, string? name, ulong dataBoxOffset, ulong length)
             {
                 if (name is null)
                 {
@@ -85,7 +85,7 @@ namespace AvifFileType
 
             public string Name { get; }
 
-            public CompressedAV1Image Image { get; }
+            public CompressedAV1Image? Image { get; }
 
             public bool IsAlphaImage { get; }
 
@@ -116,7 +116,7 @@ namespace AvifFileType
             }
 
             public static AvifWriterItem CreateFromImage(uint itemId,
-                                                         string name,
+                                                         string? name,
                                                          CompressedAV1Image image,
                                                          bool isAlphaImage,
                                                          int duplicateImageIndex)
@@ -124,7 +124,7 @@ namespace AvifFileType
                 return new AvifWriterItem(itemId, name, image, isAlphaImage, duplicateImageIndex);
             }
 
-            public static AvifWriterItem CreateFromImageGrid(uint itemId, string name, ulong dataBoxOffset, ulong length)
+            public static AvifWriterItem CreateFromImageGrid(uint itemId, string? name, ulong dataBoxOffset, ulong length)
             {
                 return new AvifWriterItem(itemId, name, dataBoxOffset, length);
             }

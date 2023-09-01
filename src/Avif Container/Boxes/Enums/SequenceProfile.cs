@@ -61,7 +61,7 @@ namespace AvifFileType.AvifContainer
         {
             byte value = (byte)((seqProfileAndSeqLevelIdx0 >> 5) & 0x07);
 
-            if (SequenceProfileMap.Instance.TryGetValue(value, out SequenceProfile profile))
+            if (SequenceProfileMap.Instance.TryGetValue(value, out SequenceProfile? profile))
             {
                 return profile;
             }
@@ -71,12 +71,12 @@ namespace AvifFileType.AvifContainer
             }
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is SequenceProfile sequenceProfile && Equals(sequenceProfile);
         }
 
-        public bool Equals(SequenceProfile other)
+        public bool Equals(SequenceProfile? other)
         {
             if (other is null)
             {
@@ -91,12 +91,12 @@ namespace AvifFileType.AvifContainer
             return this.Value.GetHashCode();
         }
 
-        public static bool operator ==(SequenceProfile left, SequenceProfile right)
+        public static bool operator ==(SequenceProfile? left, SequenceProfile? right)
         {
             return EqualityComparer<SequenceProfile>.Default.Equals(left, right);
         }
 
-        public static bool operator !=(SequenceProfile left, SequenceProfile right)
+        public static bool operator !=(SequenceProfile? left, SequenceProfile? right)
         {
             return !(left == right);
         }

@@ -19,7 +19,7 @@ namespace AvifFileType
     internal sealed class ManagedAvifItemData
         : AvifItemData
     {
-        private IArrayPoolBuffer<byte> bufferFromArrayPool;
+        private readonly IArrayPoolBuffer<byte> bufferFromArrayPool;
 
         public ManagedAvifItemData(int length, IArrayPoolService pool)
             : base()
@@ -39,7 +39,7 @@ namespace AvifFileType
         {
             if (disposing)
             {
-                DisposableUtil.Free(ref this.bufferFromArrayPool);
+                this.bufferFromArrayPool.Dispose();
             }
         }
 

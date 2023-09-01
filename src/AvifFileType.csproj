@@ -6,6 +6,7 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="ARM64\**" />

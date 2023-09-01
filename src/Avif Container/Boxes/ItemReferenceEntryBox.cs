@@ -21,7 +21,7 @@ namespace AvifFileType.AvifContainer
         : Box, IItemReferenceEntry
     {
         private readonly List<uint> toItemIds;
-        private ItemReferenceBox parent;
+        private ItemReferenceBox? parent;
 
         public ItemReferenceEntryBox(in EndianBinaryReaderSegment reader, Box header, ItemReferenceBox parent)
             : base(header)
@@ -159,6 +159,11 @@ namespace AvifFileType.AvifContainer
 
         public override void Write(BigEndianBinaryWriter writer)
         {
+            if (this.parent is null)
+            {
+                ExceptionUtil.ThrowInvalidOperationException($"The {nameof(ItemReferenceEntryBox)} does not have a parent.");
+            }
+
             base.Write(writer);
 
             switch (this.parent.Version)
@@ -193,6 +198,11 @@ namespace AvifFileType.AvifContainer
 
         protected override ulong GetTotalBoxSize()
         {
+            if (this.parent is null)
+            {
+                ExceptionUtil.ThrowInvalidOperationException($"The {nameof(ItemReferenceEntryBox)} does not have a parent.");
+            }
+
             ulong fromItemIdSize;
             ulong toItemIdSize;
 

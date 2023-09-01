@@ -26,13 +26,13 @@ namespace AvifFileType
         private readonly AvifParser parser;
         private readonly uint primaryItemId;
         private readonly uint alphaItemId;
-        private readonly CleanApertureBox cleanApertureBox;
-        private readonly ImageRotateBox imageRotateBox;
-        private readonly ImageMirrorBox imageMirrorBox;
-        private readonly ImageGridInfo colorGridInfo;
-        private readonly ImageGridInfo alphaGridInfo;
-        private readonly IccProfileColorInformation iccProfileColorInformation;
-        private readonly NclxColorInformation nclxColorInformation;
+        private readonly CleanApertureBox? cleanApertureBox;
+        private readonly ImageRotateBox? imageRotateBox;
+        private readonly ImageMirrorBox? imageMirrorBox;
+        private readonly ImageGridInfo? colorGridInfo;
+        private readonly ImageGridInfo? alphaGridInfo;
+        private readonly IccProfileColorInformation? iccProfileColorInformation;
+        private readonly NclxColorInformation? nclxColorInformation;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AvifReader"/> class.
@@ -135,7 +135,7 @@ namespace AvifFileType
 
         public CICPColorData? ImageColorData { get; private set; }
 
-        public ImageGridMetadata ImageGridMetadata { get; private set; }
+        public ImageGridMetadata? ImageGridMetadata { get; private set; }
 
         public Surface Decode()
         {
@@ -147,7 +147,6 @@ namespace AvifFileType
             Size colorSize = GetImageSize(this.primaryItemId, this.colorGridInfo, "color");
 
             Surface surface = new Surface(colorSize);
-            bool disposeSurface = true;
 
             try
             {
@@ -162,27 +161,21 @@ namespace AvifFileType
                     new UnaryPixelOps.SetAlphaChannelTo255().Apply(surface, surface.Bounds);
                 }
                 ApplyImageTransforms(ref surface);
-
-                disposeSurface = false;
             }
-            finally
+            catch (Exception)
             {
-                // Free the surface if an exception was thrown when populating it.
-                if (disposeSurface)
-                {
-                    surface.Dispose();
-                    surface = null;
-                }
+                surface.Dispose();
+                throw;
             }
 
             return surface;
         }
 
-        public AvifItemData GetExifData()
+        public AvifItemData? GetExifData()
         {
             VerifyNotDisposed();
 
-            ItemLocationEntry entry = this.parser.TryGetExifLocation(this.primaryItemId);
+            ItemLocationEntry? entry = this.parser.TryGetExifLocation(this.primaryItemId);
 
             if (entry != null)
             {
@@ -204,11 +197,11 @@ namespace AvifFileType
             return this.iccProfileColorInformation?.ProfileData ?? ReadOnlyMemory<byte>.Empty;
         }
 
-        public AvifItemData GetXmpData()
+        public AvifItemData? GetXmpData()
         {
             VerifyNotDisposed();
 
-            ItemLocationEntry entry = this.parser.TryGetXmpLocation(this.primaryItemId);
+            ItemLocationEntry? entry = this.parser.TryGetXmpLocation(this.primaryItemId);
 
             return entry != null ? this.parser.ReadItemData(entry) : null;
         }
@@ -301,7 +294,7 @@ namespace AvifFileType
             }
         }
 
-        private void CheckImageItemType(uint itemId, ImageGridInfo gridInfo, string imageName)
+        private void CheckImageItemType(uint itemId, ImageGridInfo? gridInfo, string imageName)
         {
             if (gridInfo != null)
             {
@@ -314,7 +307,7 @@ namespace AvifFileType
             }
             else
             {
-                IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+                IItemInfoEntry? entry = this.parser.TryGetItemInfoEntry(itemId);
 
                 if (entry is null)
                 {
@@ -334,7 +327,7 @@ namespace AvifFileType
             }
         }
 
-        private void CheckRequiredImageProperties(uint itemId, ImageGridInfo gridInfo, string imageName)
+        private void CheckRequiredImageProperties(uint itemId, ImageGridInfo? gridInfo, string imageName)
         {
             if (gridInfo != null)
             {
@@ -347,7 +340,7 @@ namespace AvifFileType
             }
             else
             {
-                IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+                IItemInfoEntry? entry = this.parser.TryGetItemInfoEntry(itemId);
 
                 if (entry is null)
                 {
@@ -366,14 +359,14 @@ namespace AvifFileType
 
         private void DecodeColorImage(uint itemId, DecodeInfo decodeInfo, CICPColorData? colorConversionInfo, Surface fullSurface)
         {
-            ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
+            ItemLocationEntry? entry = this.parser.TryGetItemLocation(itemId);
 
             if (entry is null)
             {
                 ExceptionUtil.ThrowFormatException("The color image item location was not found.");
             }
 
-            LayerSelectorInfo layerInfo = this.parser.GetLayerSelectorInfo(itemId, entry.TotalItemSize);
+            LayerSelectorInfo? layerInfo = this.parser.GetLayerSelectorInfo(itemId, entry.TotalItemSize);
             // Read all of the image data, unless there are additional spatial layers beyond the one we want.
             ulong? numberOfBytesToRead = null;
 
@@ -398,14 +391,14 @@ namespace AvifFileType
 
         private void DecodeAlphaImage(uint itemId, DecodeInfo decodeInfo, Surface fullSurface)
         {
-            ItemLocationEntry entry = this.parser.TryGetItemLocation(itemId);
+            ItemLocationEntry? entry = this.parser.TryGetItemLocation(itemId);
 
             if (entry is null)
             {
                 ExceptionUtil.ThrowFormatException("The alpha image item location was not found.");
             }
 
-            LayerSelectorInfo layerInfo = this.parser.GetLayerSelectorInfo(itemId, entry.TotalItemSize);
+            LayerSelectorInfo? layerInfo = this.parser.GetLayerSelectorInfo(itemId, entry.TotalItemSize);
             // Read all of the image data, unless there are additional spatial layers beyond the one we want.
             ulong? numberOfBytesToRead = null;
 
@@ -440,7 +433,7 @@ namespace AvifFileType
 
         private void EnsurePrimaryItemIsNotHidden()
         {
-            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(this.primaryItemId);
+            IItemInfoEntry? entry = this.parser.TryGetItemInfoEntry(this.primaryItemId);
 
             if (entry is null)
             {
@@ -464,7 +457,7 @@ namespace AvifFileType
 
         private void FillAlphaImageGrid(Surface fullSurface)
         {
-            this.alphaGridInfo.CheckAvailableTileCount();
+            this.alphaGridInfo!.CheckAvailableTileCount();
             DecodeInfo decodeInfo = new DecodeInfo
             {
                 expectedWidth = 0,
@@ -507,7 +500,7 @@ namespace AvifFileType
 
         private void FillColorImageGrid(CICPColorData? colorInfo, Surface fullSurface)
         {
-            this.colorGridInfo.CheckAvailableTileCount();
+            this.colorGridInfo!.CheckAvailableTileCount();
             DecodeInfo decodeInfo = new DecodeInfo
             {
                 expectedWidth = 0,
@@ -551,16 +544,21 @@ namespace AvifFileType
             SetImageColorData(colorInfo, decodeInfo);
         }
 
-        private Size GetImageSize(uint itemId, ImageGridInfo gridInfo, string imageName)
+        private Size GetImageSize(uint itemId, ImageGridInfo? gridInfo, string imageName)
         {
-            IItemInfoEntry entry = this.parser.TryGetItemInfoEntry(itemId);
+            IItemInfoEntry? entry = this.parser.TryGetItemInfoEntry(itemId);
+
+            if (entry is null)
+            {
+                ExceptionUtil.ThrowFormatException($"The {imageName} image does not exist.");
+            }
 
             uint width;
             uint height;
 
             if (entry.ItemType == ItemInfoEntryTypes.AV01)
             {
-                ImageSpatialExtentsBox extents = this.parser.TryGetAssociatedItemProperty<ImageSpatialExtentsBox>(itemId);
+                ImageSpatialExtentsBox? extents = this.parser.TryGetAssociatedItemProperty<ImageSpatialExtentsBox>(itemId);
 
                 if (extents is null)
                 {
@@ -597,7 +595,7 @@ namespace AvifFileType
         {
             byte operatingPoint = 0;
 
-            AV1OperatingPointBox box = this.parser.TryGetAssociatedItemProperty<AV1OperatingPointBox>(itemId);
+            AV1OperatingPointBox? box = this.parser.TryGetAssociatedItemProperty<AV1OperatingPointBox>(itemId);
 
             if (box != null)
             {

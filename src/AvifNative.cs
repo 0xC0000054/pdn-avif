@@ -349,7 +349,7 @@ namespace AvifFileType
             return result;
         }
 
-        private static void HandleError(EncoderStatus status, ExceptionDispatchInfo exceptionDispatchInfo)
+        private static void HandleError(EncoderStatus status, ExceptionDispatchInfo? exceptionDispatchInfo)
         {
             if (exceptionDispatchInfo != null)
             {

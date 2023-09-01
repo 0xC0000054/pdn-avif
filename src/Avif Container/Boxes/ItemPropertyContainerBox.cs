@@ -20,12 +20,12 @@ namespace AvifFileType.AvifContainer
     internal sealed class ItemPropertyContainerBox
         : Box
     {
-        private readonly List<IItemProperty> properties;
+        private readonly List<IItemProperty?> properties;
 
         public ItemPropertyContainerBox()
             : base(BoxTypes.ItemPropertyContainer)
         {
-            this.properties = new List<IItemProperty>();
+            this.properties = new List<IItemProperty?>();
         }
 
         public ItemPropertyContainerBox(in EndianBinaryReaderSegment reader, Box header)
@@ -36,7 +36,7 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowFormatException($"Expected an 'ipco' box, actual value: '{ this.Type }'");
             }
 
-            this.properties = new List<IItemProperty>();
+            this.properties = new List<IItemProperty?>();
             ItemPropertyFactory propertyFactory = new ItemPropertyFactory();
 
             while (reader.Position < reader.EndOffset)
@@ -66,7 +66,7 @@ namespace AvifFileType.AvifContainer
             this.properties.Add(property);
         }
 
-        public IItemProperty TryGetProperty(uint propertyIndex)
+        public IItemProperty? TryGetProperty(uint propertyIndex)
         {
             if (propertyIndex > 0 && propertyIndex <= (uint)this.properties.Count)
             {
@@ -82,7 +82,12 @@ namespace AvifFileType.AvifContainer
 
             for (int i = 0; i < this.properties.Count; i++)
             {
-                this.properties[i].Write(writer);
+                IItemProperty? property = this.properties[i];
+
+                if (property != null)
+                {
+                    property.Write(writer);
+                }
             }
         }
 
@@ -92,7 +97,12 @@ namespace AvifFileType.AvifContainer
 
             for (int i = 0; i < this.properties.Count; i++)
             {
-                size += this.properties[i].GetSize();
+                IItemProperty? property = this.properties[i];
+
+                if (property != null)
+                {
+                    size += property.GetSize();
+                }
             }
 
             return size;
@@ -108,7 +118,7 @@ namespace AvifFileType.AvifContainer
             }
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public IItemProperty[] Items => this.itemPropertyContainerBox.properties.ToArray();
+            public IItemProperty?[] Items => this.itemPropertyContainerBox.properties.ToArray();
         }
     }
 }

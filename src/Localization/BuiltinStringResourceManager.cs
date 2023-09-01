@@ -17,7 +17,7 @@ namespace AvifFileType
     internal sealed class BuiltinStringResourceManager
         : IAvifStringResourceManager
     {
-        public string GetString(string name)
+        public string? GetString(string name)
         {
             return Resources.ResourceManager.GetString(name);
         }

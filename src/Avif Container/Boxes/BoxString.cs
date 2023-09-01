@@ -11,7 +11,9 @@
 ////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Buffers;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace AvifFileType.AvifContainer
@@ -66,8 +68,48 @@ namespace AvifFileType.AvifContainer
 
         public void Write(BigEndianBinaryWriter writer)
         {
-            writer.Write(Encoding.UTF8.GetBytes(this.Value));
-            writer.Write((byte)0);
+            if (string.IsNullOrEmpty(this.Value))
+            {
+                // For empty strings we only need to write the null-terminator.
+                writer.Write((byte)0);
+            }
+            else
+            {
+                WriteString(writer, this.Value);
+            }
+
+            [SkipLocalsInit]
+            static void WriteString(BigEndianBinaryWriter writer, string value)
+            {
+                const int MaxStackBufferSize = 256;
+
+                Span<byte> buffer = stackalloc byte[MaxStackBufferSize];
+                byte[] arrayFromPool = null;
+
+                try
+                {
+                    int stringLengthWithTerminator = checked(Encoding.UTF8.GetByteCount(value) + 1);
+
+                    if (stringLengthWithTerminator > MaxStackBufferSize)
+                    {
+                        arrayFromPool = ArrayPool<byte>.Shared.Rent(stringLengthWithTerminator);
+                        buffer = arrayFromPool;
+                    }
+
+                    int bytesWritten = Encoding.UTF8.GetBytes(value, buffer);
+
+                    buffer[bytesWritten] = 0;
+
+                    writer.Write(buffer.Slice(0, stringLengthWithTerminator));
+                }
+                finally
+                {
+                    if (arrayFromPool != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(arrayFromPool);
+                    }
+                }
+            }
         }
 
         public static bool operator ==(BoxString left, BoxString right)

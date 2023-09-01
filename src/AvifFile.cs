@@ -14,7 +14,6 @@ using AvifFileType.AvifContainer;
 using AvifFileType.Exif;
 using AvifFileType.Interop;
 using PaintDotNet;
-using PaintDotNet.AppModel;
 using PaintDotNet.Collections;
 using PaintDotNet.Imaging;
 using PaintDotNet.Rendering;
@@ -36,16 +35,11 @@ namespace AvifFileType
         // allow the data to be read from existing PDN files.
         private const string NclxMetadataName = "AvifNclxData";
 
-        public static Document Load(Stream input, IArrayPoolService arrayPool)
+        public static Document Load(Stream input)
         {
-            if (arrayPool is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
-            }
-
             Document? doc = null;
 
-            using (AvifReader reader = new AvifReader(input, leaveOpen: true, arrayPool))
+            using (AvifReader reader = new AvifReader(input, leaveOpen: true))
             {
                 Surface? surface = null;
                 bool disposeSurface = true;
@@ -56,7 +50,7 @@ namespace AvifFileType
 
                     doc = new Document(surface.Width, surface.Height);
 
-                    AddAvifMetadataToDocument(doc, reader, arrayPool);
+                    AddAvifMetadataToDocument(doc, reader);
 
                     doc.Layers.Add(Layer.CreateBackgroundLayer(surface, takeOwnership: true));
                     disposeSurface = false;
@@ -83,14 +77,8 @@ namespace AvifFileType
                                 bool preserveExistingTileSize,
                                 bool premultipliedAlpha,
                                 Surface scratchSurface,
-                                ProgressEventHandler progressCallback,
-                                IArrayPoolService arrayPool)
+                                ProgressEventHandler progressCallback)
         {
-            if (arrayPool is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
-            }
-
             if (lossless)
             {
                 losslessAlpha = true;
@@ -221,7 +209,6 @@ namespace AvifFileType
                                 AvifNative.CompressColorImage(window,
                                                               options,
                                                               ReportCompressionProgress,
-                                                              arrayPool,
                                                               ref progressDone,
                                                               progressTotal,
                                                               colorConversionInfo,
@@ -258,7 +245,6 @@ namespace AvifFileType
                                     AvifNative.CompressAlphaImage(window,
                                                                   options,
                                                                   ReportCompressionProgress,
-                                                                  arrayPool,
                                                                   ref progressDone,
                                                                   progressTotal,
                                                                   out alpha);
@@ -298,8 +284,7 @@ namespace AvifFileType
                                                    colorInformationBoxes,
                                                    progressCallback,
                                                    progressDone,
-                                                   progressTotal,
-                                                   arrayPool);
+                                                   progressTotal);
                 writer.WriteTo(output);
             }
             finally
@@ -322,7 +307,7 @@ namespace AvifFileType
             }
         }
 
-        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader, IArrayPoolService arrayPool)
+        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader)
         {
             AvifItemData? exif = reader.GetExifData();
 
@@ -330,7 +315,7 @@ namespace AvifFileType
             {
                 try
                 {
-                    ExifValueCollection? exifValues = ExifParser.Parse(exif, arrayPool);
+                    ExifValueCollection? exifValues = ExifParser.Parse(exif);
 
                     if (exifValues != null)
                     {

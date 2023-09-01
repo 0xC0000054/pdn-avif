@@ -297,8 +297,8 @@ __pycache__/
 # Local repository
 
 *.diagsession
+FodyWeavers.xsd
 
-src/Resources/BuildDate.txt
 vendor/
 
 # Include the compiled lib files

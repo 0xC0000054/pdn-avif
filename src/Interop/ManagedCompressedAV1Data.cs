@@ -10,9 +10,8 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using PaintDotNet;
-using PaintDotNet.AppModel;
 using System;
+using System.Buffers;
 using System.Runtime.InteropServices;
 
 namespace AvifFileType.Interop
@@ -20,13 +19,13 @@ namespace AvifFileType.Interop
     internal sealed class ManagedCompressedAV1Data
         : CompressedAV1Data, IEquatable<ManagedCompressedAV1Data>
     {
-        private readonly IArrayPoolBuffer<byte> buffer;
+        private readonly byte[] buffer;
         private GCHandle gcHandle;
 
-        public ManagedCompressedAV1Data(ulong size, IArrayPoolService arrayPool)
+        public ManagedCompressedAV1Data(ulong size)
             : base(size)
         {
-            this.buffer = arrayPool.Rent<byte>(checked((int)size));
+            this.buffer = ArrayPool<byte>.Shared.Rent(checked((int)size));
         }
 
         ~ManagedCompressedAV1Data()
@@ -51,10 +50,10 @@ namespace AvifFileType.Interop
                 return false;
             }
 
-            IArrayPoolBuffer<byte> firstBuffer = this.buffer;
-            IArrayPoolBuffer<byte> secondBuffer = other.buffer;
+            ReadOnlySpan<byte> firstBuffer = this.buffer.AsSpan(0, (int)this.ByteLength);
+            ReadOnlySpan<byte> secondBuffer = other.buffer.AsSpan(0, (int)this.ByteLength);
 
-            return firstBuffer.AsSpan().SequenceEqual(secondBuffer.AsSpan());
+            return firstBuffer.SequenceEqual(secondBuffer);
         }
 
         public override int GetHashCode()
@@ -66,7 +65,7 @@ namespace AvifFileType.Interop
         {
             if (disposing)
             {
-                this.buffer.Dispose();
+                ArrayPool<byte>.Shared.Return(this.buffer);
             }
 
             if (this.gcHandle.IsAllocated)
@@ -77,17 +76,17 @@ namespace AvifFileType.Interop
 
         protected override bool EqualsCore(CompressedAV1Data other)
         {
-            IArrayPoolBuffer<byte> firstBuffer = this.buffer;
-            IArrayPoolBuffer<byte> secondBuffer = ((ManagedCompressedAV1Data)other).buffer;
+            ReadOnlySpan<byte> firstBuffer = this.buffer.AsSpan(0, (int)this.ByteLength);
+            ReadOnlySpan<byte> secondBuffer = ((ManagedCompressedAV1Data)other).buffer.AsSpan(0, (int)this.ByteLength);
 
-            return firstBuffer.AsSpan().SequenceEqual(secondBuffer.AsSpan());
+            return firstBuffer.SequenceEqual(secondBuffer);
         }
 
         protected override IntPtr PinBuffer()
         {
             if (!this.gcHandle.IsAllocated)
             {
-                this.gcHandle = GCHandle.Alloc(this.buffer.Array, GCHandleType.Pinned);
+                this.gcHandle = GCHandle.Alloc(this.buffer, GCHandleType.Pinned);
             }
 
             return this.gcHandle.AddrOfPinnedObject();
@@ -103,7 +102,7 @@ namespace AvifFileType.Interop
 
         protected override void WriteBuffer(BigEndianBinaryWriter writer)
         {
-            writer.Write(this.buffer.Array, 0, this.buffer.RequestedLength);
+            writer.Write(this.buffer, 0, (int)this.ByteLength);
         }
 
         public static bool operator ==(ManagedCompressedAV1Data left, ManagedCompressedAV1Data right)

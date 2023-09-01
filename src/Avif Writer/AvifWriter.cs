@@ -12,7 +12,6 @@
 
 using AvifFileType.AvifContainer;
 using PaintDotNet;
-using PaintDotNet.AppModel;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,7 +25,6 @@ namespace AvifFileType
         private readonly MetaBox metaBox;
         private readonly IReadOnlyList<ColorInformationBox> colorInformationBoxes;
         private readonly bool colorImageIsGrayscale;
-        private readonly IArrayPoolService arrayPool;
 
         private readonly ProgressEventHandler? progressCallback;
         private uint progressDone;
@@ -42,17 +40,14 @@ namespace AvifFileType
                           IReadOnlyList<ColorInformationBox> colorInformationBoxes,
                           ProgressEventHandler? progressEventHandler,
                           uint progressDone,
-                          uint progressTotal,
-                          IArrayPoolService arrayPool)
+                          uint progressTotal)
         {
             this.state = new AvifWriterState(colorImages,
                                              alphaImages,
                                              homogeneousTiles,
                                              premultipliedAlpha,
                                              imageGridMetadata,
-                                             metadata,
-                                             arrayPool);
-            this.arrayPool = arrayPool;
+                                             metadata);
             this.colorImageIsGrayscale = chromaSubsampling == YUVChromaSubsampling.Subsampling400;
             this.colorInformationBoxes = colorInformationBoxes ?? System.Array.Empty<ColorInformationBox>();
             this.progressCallback = progressEventHandler;
@@ -68,7 +63,7 @@ namespace AvifFileType
 
         public void WriteTo(Stream stream)
         {
-            using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, true, this.arrayPool))
+            using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, true))
             {
                 this.fileTypeBox.Write(writer);
                 this.metaBox.Write(writer);

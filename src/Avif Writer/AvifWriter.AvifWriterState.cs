@@ -12,8 +12,7 @@
 
 using AvifFileType.AvifContainer;
 using AvifFileType.Interop;
-using PaintDotNet;
-using PaintDotNet.AppModel;
+using CommunityToolkit.HighPerformance.Buffers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,8 +35,7 @@ namespace AvifFileType
                                    HomogeneousTileInfo homogeneousTiles,
                                    bool premultipliedAlpha,
                                    ImageGridMetadata? imageGridMetadata,
-                                   AvifMetadata metadata,
-                                   IArrayPoolService arrayPool)
+                                   AvifMetadata metadata)
             {
                 if (colorImages is null)
                 {
@@ -49,23 +47,18 @@ namespace AvifFileType
                     ExceptionUtil.ThrowArgumentNullException(nameof(metadata));
                 }
 
-                if (arrayPool is null)
-                {
-                    ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
-                }
-
                 this.ImageGrid = imageGridMetadata;
                 this.items = new List<AvifWriterItem>(GetItemCount(colorImages, alphaImages, metadata));
                 this.duplicateAlphaTiles = new Dictionary<int, int>(homogeneousTiles.DuplicateAlphaTileMap);
                 this.duplicateColorTiles = new Dictionary<int, int>(homogeneousTiles.DuplicateColorTileMap);
-                DeduplicateColorTiles(colorImages, homogeneousTiles, arrayPool);
+                DeduplicateColorTiles(colorImages, homogeneousTiles);
 
                 if (alphaImages != null)
                 {
-                    DeduplicateAlphaTiles(alphaImages, homogeneousTiles, arrayPool);
+                    DeduplicateAlphaTiles(alphaImages, homogeneousTiles);
                 }
 
-                Initialize(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata, metadata, arrayPool);
+                Initialize(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata, metadata);
             }
 
             public uint AlphaItemId { get; private set; }
@@ -86,7 +79,7 @@ namespace AvifFileType
 
             public uint PrimaryItemId { get; private set; }
 
-            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata, IArrayPoolService arrayPool)
+            private static ItemDataBox CreateItemDataBox(ImageGridMetadata imageGridMetadata)
             {
                 ImageGridDescriptor imageGridDescriptor = new ImageGridDescriptor(imageGridMetadata);
 
@@ -97,7 +90,7 @@ namespace AvifFileType
                 {
                     stream = new MemoryStream(dataBoxBuffer);
 
-                    using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, leaveOpen: false, arrayPool))
+                    using (BigEndianBinaryWriter writer = new BigEndianBinaryWriter(stream, leaveOpen: false))
                     {
                         stream = null;
 
@@ -113,21 +106,20 @@ namespace AvifFileType
                 return new ItemDataBox(dataBoxBuffer);
             }
 
-            private void DeduplicateAlphaTiles(
-                IReadOnlyList<CompressedAV1Image> alphaImages,
-                HomogeneousTileInfo homogeneousTiles,
-                IArrayPoolService arrayPool)
+            private void DeduplicateAlphaTiles(IReadOnlyList<CompressedAV1Image> alphaImages,
+                                               HomogeneousTileInfo homogeneousTiles)
             {
                 if (alphaImages.Count == 1 || alphaImages.Count == homogeneousTiles.HomogeneousAlphaTiles.Count)
                 {
                     return;
                 }
 
-                using (IArrayPoolBuffer<int> duplicateTileSearchSpace = GetDuplicateTileSearchSpace(alphaImages,
-                                                                                                    homogeneousTiles.HomogeneousAlphaTiles,
-                                                                                                    arrayPool))
+                using (MemoryOwner<int> duplicateTileOwner = GetDuplicateTileSearchSpace(alphaImages,
+                                                                                                    homogeneousTiles.HomogeneousAlphaTiles))
                 {
-                    for (int i = 0; i < duplicateTileSearchSpace.Count; i++)
+                    ReadOnlySpan<int> duplicateTileSearchSpace = duplicateTileOwner.Span;
+
+                    for (int i = 0; i < duplicateTileSearchSpace.Length; i++)
                     {
                         int firstTileIndex = duplicateTileSearchSpace[i];
 
@@ -138,7 +130,7 @@ namespace AvifFileType
 
                         CompressedAV1Data firstImageData = alphaImages[firstTileIndex].Data;
 
-                        for (int j = i + 1; j < duplicateTileSearchSpace.Count; j++)
+                        for (int j = i + 1; j < duplicateTileSearchSpace.Length; j++)
                         {
                             int secondTileIndex = duplicateTileSearchSpace[j];
 
@@ -158,21 +150,19 @@ namespace AvifFileType
                 }
             }
 
-            private void DeduplicateColorTiles(
-                IReadOnlyList<CompressedAV1Image> colorImages,
-                HomogeneousTileInfo homogeneousTiles,
-                IArrayPoolService arrayPool)
+            private void DeduplicateColorTiles(IReadOnlyList<CompressedAV1Image> colorImages,
+                                               HomogeneousTileInfo homogeneousTiles)
             {
                 if (colorImages.Count == 1 || colorImages.Count == homogeneousTiles.HomogeneousColorTiles.Count)
                 {
                     return;
                 }
 
-                using (IArrayPoolBuffer<int> duplicateTileSearchSpace = GetDuplicateTileSearchSpace(colorImages,
-                                                                                                    homogeneousTiles.HomogeneousColorTiles,
-                                                                                                    arrayPool))
+                using (MemoryOwner<int> owner = GetDuplicateTileSearchSpace(colorImages, homogeneousTiles.HomogeneousColorTiles))
                 {
-                    for (int i = 0; i < duplicateTileSearchSpace.Count; i++)
+                    ReadOnlySpan<int> duplicateTileSearchSpace = owner.Span;
+
+                    for (int i = 0; i < duplicateTileSearchSpace.Length; i++)
                     {
                         int firstTileIndex = duplicateTileSearchSpace[i];
 
@@ -183,7 +173,7 @@ namespace AvifFileType
 
                         CompressedAV1Data firstImageData = colorImages[firstTileIndex].Data;
 
-                        for (int j = i + 1; j < duplicateTileSearchSpace.Count; j++)
+                        for (int j = i + 1; j < duplicateTileSearchSpace.Length; j++)
                         {
                             int secondTileIndex = duplicateTileSearchSpace[j];
 
@@ -203,13 +193,12 @@ namespace AvifFileType
                 }
             }
 
-            private static IArrayPoolBuffer<int> GetDuplicateTileSearchSpace(IReadOnlyList<CompressedAV1Image> images,
-                                                                             HashSet<int> homogeneousTiles,
-                                                                             IArrayPoolService arrayPool)
+            private static MemoryOwner<int> GetDuplicateTileSearchSpace(IReadOnlyList<CompressedAV1Image> images,
+                                                                        HashSet<int> homogeneousTiles)
             {
-                IArrayPoolBuffer<int> buffer = arrayPool.Rent<int>(images.Count - homogeneousTiles.Count);
+                MemoryOwner<int> buffer = MemoryOwner<int>.Allocate(images.Count - homogeneousTiles.Count);
 
-                int[] searchSpace = buffer.Array;
+                Span<int> searchSpace = buffer.Span;
                 int index = 0;
 
                 for (int i = 0; i < images.Count; i++)
@@ -228,15 +217,14 @@ namespace AvifFileType
                                     IReadOnlyList<CompressedAV1Image>? alphaImages,
                                     bool premultipliedAlpha,
                                     ImageGridMetadata? imageGridMetadata,
-                                    AvifMetadata metadata,
-                                    IArrayPoolService arrayPool)
+                                    AvifMetadata metadata)
             {
                 ImageStateInfo result;
 
                 if (imageGridMetadata != null)
                 {
                     result = InitializeFromImageGrid(colorImages, alphaImages, premultipliedAlpha, imageGridMetadata);
-                    this.ItemDataBox = CreateItemDataBox(imageGridMetadata, arrayPool);
+                    this.ItemDataBox = CreateItemDataBox(imageGridMetadata);
                 }
                 else
                 {

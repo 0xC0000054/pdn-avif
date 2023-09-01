@@ -12,7 +12,6 @@
 
 using AvifFileType.Interop;
 using PaintDotNet;
-using PaintDotNet.AppModel;
 using System;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
@@ -24,7 +23,6 @@ namespace AvifFileType
         public static void CompressAlphaImage(Surface surface,
                                               in EncoderOptions options,
                                               AvifProgressCallback avifProgress,
-                                              IArrayPoolService arrayPool,
                                               ref uint progressDone,
                                               uint progressTotal,
                                               out CompressedAV1Image alpha)
@@ -39,7 +37,7 @@ namespace AvifFileType
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
 
-            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1, arrayPool))
+            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1))
             {
                 IntPtr alphaImage;
 
@@ -85,7 +83,6 @@ namespace AvifFileType
         public static void CompressColorImage(Surface surface,
                                               in EncoderOptions options,
                                               AvifProgressCallback avifProgress,
-                                              IArrayPoolService arrayPool,
                                               ref uint progressDone,
                                               uint progressTotal,
                                               CICPColorData colorInfo,
@@ -101,7 +98,7 @@ namespace AvifFileType
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
 
-            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1, arrayPool))
+            using (CompressedAV1DataAllocator allocator = new CompressedAV1DataAllocator(1))
             {
                 IntPtr colorImage;
 

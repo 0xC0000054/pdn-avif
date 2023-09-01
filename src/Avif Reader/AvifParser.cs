@@ -11,7 +11,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
-using PaintDotNet.AppModel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,17 +29,15 @@ namespace AvifFileType
         private MetaBox? metaBox;
         private readonly EndianBinaryReader reader;
         private readonly ulong fileLength;
-        private readonly IArrayPoolService arrayPool;
 
-        public AvifParser(Stream stream, bool leaveOpen, IArrayPoolService arrayPool)
+        public AvifParser(Stream stream, bool leaveOpen)
         {
             if (stream is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(stream));
             }
 
-            this.arrayPool = arrayPool;
-            this.reader = new EndianBinaryReader(stream, Endianess.Big, leaveOpen, arrayPool);
+            this.reader = new EndianBinaryReader(stream, Endianess.Big, leaveOpen);
             Parse();
             this.fileLength = (ulong)stream.Length;
         }
@@ -188,11 +185,11 @@ namespace AvifFileType
 
                 if (totalItemSize <= ManagedAvifItemDataMaxSize)
                 {
-                    ManagedAvifItemData? managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
+                    ManagedAvifItemData? managedItemData = new ManagedAvifItemData((int)totalItemSize);
 
                     try
                     {
-                        this.reader.ReadExactly(managedItemData.GetBuffer(), 0, (int)managedItemData.Length);
+                        this.reader.ReadExactly(managedItemData.AsSpan());
 
                         data = managedItemData;
                         managedItemData = null;
@@ -552,13 +549,13 @@ namespace AvifFileType
 
             if (totalItemSize <= ManagedAvifItemDataMaxSize)
             {
-                ManagedAvifItemData? managedItemData = new ManagedAvifItemData((int)totalItemSize, this.arrayPool);
+                ManagedAvifItemData? managedItemData = new ManagedAvifItemData((int)totalItemSize);
 
                 try
                 {
                     int offset = 0;
                     int remainingBytes = (int)managedItemData.Length;
-                    byte[] bytes = managedItemData.GetBuffer();
+                    Span<byte> bytes = managedItemData.AsSpan();
 
                     for (int i = 0; i < extents.Count; i++)
                     {
@@ -574,7 +571,7 @@ namespace AvifFileType
                         }
 
                         this.reader.Position = itemOffset;
-                        this.reader.ReadExactly(bytes, offset, length);
+                        this.reader.ReadExactly(bytes.Slice(offset, length));
 
                         offset += length;
                         remainingBytes -= length;
@@ -664,7 +661,7 @@ namespace AvifFileType
                         {
                             stream = itemData.GetStream();
 
-                            using (EndianBinaryReader imageGridReader = new EndianBinaryReader(stream, this.reader.Endianess, this.arrayPool))
+                            using (EndianBinaryReader imageGridReader = new EndianBinaryReader(stream, this.reader.Endianess))
                             {
                                 stream = null;
 

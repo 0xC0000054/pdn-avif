@@ -40,24 +40,17 @@ namespace AvifFileType
         /// <param name="parser">The parser.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="input"/> is null.
-        /// -or-
-        /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        public AvifReader(Stream input, bool leaveOpen, PaintDotNet.AppModel.IArrayPoolService arrayPool)
+        public AvifReader(Stream input, bool leaveOpen)
         {
             if (input is null)
             {
                 ExceptionUtil.ThrowArgumentNullException(nameof(input));
             }
 
-            if (arrayPool is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
-            }
-
             // The parser is initialized first because it will throw an exception
             // if the AVIF file is invalid or not supported.
-            this.parser = new AvifParser(input, leaveOpen, arrayPool);
+            this.parser = new AvifParser(input, leaveOpen);
             this.primaryItemId = this.parser.GetPrimaryItemId();
             this.alphaItemId = this.parser.GetAlphaItemId(this.primaryItemId);
             this.parser.GetTransformationProperties(this.primaryItemId,

@@ -32,12 +32,8 @@ namespace AvifFileType.Exif
         /// </returns>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="exif"/> is null.
-        ///
-        /// -or-
-        ///
-        /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        internal static ExifValueCollection? Parse(AvifItemData exif, PaintDotNet.AppModel.IArrayPoolService arrayPool)
+        internal static ExifValueCollection? Parse(AvifItemData exif)
         {
             if (exif is null)
             {
@@ -56,7 +52,7 @@ namespace AvifFileType.Exif
 
                     if (byteOrder.HasValue)
                     {
-                        using (EndianBinaryReader reader = new EndianBinaryReader(stream, byteOrder.Value, arrayPool))
+                        using (EndianBinaryReader reader = new EndianBinaryReader(stream, byteOrder.Value))
                         {
                             stream = null;
 

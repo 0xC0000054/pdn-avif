@@ -10,9 +10,9 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using PaintDotNet;
-using PaintDotNet.AppModel;
+using CommunityToolkit.HighPerformance.Buffers;
 using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -32,12 +32,10 @@ namespace AvifFileType
         private readonly Stream stream;
         private int readOffset;
         private int readLength;
-        private IArrayPoolBuffer<byte>? bufferFromArrayPool;
         private readonly byte[] buffer;
         private readonly int bufferSize;
         private readonly Endianess endianess;
         private readonly bool leaveOpen;
-        private readonly IArrayPoolService arrayPool;
 #pragma warning restore IDE0032 // Use auto property
 
         /// <summary>
@@ -47,12 +45,8 @@ namespace AvifFileType
         /// <param name="byteOrder">The byte order of the stream.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is null.
-        ///
-        /// -or-
-        ///
-        /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        public EndianBinaryReader(Stream stream, Endianess byteOrder, IArrayPoolService arrayPool) : this(stream, byteOrder, false, arrayPool)
+        public EndianBinaryReader(Stream stream, Endianess byteOrder) : this(stream, byteOrder, false)
         {
         }
 
@@ -66,25 +60,14 @@ namespace AvifFileType
         /// </param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is null.
-        ///
-        /// -or-
-        ///
-        /// <paramref name="arrayPool"/> is null.
         /// </exception>
-        public EndianBinaryReader(Stream stream, Endianess byteOrder, bool leaveOpen, IArrayPoolService arrayPool)
+        public EndianBinaryReader(Stream stream, Endianess byteOrder, bool leaveOpen)
         {
-            if (arrayPool is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(arrayPool));
-            }
-
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
             this.bufferSize = (int)Math.Min(stream.Length, MaxBufferSize);
-            this.bufferFromArrayPool = arrayPool.Rent<byte>(this.bufferSize);
-            this.buffer = this.bufferFromArrayPool.Array;
+            this.buffer = ArrayPool<byte>.Shared.Rent(this.bufferSize);
             this.endianess = byteOrder;
             this.leaveOpen = leaveOpen;
-            this.arrayPool = arrayPool;
 
             this.readOffset = 0;
             this.readLength = 0;
@@ -265,9 +248,9 @@ namespace AvifFileType
                 }
                 else
                 {
-                    using (IArrayPoolBuffer<byte> bytes = this.arrayPool.Rent<byte>(length))
+                    using (SpanOwner<byte> owner = SpanOwner<byte>.Allocate(length))
                     {
-                        Span<byte> buffer = bytes.AsSpan();
+                        Span<byte> buffer = owner.Span;
 
                         ReadExactlyInternal(buffer);
 
@@ -400,9 +383,9 @@ namespace AvifFileType
             const int MaxReadBufferSize = 1024 * 1024;
             int bufferSize = (int)Math.Min(count, MaxReadBufferSize);
 
-            using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))
+            using (SpanOwner<byte> owner = SpanOwner<byte>.Allocate(bufferSize))
             {
-                Span<byte> readBuffer = poolBuffer.Array.AsSpan();
+                Span<byte> readBuffer = owner.Span;
 
                 byte* writePtr = null;
                 try
@@ -605,7 +588,7 @@ namespace AvifFileType
         {
             if (disposing)
             {
-                DisposableUtil.Free(ref this.bufferFromArrayPool);
+                ArrayPool<byte>.Shared.Return(this.buffer);
 
                 if (!this.leaveOpen)
                 {

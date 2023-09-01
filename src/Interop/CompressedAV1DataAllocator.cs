@@ -10,7 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using PaintDotNet.AppModel;
 using System;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
@@ -25,12 +24,10 @@ namespace AvifFileType.Interop
         : Disposable
     {
         private readonly List<CompressedDataState> compressedData;
-        private readonly IArrayPoolService arrayPool;
 
-        public CompressedAV1DataAllocator(int capacity, IArrayPoolService arrayPool)
+        public CompressedAV1DataAllocator(int capacity)
         {
             this.compressedData = new List<CompressedDataState>(capacity);
-            this.arrayPool = arrayPool;
         }
 
         public ExceptionDispatchInfo? ExceptionInfo { get; private set; }
@@ -42,7 +39,7 @@ namespace AvifFileType.Interop
 
             try
             {
-                CompressedDataState state = new CompressedDataState(size, this.arrayPool);
+                CompressedDataState state = new CompressedDataState(size);
                 this.compressedData.Add(state);
 
                 nativePointer = state.NativePointer;
@@ -104,11 +101,11 @@ namespace AvifFileType.Interop
             private readonly CompressedAV1Data data;
             private bool isPinned;
 
-            public CompressedDataState(ulong size, IArrayPoolService arrayPool)
+            public CompressedDataState(ulong size)
             {
                 if (size <= ManagedCompressedAV1DataMaxSize)
                 {
-                    this.data = new ManagedCompressedAV1Data(size, arrayPool);
+                    this.data = new ManagedCompressedAV1Data(size);
                 }
                 else
                 {

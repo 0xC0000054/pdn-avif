@@ -11,8 +11,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
-using PaintDotNet;
-using PaintDotNet.AppModel;
+using CommunityToolkit.HighPerformance.Buffers;
 using System;
 using System.Buffers.Binary;
 using System.IO;
@@ -26,9 +25,8 @@ namespace AvifFileType
     {
         private readonly Stream stream;
         private readonly bool leaveOpen;
-        private readonly IArrayPoolService arrayPool;
 
-        public BigEndianBinaryWriter(Stream stream, bool leaveOpen, IArrayPoolService arrayPool)
+        public BigEndianBinaryWriter(Stream stream, bool leaveOpen)
         {
             if (stream is null)
             {
@@ -37,7 +35,6 @@ namespace AvifFileType
 
             this.stream = stream;
             this.leaveOpen = leaveOpen;
-            this.arrayPool = arrayPool;
         }
 
         public long Position
@@ -158,12 +155,11 @@ namespace AvifFileType
             }
 
             const int MaxBufferSize = 1024 * 1024;
-
             int bufferSize = (int)Math.Min(length, MaxBufferSize);
 
-            using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))
+            using (SpanOwner<byte> poolBuffer = SpanOwner<byte>.Allocate(bufferSize))
             {
-                Span<byte> writeBuffer = poolBuffer.AsSpan();
+                Span<byte> writeBuffer = poolBuffer.Span;
 
                 byte* readPtr = null;
                 try

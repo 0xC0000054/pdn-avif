@@ -11,7 +11,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 using PaintDotNet;
-using PaintDotNet.AppModel;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
@@ -24,7 +23,6 @@ namespace AvifFileType
     public sealed class AvifFileTypePlugin
         : PropertyBasedFileType
     {
-        private readonly IArrayPoolService? arrayPoolService;
         private readonly IAvifStringResourceManager strings;
 
         // Names of the properties
@@ -58,7 +56,6 @@ namespace AvifFileType
                     SupportsLayers = false
                 })
         {
-            this.arrayPoolService = host?.Services.GetService<IArrayPoolService>();
             PaintDotNet.Avif.IAvifFileTypeStrings? avifFileTypeStrings = host?.Services.GetService<PaintDotNet.Avif.IAvifFileTypeStrings>();
 
             if (avifFileTypeStrings != null)
@@ -203,8 +200,7 @@ namespace AvifFileType
                           preserveExistingTileSize,
                           premultipliedAlpha,
                           scratchSurface,
-                          progressCallback,
-                          this.arrayPoolService!);
+                          progressCallback);
         }
 
         /// <summary>
@@ -212,7 +208,7 @@ namespace AvifFileType
         /// </summary>
         protected override Document OnLoad(Stream input)
         {
-            return AvifFile.Load(input, this.arrayPoolService!);
+            return AvifFile.Load(input);
         }
     }
 }

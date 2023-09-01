@@ -277,8 +277,8 @@ namespace AvifFileType
 
                 List<ColorInformationBox> colorInformationBoxes = new List<ColorInformationBox>(2);
 
-                byte[] iccProfileBytes = metadata.GetICCProfileBytesReadOnly();
-                if (iccProfileBytes != null && iccProfileBytes.Length > 0)
+                ReadOnlyMemory<byte> iccProfileBytes = metadata.IccProfile;
+                if (iccProfileBytes.Length > 0)
                 {
                     colorInformationBoxes.Add(new IccProfileColorInformation(iccProfileBytes));
                 }
@@ -378,14 +378,14 @@ namespace AvifFileType
                 }
             }
 
-            byte[] iccProfileBytes = reader.GetICCProfile();
+            ReadOnlyMemory<byte> iccProfileBytes = reader.GetICCProfile();
 
-            if (iccProfileBytes != null)
+            if (iccProfileBytes.Length > 0)
             {
                 doc.Metadata.AddExifPropertyItem(ExifSection.Image,
                                                  unchecked((ushort)ExifTagID.IccProfileData),
                                                  new ExifValue(ExifValueType.Undefined,
-                                                               iccProfileBytes));
+                                                               iccProfileBytes.Span));
             }
 
             AvifItemData xmp = reader.GetXmpData();

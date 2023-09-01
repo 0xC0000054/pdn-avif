@@ -199,9 +199,9 @@ namespace AvifFileType
             return null;
         }
 
-        public byte[] GetICCProfile()
+        public ReadOnlyMemory<byte> GetICCProfile()
         {
-            return this.iccProfileColorInformation?.GetProfileBytes();
+            return this.iccProfileColorInformation?.ProfileData ?? ReadOnlyMemory<byte>.Empty;
         }
 
         public AvifItemData GetXmpData()

@@ -10,34 +10,29 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using System;
+
 namespace AvifFileType
 {
     internal sealed class AvifMetadata
     {
-        private readonly byte[] exifBytes;
-        private readonly byte[] iccProfileBytes;
-        private readonly byte[] xmpBytes;
+        private readonly ReadOnlyMemory<byte> exifBytes;
+        private readonly ReadOnlyMemory<byte> iccProfileBytes;
+        private readonly ReadOnlyMemory<byte> xmpBytes;
 
-        public AvifMetadata(byte[] exifBytes, byte[] iccProfileBytes, byte[] xmpBytes)
+        public AvifMetadata(ReadOnlyMemory<byte> exifBytes,
+                            ReadOnlyMemory<byte> iccProfileBytes,
+                            ReadOnlyMemory<byte> xmpBytes)
         {
             this.exifBytes = exifBytes;
             this.iccProfileBytes = iccProfileBytes;
             this.xmpBytes = xmpBytes;
         }
 
-        public byte[] GetExifBytesReadOnly()
-        {
-            return this.exifBytes;
-        }
+        public ReadOnlyMemory<byte> Exif => this.exifBytes;
 
-        public byte[] GetICCProfileBytesReadOnly()
-        {
-            return this.iccProfileBytes;
-        }
+        public ReadOnlyMemory<byte> IccProfile => this.iccProfileBytes;
 
-        public byte[] GetXmpBytesReadOnly()
-        {
-            return this.xmpBytes;
-        }
+        public ReadOnlyMemory<byte> Xmp => this.xmpBytes;
     }
 }

@@ -14,6 +14,7 @@ using AvifFileType.AvifContainer;
 using AvifFileType.Interop;
 using PaintDotNet;
 using PaintDotNet.AppModel;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -248,8 +249,8 @@ namespace AvifFileType
 
                 List<int> mediaDataBoxMetadataItemIndexes = new List<int>(2);
 
-                byte[] exif = metadata.GetExifBytesReadOnly();
-                if (exif != null && exif.Length > 0)
+                ReadOnlyMemory<byte> exif = metadata.Exif;
+                if (exif.Length > 0)
                 {
                     AvifWriterItem exifItem = AvifWriterItem.CreateFromExif(itemId, exif);
                     itemId++;
@@ -260,8 +261,8 @@ namespace AvifFileType
                     mediaDataBoxContentSize += (ulong)exifItem.ContentBytes.Length;
                 }
 
-                byte[] xmp = metadata.GetXmpBytesReadOnly();
-                if (xmp != null && xmp.Length > 0)
+                ReadOnlyMemory<byte> xmp = metadata.Xmp;
+                if (xmp.Length > 0)
                 {
                     AvifWriterItem xmpItem = AvifWriterItem.CreateFromXmp(itemId, xmp);
                     xmpItem.ItemReferences.Add(new ItemReferenceEntryBox(xmpItem.Id, ReferenceTypes.ContentDescription, this.PrimaryItemId));
@@ -447,14 +448,12 @@ namespace AvifFileType
                     count *= 2;
                 }
 
-                byte[] exif = metadata.GetExifBytesReadOnly();
-                if (exif != null && exif.Length > 0)
+                if (metadata.Exif.Length > 0)
                 {
                     count++;
                 }
 
-                byte[] xmp = metadata.GetXmpBytesReadOnly();
-                if (xmp != null && xmp.Length > 0)
+                if (metadata.Xmp.Length > 0)
                 {
                     count++;
                 }

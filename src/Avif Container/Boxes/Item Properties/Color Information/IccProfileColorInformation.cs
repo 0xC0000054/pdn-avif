@@ -17,7 +17,7 @@ namespace AvifFileType.AvifContainer
     internal sealed class IccProfileColorInformation
         : ColorInformationBox
     {
-        private readonly byte[] iccProfile;
+        private readonly ReadOnlyMemory<byte> iccProfile;
 
         public IccProfileColorInformation(in EndianBinaryReaderSegment reader, ColorInformationBox header)
             : base(header)
@@ -32,27 +32,19 @@ namespace AvifFileType.AvifContainer
             this.iccProfile = reader.ReadBytes((int)profileLength);
         }
 
-        public IccProfileColorInformation(byte[] iccProfile)
+        public IccProfileColorInformation(ReadOnlyMemory<byte> iccProfile)
             : base(ColorInformationBoxTypes.IccProfile)
         {
-            if (iccProfile is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(iccProfile));
-            }
-
             this.iccProfile = iccProfile;
         }
 
-        public byte[] GetProfileBytes()
-        {
-            return (byte[])this.iccProfile?.Clone();
-        }
+        public ReadOnlyMemory<byte> ProfileData => this.iccProfile;
 
         public override void Write(BigEndianBinaryWriter writer)
         {
             base.Write(writer);
 
-            writer.Write(this.iccProfile);
+            writer.Write(this.iccProfile.Span);
         }
 
         protected override ulong GetTotalBoxSize()

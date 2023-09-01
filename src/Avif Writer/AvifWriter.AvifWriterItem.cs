@@ -38,19 +38,14 @@ namespace AvifFileType
                 this.Image = image;
                 this.IsAlphaImage = isAlphaImage;
                 this.DuplicateImageIndex = duplicateImageIndex;
-                this.ContentBytes = null;
+                this.ContentBytes = ReadOnlyMemory<byte>.Empty;
                 this.ItemInfoEntry = new AV01ItemInfoEntryBox(id, name);
                 this.ItemLocation = new ItemLocationEntry(id, image.Data.ByteLength);
                 this.ItemReferences = new List<ItemReferenceEntryBox>();
             }
 
-            private AvifWriterItem(uint id, string name, byte[] contentBytes, ItemInfoEntryBox itemInfo)
+            private AvifWriterItem(uint id, string name, ReadOnlyMemory<byte> contentBytes, ItemInfoEntryBox itemInfo)
             {
-                if (contentBytes is null)
-                {
-                    ExceptionUtil.ThrowArgumentNullException(nameof(contentBytes));
-                }
-
                 if (itemInfo is null)
                 {
                     ExceptionUtil.ThrowArgumentNullException(nameof(itemInfo));
@@ -79,7 +74,7 @@ namespace AvifFileType
                 this.Image = null;
                 this.IsAlphaImage = false;
                 this.DuplicateImageIndex = -1;
-                this.ContentBytes = null;
+                this.ContentBytes = ReadOnlyMemory<byte>.Empty;
                 this.ItemInfoEntry = new ImageGridItemInfoEntryBox(id, name);
                 this.ItemLocation = new ItemLocationEntry(id, dataBoxOffset, length);
                 this.ItemReferences = new List<ItemReferenceEntryBox>();
@@ -95,7 +90,7 @@ namespace AvifFileType
 
             public int DuplicateImageIndex { get; }
 
-            public byte[] ContentBytes { get; }
+            public ReadOnlyMemory<byte> ContentBytes { get; }
 
             public ItemInfoEntryBox ItemInfoEntry { get; }
 
@@ -133,7 +128,7 @@ namespace AvifFileType
                 return new AvifWriterItem(itemId, name, dataBoxOffset, length);
             }
 
-            public static AvifWriterItem CreateFromExif(uint itemId, byte[] exif)
+            public static AvifWriterItem CreateFromExif(uint itemId, ReadOnlyMemory<byte> exif)
             {
                 // The AVIF format includes the offset to the start of the TIFF header
                 // before the EXIF data.
@@ -141,14 +136,14 @@ namespace AvifFileType
                 // at offset 0, so we only need to copy the EXIF data to a new byte array.
 
                 byte[] contentBytes = new byte[sizeof(uint) + exif.Length];
-                Buffer.BlockCopy(exif, 0, contentBytes, 4, exif.Length);
+                exif.CopyTo(contentBytes.AsMemory(4, exif.Length));
 
                 ExifItemInfoEntry exifItemInfo = new ExifItemInfoEntry(itemId);
 
                 return new AvifWriterItem(itemId, "Exif", contentBytes, exifItemInfo);
             }
 
-            public static AvifWriterItem CreateFromXmp(uint itemId, byte[] xmp)
+            public static AvifWriterItem CreateFromXmp(uint itemId, ReadOnlyMemory<byte> xmp)
             {
                 XmpItemInfoEntry xmpItemInfo = new XmpItemInfoEntry(itemId);
 

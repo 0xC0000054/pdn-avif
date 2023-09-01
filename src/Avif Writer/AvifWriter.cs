@@ -322,12 +322,12 @@ namespace AvifFileType
                     this.progressDone++;
                     this.progressCallback?.Invoke(this, new ProgressEventArgs(((double)this.progressDone / this.progressTotal) * 100.0));
                 }
-                else if (item.ContentBytes != null)
+                else if (item.ContentBytes.Length > 0)
                 {
                     // We only ever write items with a single extent.
                     item.ItemLocation.Extents[0].WriteFinalOffset(writer, (ulong)writer.Position);
 
-                    writer.Write(item.ContentBytes);
+                    writer.Write(item.ContentBytes.Span);
                 }
             }
         }

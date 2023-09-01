@@ -56,7 +56,7 @@ namespace AvifFileType.AvifContainer
             this.reserved1 = 0;
             this.reserved2 = 0;
             this.reserved3 = 0;
-            this.name = new BoxString("PDNavif");
+            this.name = BoxString.Empty;
         }
 
         public string Name => this.name?.Value;

@@ -14,7 +14,9 @@ using AvifFileType.AvifContainer;
 using PaintDotNet;
 using PaintDotNet.AppModel;
 using System;
+using System.Buffers.Binary;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace AvifFileType
@@ -24,7 +26,6 @@ namespace AvifFileType
     {
         private Stream stream;
         private readonly bool leaveOpen;
-        private readonly byte[] buffer;
         private readonly IArrayPoolService arrayPool;
 
         public BigEndianBinaryWriter(Stream stream, bool leaveOpen, IArrayPoolService arrayPool)
@@ -36,7 +37,6 @@ namespace AvifFileType
 
             this.stream = stream;
             this.leaveOpen = leaveOpen;
-            this.buffer = new byte[sizeof(ulong)];
             this.arrayPool = arrayPool;
         }
 
@@ -66,14 +66,16 @@ namespace AvifFileType
             Write((ushort)value);
         }
 
+        [SkipLocalsInit]
         public void Write(ushort value)
         {
             VerifyNotDisposed();
 
-            this.buffer[0] = (byte)((value >> 8) & 0xff);
-            this.buffer[1] = (byte)(value & 0xff);
+            Span<byte> buffer = stackalloc byte[2];
 
-            this.stream.Write(this.buffer, 0, 2);
+            BinaryPrimitives.WriteUInt16BigEndian(buffer, value);
+
+            this.stream.Write(buffer);
         }
 
         public void Write(int value)
@@ -81,16 +83,16 @@ namespace AvifFileType
             Write((uint)value);
         }
 
+        [SkipLocalsInit]
         public void Write(uint value)
         {
             VerifyNotDisposed();
 
-            this.buffer[0] = (byte)((value >> 24) & 0xff);
-            this.buffer[1] = (byte)((value >> 16) & 0xff);
-            this.buffer[2] = (byte)((value >> 8) & 0xff);
-            this.buffer[3] = (byte)(value & 0xff);
+            Span<byte> buffer = stackalloc byte[4];
 
-            this.stream.Write(this.buffer, 0, 4);
+            BinaryPrimitives.WriteUInt32BigEndian(buffer, value);
+
+            this.stream.Write(buffer);
         }
 
         public void Write(long value)
@@ -98,20 +100,16 @@ namespace AvifFileType
             Write((ulong)value);
         }
 
+        [SkipLocalsInit]
         public void Write(ulong value)
         {
             VerifyNotDisposed();
 
-            this.buffer[0] = (byte)((value >> 56) & 0xff);
-            this.buffer[1] = (byte)((value >> 48) & 0xff);
-            this.buffer[2] = (byte)((value >> 40) & 0xff);
-            this.buffer[3] = (byte)((value >> 32) & 0xff);
-            this.buffer[4] = (byte)((value >> 24) & 0xff);
-            this.buffer[5] = (byte)((value >> 16) & 0xff);
-            this.buffer[6] = (byte)((value >> 8) & 0xff);
-            this.buffer[7] = (byte)(value & 0xff);
+            Span<byte> buffer = stackalloc byte[8];
 
-            this.stream.Write(this.buffer, 0, 8);
+            BinaryPrimitives.WriteUInt64BigEndian(buffer, value);
+
+            this.stream.Write(buffer);
         }
 
         public void Write(FourCC fourCC)
@@ -136,6 +134,13 @@ namespace AvifFileType
             this.stream.Write(bytes, offset, count);
         }
 
+        public void Write(ReadOnlySpan<byte> buffer)
+        {
+            VerifyNotDisposed();
+
+            this.stream.Write(buffer);
+        }
+
         public unsafe void Write(SafeBuffer buffer)
         {
             if (buffer is null)
@@ -158,27 +163,24 @@ namespace AvifFileType
 
             using (IArrayPoolBuffer<byte> poolBuffer = this.arrayPool.Rent<byte>(bufferSize))
             {
-                byte[] writeBuffer = poolBuffer.Array;
+                Span<byte> writeBuffer = poolBuffer.AsSpan();
 
                 byte* readPtr = null;
                 try
                 {
                     buffer.AcquirePointer(ref readPtr);
 
-                    fixed (byte* writePtr = writeBuffer)
+                    ulong totalBytesRead = 0;
+
+                    while (totalBytesRead < length)
                     {
-                        ulong totalBytesRead = 0;
+                        int bytesRead = (int)Math.Min(length - totalBytesRead, MaxBufferSize);
 
-                        while (totalBytesRead < length)
-                        {
-                            ulong bytesRead = Math.Min(length - totalBytesRead, MaxBufferSize);
+                        new ReadOnlySpan<byte>(readPtr + totalBytesRead, bytesRead).CopyTo(writeBuffer);
 
-                            Buffer.MemoryCopy(readPtr + totalBytesRead, writePtr, bytesRead, bytesRead);
+                        this.stream.Write(writeBuffer.Slice(0, bytesRead));
 
-                            this.stream.Write(writeBuffer, 0, (int)bytesRead);
-
-                            totalBytesRead += bytesRead;
-                        }
+                        totalBytesRead += (ulong)bytesRead;
                     }
                 }
                 finally

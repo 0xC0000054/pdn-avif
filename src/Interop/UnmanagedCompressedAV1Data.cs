@@ -45,7 +45,7 @@ namespace AvifFileType.Interop
             IntPtr firstBuffer = this.buffer.DangerousGetHandle();
             IntPtr secondBuffer = other.buffer.DangerousGetHandle();
 
-            return AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, this.ByteLength);
+            return BufferUtil.BitwiseEquals(firstBuffer, secondBuffer, this.ByteLength);
         }
 
         public override int GetHashCode()
@@ -66,7 +66,7 @@ namespace AvifFileType.Interop
             IntPtr firstBuffer = this.buffer.DangerousGetHandle();
             IntPtr secondBuffer = ((UnmanagedCompressedAV1Data)other).buffer.DangerousGetHandle();
 
-            return AvifNative.MemoryBlocksAreEqual(firstBuffer, secondBuffer, this.ByteLength);
+            return BufferUtil.BitwiseEquals(firstBuffer, secondBuffer, this.ByteLength);
         }
 
         protected override IntPtr PinBuffer()

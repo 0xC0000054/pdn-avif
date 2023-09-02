@@ -59,7 +59,7 @@ namespace AvifFileType.Interop
 
                     try
                     {
-                        result = AvifNative.MemoryBlocksAreEqual(firstPinnedBuffer, secondPinnedBuffer, this.ByteLength);
+                        result = BufferUtil.BitwiseEquals(firstPinnedBuffer, secondPinnedBuffer, this.ByteLength);
                     }
                     finally
                     {

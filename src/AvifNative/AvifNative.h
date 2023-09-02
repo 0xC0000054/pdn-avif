@@ -153,11 +153,6 @@ extern "C" {
         CompressedAV1OutputAlloc outputAllocator,
         void** compressedAlphaImage);
 
-    __declspec(dllexport) bool __stdcall MemoryBlocksAreEqual(
-        const void* buffer1,
-        const void* buffer2,
-        size_t size);
-
     // Gets a pointer to the AOM version string.
     // The memory is owned by AOM, and must not be modified or freed.
     __declspec(dllexport) const char* const __stdcall GetAOMVersionString();

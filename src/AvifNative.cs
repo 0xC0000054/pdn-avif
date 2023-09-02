@@ -306,26 +306,6 @@ namespace AvifFileType
             }
         }
 
-        public static bool MemoryBlocksAreEqual(IntPtr buffer1, IntPtr buffer2, ulong length)
-        {
-            bool result;
-
-            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
-            {
-                result = AvifNative_64.MemoryBlocksAreEqual(buffer1, buffer2, new UIntPtr(length));
-            }
-            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
-            {
-                result = AvifNative_ARM64.MemoryBlocksAreEqual(buffer1, buffer2, new UIntPtr(length));
-            }
-            else
-            {
-                throw new PlatformNotSupportedException();
-            }
-
-            return result;
-        }
-
         public static string GetAOMVersionString()
         {
             string result;

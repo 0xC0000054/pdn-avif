@@ -474,11 +474,16 @@ namespace AvifFileType
             if (tileRects.Length > 1)
             {
                 Dictionary<uint, int> homogeneousColorTileCache = new Dictionary<uint, int>();
-                Dictionary<byte, int> homogeneousAlphaTileCache = new Dictionary<byte, int>();
+                Dictionary<uint, int> homogeneousAlphaTileCache = new Dictionary<uint, int>();
+
+                RegionPtr<uint> sourceRegion = surface.AsRegionPtr().Cast<uint>();
 
                 for (int i = 0; i < tileRects.Length; i++)
                 {
-                    if (IsHomogeneousColorTile(surface, tileRects[i], out uint firstPixelBgr))
+                    RectInt32 tileBounds = tileRects[i];
+                    RegionPtr<uint> tileRegion = sourceRegion.Slice(tileBounds);
+
+                    if (IsHomogeneousColorTile(tileRegion, out uint firstPixelBgr))
                     {
                         homogeneousColorTiles.Add(i);
 
@@ -494,7 +499,7 @@ namespace AvifFileType
 
                     if (includeAlphaTiles)
                     {
-                        if (IsHomogeneousAlphaTile(surface, tileRects[i], out byte firstPixelAlpha))
+                        if (IsHomogeneousAlphaTile(tileRegion, out uint firstPixelAlpha))
                         {
                             homogeneousAlphaTiles.Add(i);
 
@@ -593,44 +598,34 @@ namespace AvifFileType
             return true;
         }
 
-        private static unsafe bool IsHomogeneousAlphaTile(Surface surface, Rectangle roi, out byte firstPixelAlpha)
+        private static unsafe bool IsHomogeneousAlphaTile(RegionPtr<uint> region, out uint firstPixelAlpha)
         {
-            firstPixelAlpha = surface[roi.Left, roi.Top].A;
+            const uint Mask = 0xff000000;
 
-            for (int y = roi.Top; y < roi.Bottom; y++)
+            firstPixelAlpha = region[0, 0] & Mask;
+
+            foreach (RegionRowPtr<uint> row in region.Rows)
             {
-                ColorBgra* ptr = surface.GetPointPointerUnchecked(roi.Left, y);
-
-                for (int x = roi.Left; x < roi.Right; x++)
+                if (!BufferUtil.BitwiseAllEqualToMasked(row.Ptr, Mask, firstPixelAlpha, row.Width))
                 {
-                    if (ptr->A != firstPixelAlpha)
-                    {
-                        return false;
-                    }
-
-                    ptr++;
+                    return false;
                 }
             }
 
             return true;
         }
 
-        private static unsafe bool IsHomogeneousColorTile(Surface surface, Rectangle roi, out uint firstPixelBgr)
+        private static unsafe bool IsHomogeneousColorTile(RegionPtr<uint> region, out uint firstPixelBgr)
         {
-            firstPixelBgr = surface[roi.Left, roi.Top].Bgra & 0x00ffffff;
+            const uint Mask = 0x00ffffff;
 
-            for (int y = roi.Top; y < roi.Bottom; y++)
+            firstPixelBgr = region[0, 0] & Mask;
+
+            foreach (RegionRowPtr<uint> row in region.Rows)
             {
-                ColorBgra* ptr = surface.GetPointPointerUnchecked(roi.Left, y);
-
-                for (int x = roi.Left; x < roi.Right; x++)
+                if (!BufferUtil.BitwiseAllEqualToMasked(row.Ptr, Mask, firstPixelBgr, row.Width))
                 {
-                    if ((ptr->Bgra & 0x00ffffff) != firstPixelBgr)
-                    {
-                        return false;
-                    }
-
-                    ptr++;
+                    return false;
                 }
             }
 

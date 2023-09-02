@@ -301,12 +301,18 @@ namespace
         aom_cfg.g_timebase.num = 1;
         aom_cfg.g_timebase.den = 24;
         aom_cfg.rc_end_usage = AOM_Q;
-        aom_cfg.rc_min_quantizer = aom_cfg.rc_max_quantizer = encodeOptions.quality;
         aom_cfg.g_threads = encodeOptions.threadCount;
         aom_cfg.g_usage = encodeOptions.usage;
         aom_cfg.monochrome = frame->monochrome;
         // Setting g_lag_in_frames to 0 is required when using the all intra encoding mode.
         aom_cfg.g_lag_in_frames = 0;
+
+        if (encodeOptions.lossless)
+        {
+            // Set both quantizer values to 0 for lossless encoding.
+            // AOM uses a quality range where 0 is the highest and 63 is the lowest.
+            aom_cfg.rc_min_quantizer = aom_cfg.rc_max_quantizer = 0;
+        }
 
         // Set the profile to use based on the frame format.
         // See Annex A.2 in the AV1 Specification:

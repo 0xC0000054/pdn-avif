@@ -774,10 +774,7 @@ namespace AvifFileType
                         }
                     }
 
-                    if (metadata is null)
-                    {
-                        metadata = TryCalculateBestTileSize(document, encoderPreset);
-                    }
+                    metadata ??= TryCalculateBestTileSize(document, encoderPreset);
                 }
             }
 

@@ -368,7 +368,7 @@ namespace AvifFileType
             if (iccProfileBytes.Length > 0)
             {
                 doc.Metadata.AddExifPropertyItem(ExifSection.Image,
-                                                 unchecked((ushort)ExifTagID.IccProfileData),
+                                                 ExifPropertyKeys.Image.InterColorProfile.Path.TagID,
                                                  new ExifValue(ExifValueType.Undefined,
                                                                iccProfileBytes.Span));
             }

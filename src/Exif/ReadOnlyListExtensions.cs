@@ -24,7 +24,7 @@ namespace AvifFileType.Exif
                 ExceptionUtil.ThrowArgumentNullException(nameof(items));
             }
 
-            return items is T[] asArray ? asArray : EnumerableExtensions.ToArrayEx(items);
+            return items is T[] asArray ? asArray : items.ToArrayEx();
         }
     }
 }

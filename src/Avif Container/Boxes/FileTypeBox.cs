@@ -84,39 +84,24 @@ namespace AvifFileType.AvifContainer
         /// <exception cref="FormatException">The file is not AVIF compatible.</exception>
         public void CheckForAvifCompatibility()
         {
-            if (this.majorBrand != AvifBrands.AVIF)
+            if (this.majorBrand != AvifBrands.AVIF && this.majorBrand != AvifBrands.AVIS)
             {
-                if (this.majorBrand == AvifBrands.AVIS)
+                bool isCompatible = false;
+
+                for (int i = 0; i < this.compatibleBrands.Count; i++)
                 {
-                    ExceptionUtil.ThrowFormatException("Animated AVIF images are not supported.");
+                    FourCC brand = this.compatibleBrands[i];
+
+                    if (brand == AvifBrands.AVIF || brand == AvifBrands.AVIS)
+                    {
+                        isCompatible = true;
+                        break;
+                    }
                 }
-                else
+
+                if (!isCompatible)
                 {
-                    bool isCompatible = false;
-                    bool isImageSequence = false;
-
-                    for (int i = 0; i < this.compatibleBrands.Count; i++)
-                    {
-                        FourCC brand = this.compatibleBrands[i];
-
-                        if (brand == AvifBrands.AVIF)
-                        {
-                            isCompatible = true;
-                        }
-                        else if (brand == AvifBrands.AVIS)
-                        {
-                            isImageSequence = true;
-                        }
-                    }
-
-                    if (isImageSequence)
-                    {
-                        ExceptionUtil.ThrowFormatException("Animated AVIF images are not supported.");
-                    }
-                    else if (!isCompatible)
-                    {
-                        ExceptionUtil.ThrowFormatException("The file is not AVIF compatible.");
-                    }
+                    ExceptionUtil.ThrowFormatException("The file is not AVIF compatible.");
                 }
             }
         }

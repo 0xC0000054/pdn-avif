@@ -16,6 +16,6 @@ namespace AvifFileType.AvifContainer
     {
         public static readonly FourCC IccProfile = new FourCC('p', 'r', 'o', 'f');
         public static readonly FourCC Nclx = new FourCC('n', 'c', 'l', 'x');
-        public static readonly FourCC RestrictedIccProfile = new FourCC('r', 'i', 'c', 'c');
+        public static readonly FourCC RestrictedIccProfile = new FourCC('r', 'I', 'C', 'C');
     }
 }

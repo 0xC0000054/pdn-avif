@@ -84,10 +84,7 @@ namespace AvifFileType.AvifContainer
             {
                 IItemProperty? property = this.properties[i];
 
-                if (property != null)
-                {
-                    property.Write(writer);
-                }
+                property?.Write(writer);
             }
         }
 

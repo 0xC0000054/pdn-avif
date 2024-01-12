@@ -136,10 +136,7 @@ namespace AvifFileType.AvifContainer
                 this.ItemReferences.Write(writer);
             }
             this.ItemProperties!.Write(writer);
-            if (this.ItemData != null)
-            {
-                this.ItemData.Write(writer);
-            }
+            this.ItemData?.Write(writer);
         }
 
         protected override ulong GetTotalBoxSize()

@@ -42,4 +42,4 @@ See [License.txt](License.txt) for more information.
 
 This project uses the following libraries. (the required header and library files are located in the `3rd-party` sub-folders).
 
-* [aom](https://aomedia.googlesource.com/aom/) (v3.6.0 tag)
+* [aom](https://aomedia.googlesource.com/aom/)

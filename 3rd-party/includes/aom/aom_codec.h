@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Alliance for Open Media. All rights reserved
+ * Copyright (c) 2016, Alliance for Open Media. All rights reserved.
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -102,7 +102,7 @@ extern "C" {
 
 /*!\brief Decorator indicating a function is deprecated */
 #ifndef AOM_DEPRECATED
-#if defined(__GNUC__) && __GNUC__
+#if defined(__GNUC__)
 #define AOM_DEPRECATED __attribute__((deprecated))
 #elif defined(_MSC_VER)
 #define AOM_DEPRECATED
@@ -112,7 +112,7 @@ extern "C" {
 #endif /* AOM_DEPRECATED */
 
 #ifndef AOM_DECLSPEC_DEPRECATED
-#if defined(__GNUC__) && __GNUC__
+#if defined(__GNUC__)
 #define AOM_DECLSPEC_DEPRECATED /**< \copydoc #AOM_DEPRECATED */
 #elif defined(_MSC_VER)
 /*!\brief \copydoc #AOM_DEPRECATED */
@@ -132,7 +132,7 @@ extern "C" {
 
 /*!\brief Decorator indicating that given struct/union/enum is packed */
 #ifndef ATTRIBUTE_PACKED
-#if defined(__GNUC__) && __GNUC__
+#if defined(__GNUC__)
 #define ATTRIBUTE_PACKED __attribute__((packed))
 #elif defined(_MSC_VER)
 #define ATTRIBUTE_PACKED

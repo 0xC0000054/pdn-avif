@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Alliance for Open Media. All rights reserved
+ * Copyright (c) 2016, Alliance for Open Media. All rights reserved.
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -1527,9 +1527,10 @@ enum aome_enc_control_id {
    */
   AV1E_SET_BITRATE_ONE_PASS_CBR = 163,
 
-  /*!\brief Codec control to set the maximum number of consecutive frame drops
-   * allowed for the frame dropper in 1 pass CBR mode, int parameter. Value of
-   * zero has no effect.
+  /*!\brief Codec control to set the maximum number of consecutive frame drops,
+   * in units of frames, allowed for the frame dropper in 1 pass
+   * CBR mode, int parameter. Value of zero has no effect.
+   * \deprecated Use the new control AV1E_SET_MAX_CONSEC_FRAME_DROP_MS_CBR.
    */
   AV1E_SET_MAX_CONSEC_FRAME_DROP_CBR = 164,
 
@@ -1538,6 +1539,36 @@ enum aome_enc_control_id {
    * AOM_SVC_FRAME_DROP_MODE enum: AOM_LAYER_DROP or AOM_FULL_SUPERFRAME_DROP.
    */
   AV1E_SET_SVC_FRAME_DROP_MODE = 165,
+
+  /*!\brief Codec control to set auto tiling, unsigned int parameter.
+   * Value of 1 means encoder will set number of tile_columns and tile_rows,
+   * based on the number of threads and resolution. This will override any
+   * settings set via SET_TILE_COLUMNS/ROWS. If the value is 0 no change is
+   * done, the previous setting (if any) for tile_columns/rows is preserved.
+   */
+  AV1E_SET_AUTO_TILES = 166,
+
+  /*!\brief Codec control to get the high motion content flag, used for
+   * screen content realtime (RTC) encoding, int * parameter.
+   * Returns an integer.
+   * 1 means high motion content flag is set to 1, 0 means set to 0.
+   */
+  AV1E_GET_HIGH_MOTION_CONTENT_SCREEN_RTC = 167,
+
+  /*!\brief Codec control to enable post encode frame drop for RTC encoding,
+   * int parameter.
+   *
+   * Value of 1 means encoder will enable post encode drop. Default is 0 (not
+   * enabled). Post encode drop is only allowed when frame dropping is enabled
+   * (aom_codec_enc_cfg::rc_dropframe_thresh > 0).
+   */
+  AV1E_SET_POSTENCODE_DROP_RTC = 168,
+
+  /*!\brief Codec control to set the maximum number of consecutive frame drops,
+   * in units of time (milliseconds), allowed for the frame dropper in 1 pass
+   * CBR mode, int parameter. Value of zero has no effect.
+   */
+  AV1E_SET_MAX_CONSEC_FRAME_DROP_MS_CBR = 169,
 
   // Any new encoder control IDs should be added above.
   // Maximum allowed encoder control ID is 229.
@@ -2195,6 +2226,18 @@ AOM_CTRL_USE_TYPE(AV1E_SET_SVC_FRAME_DROP_MODE, unsigned int)
 
 AOM_CTRL_USE_TYPE(AV1E_SET_MAX_CONSEC_FRAME_DROP_CBR, int)
 #define AOM_CTRL_AV1E_SET_MAX_CONSEC_FRAME_DROP_CBR
+
+AOM_CTRL_USE_TYPE(AV1E_SET_AUTO_TILES, unsigned int)
+#define AOM_CTRL_AV1E_SET_AUTO_TILES
+
+AOM_CTRL_USE_TYPE(AV1E_GET_HIGH_MOTION_CONTENT_SCREEN_RTC, int *)
+#define AOM_CTRL_AV1E_GET_HIGH_MOTION_CONTENT_SCREEN_RTC
+
+AOM_CTRL_USE_TYPE(AV1E_SET_POSTENCODE_DROP_RTC, int)
+#define AOM_CTRL_AV1E_SET_POSTENCODE_DROP_RTC
+
+AOM_CTRL_USE_TYPE(AV1E_SET_MAX_CONSEC_FRAME_DROP_MS_CBR, int)
+#define AOM_CTRL_AV1E_SET_MAX_CONSEC_FRAME_DROP_MS_CBR
 
 /*!\endcond */
 /*! @} - end defgroup aom_encoder */

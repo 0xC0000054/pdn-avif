@@ -42,7 +42,7 @@ namespace AvifFileType
                 this.ContentBytes = ReadOnlyMemory<byte>.Empty;
                 this.ItemInfoEntry = new AV01ItemInfoEntryBox(id, name);
                 this.ItemLocation = new ItemLocationEntry(id, image.Data.ByteLength);
-                this.ItemReferences = new List<ItemReferenceEntryBox>();
+                this.ItemReferences = [];
             }
 
             private AvifWriterItem(uint id, string name, ReadOnlyMemory<byte> contentBytes, ItemInfoEntryBox itemInfo)
@@ -60,7 +60,7 @@ namespace AvifFileType
                 this.ContentBytes = contentBytes;
                 this.ItemInfoEntry = itemInfo;
                 this.ItemLocation = new ItemLocationEntry(id, (ulong)contentBytes.Length);
-                this.ItemReferences = new List<ItemReferenceEntryBox>();
+                this.ItemReferences = [];
             }
 
             private AvifWriterItem(uint id, string? name, ulong dataBoxOffset, ulong length)
@@ -78,7 +78,7 @@ namespace AvifFileType
                 this.ContentBytes = ReadOnlyMemory<byte>.Empty;
                 this.ItemInfoEntry = new ImageGridItemInfoEntryBox(id, name);
                 this.ItemLocation = new ItemLocationEntry(id, dataBoxOffset, length);
-                this.ItemReferences = new List<ItemReferenceEntryBox>();
+                this.ItemReferences = [];
             }
 
             public uint Id { get; }

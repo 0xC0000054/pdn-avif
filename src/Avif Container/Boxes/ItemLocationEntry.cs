@@ -91,10 +91,10 @@ namespace AvifFileType.AvifContainer
             this.DataReferenceIndex = 0;
             this.ConstructionMethod = ConstructionMethod.FileOffset;
             this.BaseOffset = 0;
-            this.extents = new List<ItemLocationExtent>(1)
-            {
+            this.extents =
+            [
                 new ItemLocationExtent(itemLength)
-            };
+            ];
             this.TotalItemSize = itemLength;
         }
 
@@ -104,10 +104,10 @@ namespace AvifFileType.AvifContainer
             this.DataReferenceIndex = 0;
             this.ConstructionMethod = ConstructionMethod.IDatBoxOffset;
             this.BaseOffset = 0;
-            this.extents = new List<ItemLocationExtent>(1)
-            {
+            this.extents =
+            [
                 new ItemLocationExtent(itemDataBoxOffset, itemLength)
-            };
+            ];
             this.TotalItemSize = itemLength;
         }
 

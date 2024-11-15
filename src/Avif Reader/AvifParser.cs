@@ -322,13 +322,13 @@ namespace AvifFileType
 
             if (items != null)
             {
-                FourCC[] essentialProperties = new FourCC[]
-                {
+                FourCC[] essentialProperties =
+                [
                     // The AVIF specification states that the a1op box must be marked as essential.
                     BoxTypes.AV1OperatingPoint,
                     // The HEIF specification states that the lsel box must be marked as essential.
                     BoxTypes.LayerSelector
-                };
+                ];
 
                 for (int i = 0; i < items.Count; i++)
                 {
@@ -401,13 +401,7 @@ namespace AvifFileType
                 }
                 else if (constructionMethod == ConstructionMethod.IDatBoxOffset)
                 {
-                    ItemDataBox? dataBox = this.metaBox!.ItemData;
-
-                    if (dataBox is null)
-                    {
-                        throw new FormatException("The file does not have an item data box.");
-                    }
-
+                    ItemDataBox dataBox = this.metaBox!.ItemData ?? throw new FormatException("The file does not have an item data box.");
                     checked
                     {
                         if ((extent.Offset + extent.Length) > (ulong)dataBox.Length)
@@ -479,7 +473,7 @@ namespace AvifFileType
             }
             else
             {
-                return Enumerable.Empty<IItemReferenceEntry>();
+                return [];
             }
         }
 

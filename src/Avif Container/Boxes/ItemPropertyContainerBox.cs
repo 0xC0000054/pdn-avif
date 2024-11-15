@@ -25,7 +25,7 @@ namespace AvifFileType.AvifContainer
         public ItemPropertyContainerBox()
             : base(BoxTypes.ItemPropertyContainer)
         {
-            this.properties = new List<IItemProperty?>();
+            this.properties = [];
         }
 
         public ItemPropertyContainerBox(in EndianBinaryReaderSegment reader, Box header)
@@ -36,7 +36,7 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowFormatException($"Expected an 'ipco' box, actual value: '{ this.Type }'");
             }
 
-            this.properties = new List<IItemProperty?>();
+            this.properties = [];
             ItemPropertyFactory propertyFactory = new ItemPropertyFactory();
 
             while (reader.Position < reader.EndOffset)

@@ -73,8 +73,8 @@ namespace AvifFileType
         /// </summary>
         public override PropertyCollection OnCreateSavePropertyCollection()
         {
-            Property[] props = new Property[]
-            {
+            Property[] props =
+            [
                 new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
                 new BooleanProperty(PropertyNames.Lossless, false),
                 new BooleanProperty(PropertyNames.LosslessAlphaCompression, true),
@@ -86,15 +86,15 @@ namespace AvifFileType
                 new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif")),
                 new StringProperty(PropertyNames.PluginVersion),
                 new StringProperty(PropertyNames.AOMVersion),
-            };
+            ];
 
-            List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>
-            {
+            List<PropertyCollectionRule> rules =
+            [
                 new ReadOnlyBoundToBooleanRule(PropertyNames.Quality, PropertyNames.Lossless, false),
                 new ReadOnlyBoundToBooleanRule(PropertyNames.LosslessAlphaCompression, PropertyNames.Lossless, false),
                 new ReadOnlyBoundToBooleanRule(PropertyNames.YUVChromaSubsampling, PropertyNames.Lossless, false),
                 new ReadOnlyBoundToBooleanRule(PropertyNames.PremultipliedAlpha, PropertyNames.Lossless, false)
-            };
+            ];
 
             return new PropertyCollection(props, rules);
 
@@ -103,12 +103,12 @@ namespace AvifFileType
                 // The list is created manually because some of the YUVChromaSubsampling enumeration values
                 // are used for internal signaling.
 
-                object[] choiceValues = new object[]
-                {
+                object[] choiceValues =
+                [
                     YUVChromaSubsampling.Subsampling420,
                     YUVChromaSubsampling.Subsampling422,
                     YUVChromaSubsampling.Subsampling444
-                };
+                ];
 
                 int defaultChoiceIndex = Array.IndexOf(choiceValues, YUVChromaSubsampling.Subsampling422);
 

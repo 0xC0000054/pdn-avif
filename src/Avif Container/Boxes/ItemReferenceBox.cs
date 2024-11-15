@@ -30,7 +30,7 @@ namespace AvifFileType.AvifContainer
                 ExceptionUtil.ThrowFormatException($"ItemReferenceBox version must be 0 or 1, actual value { this.Version }");
             }
 
-            this.itemReferences = new List<ItemReferenceEntryBox>();
+            this.itemReferences = [];
 
             while (reader.Position < reader.EndOffset)
             {
@@ -43,7 +43,7 @@ namespace AvifFileType.AvifContainer
         public ItemReferenceBox()
             : base(0, 0, BoxTypes.ItemReference)
         {
-            this.itemReferences = new List<ItemReferenceEntryBox>();
+            this.itemReferences = [];
         }
 
         public int Count => this.itemReferences.Count;

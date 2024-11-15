@@ -34,7 +34,7 @@ namespace AvifFileType.AvifContainer
             }
             else
             {
-                this.auxSubType = Array.Empty<byte>();
+                this.auxSubType = [];
             }
         }
 
@@ -42,7 +42,7 @@ namespace AvifFileType.AvifContainer
             : base(0, 0, BoxTypes.AuxiliaryTypeProperty)
         {
             this.AuxType = new BoxString(auxType);
-            this.auxSubType = Array.Empty<byte>();
+            this.auxSubType = [];
         }
 
         public IReadOnlyList<byte> AuxSubType => this.auxSubType;

@@ -58,12 +58,12 @@ namespace AvifFileType.AvifContainer
         {
             this.majorBrand = AvifBrands.AVIF;
             this.minorVersion = 0;
-            List<FourCC> compatibleBrands = new List<FourCC>
-            {
+            List<FourCC> compatibleBrands =
+            [
                 AvifBrands.AVIF,
                 AvifBrands.MIF1,
                 AvifBrands.MIAF
-            };
+            ];
 
             switch (chromaSubsampling)
             {

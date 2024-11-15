@@ -28,7 +28,7 @@ namespace AvifFileType.AvifContainer
         public ItemPropertyAssociationBox()
             : base(0, 0, BoxTypes.ItemPropertyAssociations)
         {
-            this.entries = new Dictionary<uint, List<ItemPropertyAssociationEntry>>();
+            this.entries = [];
         }
 
         public ItemPropertyAssociationBox(in EndianBinaryReaderSegment reader, Box header)
@@ -110,10 +110,10 @@ namespace AvifFileType.AvifContainer
             }
             else
             {
-                itemProperties = new List<ItemPropertyAssociationEntry>
-                {
+                itemProperties =
+                [
                     new ItemPropertyAssociationEntry(essential, propertyIndex)
-                };
+                ];
 
                 this.entries.Add(itemId, itemProperties);
             }

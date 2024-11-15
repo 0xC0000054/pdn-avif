@@ -466,15 +466,15 @@ namespace AvifFileType
 
         private static HomogeneousTileInfo GetHomogeneousTileInfo(Surface surface, Rectangle[] tileRects, bool includeAlphaTiles)
         {
-            Dictionary<int, int> duplicateColorTileMap = new Dictionary<int, int>();
-            HashSet<int> homogeneousColorTiles = new HashSet<int>();
-            Dictionary<int, int> duplicateAlphaTileMap = new Dictionary<int, int>();
-            HashSet<int> homogeneousAlphaTiles = new HashSet<int>();
+            Dictionary<int, int> duplicateColorTileMap = [];
+            HashSet<int> homogeneousColorTiles = [];
+            Dictionary<int, int> duplicateAlphaTileMap = [];
+            HashSet<int> homogeneousAlphaTiles = [];
 
             if (tileRects.Length > 1)
             {
-                Dictionary<uint, int> homogeneousColorTileCache = new Dictionary<uint, int>();
-                Dictionary<uint, int> homogeneousAlphaTileCache = new Dictionary<uint, int>();
+                Dictionary<uint, int> homogeneousColorTileCache = [];
+                Dictionary<uint, int> homogeneousAlphaTileCache = [];
 
                 RegionPtr<uint> sourceRegion = surface.AsRegionPtr().Cast<uint>();
 
@@ -528,7 +528,7 @@ namespace AvifFileType
 
             if (imageGridMetadata is null)
             {
-                rects = new Rectangle[] { document.Bounds };
+                rects = [document.Bounds];
             }
             else
             {

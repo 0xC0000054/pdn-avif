@@ -20,7 +20,7 @@ namespace AvifFileType.AvifContainer
 
         public ItemDataBox(Box header) : base(header)
         {
-            this.data = Array.Empty<byte>();
+            this.data = [];
         }
 
         public ItemDataBox(byte[] dataToWrite)

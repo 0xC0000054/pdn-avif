@@ -70,7 +70,7 @@ namespace AvifFileType
                     // instead of using a separate alpha image grid.
                     // See https://github.com/AOMediaCodec/libavif/issues/1203
 
-                    List<uint> alphaImageIds = new List<uint>();
+                    List<uint> alphaImageIds = [];
 
                     foreach (uint colorItem in this.colorGridInfo.ChildImageIds)
                     {

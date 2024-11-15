@@ -159,7 +159,7 @@ namespace AvifFileType.Exif
 
         private static List<ParserIFDEntry> ParseDirectories(EndianBinaryReader reader, uint firstIFDOffset)
         {
-            List<ParserIFDEntry> items = new List<ParserIFDEntry>();
+            List<ParserIFDEntry> items = [];
 
             bool foundExif = false;
             bool foundGps = false;
@@ -418,7 +418,7 @@ namespace AvifFileType.Exif
 
                 if (count == 0)
                 {
-                    return Array.Empty<byte>();
+                    return [];
                 }
 
                 // Paint.NET always stores data in little-endian byte order.

@@ -27,7 +27,7 @@
     <None Remove="*.diagsession" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.1" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.3.2" />
     <PackageReference Include="ILMerge.Fody" Version="1.24.0" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>

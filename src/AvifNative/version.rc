@@ -71,7 +71,7 @@ BEGIN
             VALUE "FileDescription", "AvifFileType native library"
             VALUE "FileVersion", "3.11.0.0"
             VALUE "InternalName", "AvifNative.dll"
-            VALUE "LegalCopyright", "Copyright (C) 2024 Nicholas Hayes"
+            VALUE "LegalCopyright", "Copyright (C) 2025 Nicholas Hayes"
             VALUE "OriginalFilename", "AvifNative.dll"
             VALUE "ProductName", "AvifFileType"
             VALUE "ProductVersion", "3.11.0.0"

@@ -260,7 +260,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -312,7 +312,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -362,7 +362,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -407,7 +407,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -467,7 +467,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -524,7 +524,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -587,7 +587,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -641,7 +641,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -688,7 +688,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {
@@ -725,7 +725,7 @@ namespace
             const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
             const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
 
-            ColorBgra* dstPtr = reinterpret_cast<ColorBgra*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra)));
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
             for (uint32_t x = 0; x < copyWidth; ++x)
             {

@@ -136,7 +136,7 @@ namespace
     {
         for (size_t y = 0; y < bgraImage->height; ++y)
         {
-            const ColorBgra* src = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (y * bgraImage->stride));
+            const ColorBgra32* src = reinterpret_cast<const ColorBgra32*>(bgraImage->scan0 + (y * bgraImage->stride));
             uint8_t* dstY = &yPlane[y * yPlaneStride];
             uint8_t* dstU = &uPlane[y * uPlaneStride];
             uint8_t* dstV = &vPlane[y * vPlaneStride];
@@ -199,7 +199,7 @@ namespace
 
                         // Unpack RGB into normalized float
 
-                        const ColorBgra* pixel = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (y * bgraImage->stride) + (x * sizeof(ColorBgra)));
+                        const ColorBgra32* pixel = reinterpret_cast<const ColorBgra32*>(bgraImage->scan0 + (y * bgraImage->stride) + (x * sizeof(ColorBgra32)));
 
                         rgbPixel.r = uint8ToFloatTable[pixel->r];
                         rgbPixel.g = uint8ToFloatTable[pixel->g];
@@ -280,7 +280,7 @@ namespace
     {
         for (uint32_t y = 0; y < bgraImage->height; ++y)
         {
-            const ColorBgra* src = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
+            const ColorBgra32* src = reinterpret_cast<const ColorBgra32*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
             uint8_t* dst = &yPlane[y * yPlaneStride];
 
             for (uint32_t x = 0; x < bgraImage->width; ++x)
@@ -300,7 +300,7 @@ namespace
     {
         for (uint32_t y = 0; y < bgraImage->height; ++y)
         {
-            const ColorBgra* src = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
+            const ColorBgra32* src = reinterpret_cast<const ColorBgra32*>(bgraImage->scan0 + (static_cast<size_t>(y) * bgraImage->stride));
             uint8_t* dst = &yPlane[y * yPlaneStride];
 
             for (uint32_t x = 0; x < bgraImage->width; ++x)

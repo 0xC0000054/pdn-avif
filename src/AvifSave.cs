@@ -27,46 +27,8 @@ using ExifColorSpace = AvifFileType.Exif.ExifColorSpace;
 
 namespace AvifFileType
 {
-    internal static class AvifFile
+    internal static class AvifSave
     {
-        private const string CICPMetadataName = "AvifCICPData";
-        private const string ImageGridName = "AvifImageGrid";
-        // This value is no longer written, but it is retained to
-        // allow the data to be read from existing PDN files.
-        private const string NclxMetadataName = "AvifNclxData";
-
-        public static Document Load(Stream input)
-        {
-            Document? doc = null;
-
-            using (AvifReader reader = new AvifReader(input, leaveOpen: true))
-            {
-                Surface? surface = null;
-                bool disposeSurface = true;
-
-                try
-                {
-                    surface = reader.Decode();
-
-                    doc = new Document(surface.Width, surface.Height);
-
-                    AddAvifMetadataToDocument(doc, reader);
-
-                    doc.Layers.Add(Layer.CreateBackgroundLayer(surface, takeOwnership: true));
-                    disposeSurface = false;
-                }
-                finally
-                {
-                    if (disposeSurface)
-                    {
-                        surface?.Dispose();
-                    }
-                }
-            }
-
-            return doc;
-        }
-
         public static void Save(Document document,
                                 Stream output,
                                 int quality,
@@ -136,7 +98,7 @@ namespace AvifFileType
                 // Look for NCLX meta-data if the CICP meta-data was not found.
                 // This preserves backwards compatibility with PDN files created by
                 // previous versions of this plugin.
-                string? serializedData = docMetadata.GetUserValue(CICPMetadataName) ?? docMetadata.GetUserValue(NclxMetadataName);
+                string? serializedData = docMetadata.GetUserValue(AvifMetadataNames.CICPMetadataName) ?? docMetadata.GetUserValue(AvifMetadataNames.NclxMetadataName);
 
                 if (serializedData != null)
                 {
@@ -303,94 +265,6 @@ namespace AvifFileType
                 catch (OperationCanceledException)
                 {
                     return false;
-                }
-            }
-        }
-
-        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader)
-        {
-            AvifItemData? exif = reader.GetExifData();
-
-            if (exif != null)
-            {
-                try
-                {
-                    ExifValueCollection? exifValues = ExifParser.Parse(exif);
-
-                    if (exifValues != null)
-                    {
-                        exifValues.Remove(ExifPropertyKeys.Image.InterColorProfile.Path);
-                        // The HEIF specification states that the EXIF orientation tag is only
-                        // informational and should not be used to rotate the image.
-                        // See https://github.com/strukturag/libheif/issues/227#issuecomment-642165942
-                        exifValues.Remove(ExifPropertyKeys.Image.Orientation.Path);
-
-                        foreach (KeyValuePair<ExifPropertyPath, ExifValue> item in exifValues)
-                        {
-                            ExifPropertyPath path = item.Key;
-
-                            doc.Metadata.AddExifPropertyItem(path.Section, path.TagID, item.Value);
-                        }
-                    }
-                }
-                finally
-                {
-                    exif.Dispose();
-                }
-            }
-
-            CICPColorData? imageColorData = reader.ImageColorData;
-
-            if (imageColorData.HasValue)
-            {
-                string? serializedValue = CICPSerializer.TrySerialize(imageColorData.Value);
-
-                if (serializedValue != null)
-                {
-                    doc.Metadata.SetUserValue(CICPMetadataName, serializedValue);
-                }
-            }
-
-            ImageGridMetadata? imageGridMetadata = reader.ImageGridMetadata;
-
-            if (imageGridMetadata != null)
-            {
-                string serializedValue = imageGridMetadata.SerializeToString();
-
-                if (serializedValue != null)
-                {
-                    doc.Metadata.SetUserValue(ImageGridName, serializedValue);
-                }
-            }
-
-            ReadOnlyMemory<byte> iccProfileBytes = reader.GetICCProfile();
-
-            if (iccProfileBytes.Length > 0)
-            {
-                doc.Metadata.AddExifPropertyItem(ExifSection.Image,
-                                                 ExifPropertyKeys.Image.InterColorProfile.Path.TagID,
-                                                 new ExifValue(ExifValueType.Undefined,
-                                                               iccProfileBytes.Span));
-            }
-
-            AvifItemData? xmp = reader.GetXmpData();
-
-            if (xmp != null)
-            {
-                try
-                {
-                    using (Stream stream = xmp.GetStream())
-                    {
-                        XmpPacket? xmpPacket = XmpPacket.TryParse(stream);
-                        if (xmpPacket != null)
-                        {
-                            doc.Metadata.SetXmpPacket(xmpPacket);
-                        }
-                    }
-                }
-                finally
-                {
-                    xmp.Dispose();
                 }
             }
         }
@@ -760,7 +634,7 @@ namespace AvifFileType
                 {
                     if (preserveExistingTileSize)
                     {
-                        string? value = document.Metadata.GetUserValue(ImageGridName);
+                        string? value = document.Metadata.GetUserValue(AvifMetadataNames.ImageGridName);
 
                         if (!string.IsNullOrEmpty(value))
                         {

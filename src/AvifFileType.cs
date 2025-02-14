@@ -190,7 +190,7 @@ namespace AvifFileType
             bool preserveExistingTileSize = token.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize)!.Value;
             bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha)!.Value;
 
-            AvifFile.Save(input,
+            AvifSave.Save(input,
                           output,
                           quality,
                           lossless,
@@ -208,7 +208,7 @@ namespace AvifFileType
         /// </summary>
         protected override Document OnLoad(Stream input)
         {
-            return AvifFile.Load(input);
+            return AvifLoad.Load(input);
         }
     }
 }

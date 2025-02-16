@@ -38,32 +38,45 @@ namespace AvifNative
     typedef std::unique_ptr<aom_image, details::aom_image_deleter> ScopedAOMImage;
 }
 
-DecoderStatus __stdcall DecompressColorImage(
-    const uint8_t* compressedColorImage,
-    size_t compressedColorImageSize,
-    const CICPColorData* colorInfo,
-    DecodeInfo* decodeInfo,
-    BitmapData* outputImage)
+DecoderStatus __stdcall DecodeImage(
+    const uint8_t* compressedImage,
+    size_t compressedImageSize,
+    const CICPColorData* containerColorInfo,
+    const DecoderLayerInfo* frameInfo,
+    DecoderImageHandle** imageHandle,
+    DecoderImageInfo* imageInfo)
 {
-    return DecodeColorImage(
-        compressedColorImage,
-        compressedColorImageSize,
-        colorInfo,
-        decodeInfo,
-        outputImage);
+    return DecoderLoadImage(
+        compressedImage,
+        compressedImageSize,
+        containerColorInfo,
+        frameInfo,
+        imageHandle,
+        imageInfo);
 }
 
-DecoderStatus __stdcall DecompressAlphaImage(
-    const uint8_t* compressedAlphaImage,
-    size_t compressedAlphaImageSize,
-    DecodeInfo* decodeInfo,
+DecoderStatus __stdcall ReadColorImageData(
+    const DecoderImageHandle* imageHandle,
+    const CICPColorData* colorInfo,
+    uint32_t tileColumnIndex,
+    uint32_t tileRowIndex,
     BitmapData* outputImage)
 {
-    return DecodeAlphaImage(
-        compressedAlphaImage,
-        compressedAlphaImageSize,
-        decodeInfo,
-        outputImage);
+    return DecoderConvertColorImage(imageHandle, colorInfo, tileColumnIndex, tileRowIndex, outputImage);
+}
+
+DecoderStatus __stdcall ReadAlphaImageData(
+    const DecoderImageHandle* imageHandle,
+    uint32_t tileColumnIndex,
+    uint32_t tileRowIndex,
+    BitmapData* outputImage)
+{
+    return DecoderConvertAlphaImage(imageHandle, tileColumnIndex, tileRowIndex, outputImage);
+}
+
+void FreeDecoderImageHandle(DecoderImageHandle* imageHandle)
+{
+    DecoderFreeImageHandle(imageHandle);
 }
 
 EncoderStatus __stdcall CompressColorImage(

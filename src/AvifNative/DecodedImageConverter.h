@@ -17,11 +17,13 @@
 
 DecoderStatus ConvertColorImage(
     const aom_image_t* frame,
-    const CICPColorData* containerColorInfo,
-    DecodeInfo* decodeInfo,
+    const CICPColorData* colorInfo,
+    uint32_t tileColumnIndex,
+    uint32_t tileRowIndex,
     BitmapData* outputBGRAImageData);
 
 DecoderStatus ConvertAlphaImage(
     const aom_image_t* frame,
-    DecodeInfo* decodeInfo,
+    uint32_t tileColumnIndex,
+    uint32_t tileRowIndex,
     BitmapData* outputBGRAImageData);

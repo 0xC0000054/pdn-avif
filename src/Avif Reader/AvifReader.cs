@@ -350,7 +350,7 @@ namespace AvifFileType
             }
         }
 
-        private void DecodeColorImage(uint itemId, DecodeInfo decodeInfo, CICPColorData? colorConversionInfo, Surface fullSurface)
+        private DecoderImage ReadImage(uint itemId, CICPColorData? colorConversionInfo)
         {
             ItemLocationEntry? entry = this.parser.TryGetItemLocation(itemId);
 
@@ -363,54 +363,21 @@ namespace AvifFileType
             // Read all of the image data, unless there are additional spatial layers beyond the one we want.
             ulong? numberOfBytesToRead = null;
 
+            DecoderLayerInfo decoderLayerInfo;
+
             if (layerInfo != null)
             {
-                decodeInfo.spatialLayerId = layerInfo.SpatialLayerId;
-                decodeInfo.allLayers = true;
+                decoderLayerInfo = new(layerInfo.SpatialLayerId, true, GetOperatingPoint(itemId));
                 numberOfBytesToRead = layerInfo.LayerDataSize;
             }
             else
             {
-                decodeInfo.spatialLayerId = 0;
-                decodeInfo.allLayers = false;
+                decoderLayerInfo = new(0, false, GetOperatingPoint(itemId));
             }
-            decodeInfo.operatingPoint = GetOperatingPoint(itemId);
 
             using (AvifItemData color = this.parser.ReadItemData(entry, numberOfBytesToRead))
             {
-                AvifNative.DecompressColor(color, colorConversionInfo, decodeInfo, fullSurface);
-            }
-        }
-
-        private void DecodeAlphaImage(uint itemId, DecodeInfo decodeInfo, Surface fullSurface)
-        {
-            ItemLocationEntry? entry = this.parser.TryGetItemLocation(itemId);
-
-            if (entry is null)
-            {
-                ExceptionUtil.ThrowFormatException("The alpha image item location was not found.");
-            }
-
-            LayerSelectorInfo? layerInfo = this.parser.GetLayerSelectorInfo(itemId, entry.TotalItemSize);
-            // Read all of the image data, unless there are additional spatial layers beyond the one we want.
-            ulong? numberOfBytesToRead = null;
-
-            if (layerInfo != null)
-            {
-                decodeInfo.spatialLayerId = layerInfo.SpatialLayerId;
-                decodeInfo.allLayers = true;
-                numberOfBytesToRead = layerInfo.LayerDataSize;
-            }
-            else
-            {
-                decodeInfo.spatialLayerId = 0;
-                decodeInfo.allLayers = false;
-            }
-            decodeInfo.operatingPoint = GetOperatingPoint(itemId);
-
-            using (AvifItemData alpha = this.parser.ReadItemData(entry, numberOfBytesToRead))
-            {
-                AvifNative.DecompressAlpha(alpha, decodeInfo, fullSurface);
+                return AvifNative.DecodeImage(color, colorConversionInfo, decoderLayerInfo);
             }
         }
 
@@ -451,90 +418,101 @@ namespace AvifFileType
         private void FillAlphaImageGrid(Surface fullSurface)
         {
             this.alphaGridInfo!.CheckAvailableTileCount();
-            DecodeInfo decodeInfo = new DecodeInfo
-            {
-                expectedWidth = 0,
-                expectedHeight = 0
-            };
 
             IReadOnlyList<uint> childImageIds = this.alphaGridInfo.ChildImageIds;
             bool firstTile = true;
+            DecoderImageInfo? firstTileInfo = null;
 
             // The tiles are encoded from top to bottom then left to right.
 
             for (int row = 0; row < this.alphaGridInfo.TileRowCount; row++)
             {
-                decodeInfo.tileRowIndex = (uint)row;
                 int startIndex = row * this.alphaGridInfo.TileColumnCount;
 
                 for (int col = 0; col < this.alphaGridInfo.TileColumnCount; col++)
                 {
-                    decodeInfo.tileColumnIndex = (uint)col;
-
-                    DecodeAlphaImage(childImageIds[startIndex + col], decodeInfo, fullSurface);
-
-                    if (firstTile)
+                    using (DecoderImage image = ReadImage(childImageIds[startIndex + col], null))
                     {
-                        firstTile = false;
-
-                        // Skip the image grid validation if the image grid only has one tile.
-                        // Some writers may use an image grid to crop a single image.
-                        if (childImageIds.Count > 1)
+                        if (firstTile)
                         {
-                            CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
-                                                        decodeInfo.expectedHeight,
-                                                        decodeInfo.chromaSubsampling,
-                                                        this.alphaGridInfo);
+                            firstTile = false;
+                            firstTileInfo = image.Info;
+
+                            // Skip the image grid validation if the image grid only has one tile.
+                            // Some writers may use an image grid to crop a single image.
+                            if (childImageIds.Count > 1)
+                            {
+                                CheckImageGridAndTileBounds(firstTileInfo.Width,
+                                                            firstTileInfo.Height,
+                                                            firstTileInfo.ChromaSubsampling,
+                                                            this.alphaGridInfo);
+                            }
                         }
+                        else
+                        {
+                            if (image.Info != firstTileInfo)
+                            {
+                                ExceptionUtil.ThrowFormatException("The image tiles must use the same size, YUV format, bit depth, and NCLX data.");
+                            }
+                        }
+
+                        AvifNative.ReadAlphaImageData(image, (uint)col, (uint)row, fullSurface);
                     }
                 }
             }
         }
 
-        private void FillColorImageGrid(CICPColorData? colorInfo, Surface fullSurface)
+        private void FillColorImageGrid(CICPColorData? containerColorInfo, Surface fullSurface)
         {
             this.colorGridInfo!.CheckAvailableTileCount();
-            DecodeInfo decodeInfo = new DecodeInfo
-            {
-                expectedWidth = 0,
-                expectedHeight = 0
-            };
+            DecoderImageInfo? firstTileInfo = null;
 
             IReadOnlyList<uint> childImageIds = this.colorGridInfo.ChildImageIds;
             bool firstTile = true;
+            CICPColorData colorData = new CICPColorData();
 
             // The tiles are encoded from top to bottom then left to right.
 
             for (int row = 0; row < this.colorGridInfo.TileRowCount; row++)
             {
-                decodeInfo.tileRowIndex = (uint)row;
                 int startIndex = row * this.colorGridInfo.TileColumnCount;
 
                 for (int col = 0; col < this.colorGridInfo.TileColumnCount; col++)
                 {
-                    decodeInfo.tileColumnIndex = (uint)col;
-
-                    DecodeColorImage(childImageIds[startIndex + col], decodeInfo, colorInfo, fullSurface);
-
-                    if (firstTile)
+                    using (DecoderImage image = ReadImage(childImageIds[startIndex + col], containerColorInfo))
                     {
-                        firstTile = false;
-
-                        // Skip the image grid validation if the image grid only has one tile.
-                        // Some writers may use an image grid to crop a single image.
-                        if (childImageIds.Count > 1)
+                        if (firstTile)
                         {
-                            CheckImageGridAndTileBounds(decodeInfo.expectedWidth,
-                                                        decodeInfo.expectedHeight,
-                                                        decodeInfo.chromaSubsampling,
-                                                        this.colorGridInfo);
+                            firstTile = false;
+                            firstTileInfo = image.Info;
+
+                            // Skip the image grid validation if the image grid only has one tile.
+                            // Some writers may use an image grid to crop a single image.
+                            if (childImageIds.Count > 1)
+                            {
+                                CheckImageGridAndTileBounds(firstTileInfo.Width,
+                                                            firstTileInfo.Height,
+                                                            firstTileInfo.ChromaSubsampling,
+                                                            this.colorGridInfo);
+                            }
+
+                            colorData = containerColorInfo ?? firstTileInfo.CICPColor;
                         }
+                        else
+                        {
+                            if (image.Info != firstTileInfo)
+                            {
+                                ExceptionUtil.ThrowFormatException("The image tiles must use the same size, YUV format, bit depth, and NCLX data.");
+                            }
+                        }
+
+                        AvifNative.ReadColorImageData(image, colorData, (uint)col, (uint)row, fullSurface);
                     }
                 }
             }
 
-            this.ImageGridMetadata = new ImageGridMetadata(this.colorGridInfo, decodeInfo.expectedHeight, decodeInfo.expectedWidth);
-            SetImageColorData(colorInfo, decodeInfo);
+            this.ImageGridMetadata = new ImageGridMetadata(this.colorGridInfo, firstTileInfo!.Width, firstTileInfo.Height);
+            SetImageColorData(containerColorInfo, firstTileInfo.CICPColor);
         }
 
         private Size GetImageSize(uint itemId, ImageGridInfo? gridInfo, string imageName)
@@ -606,15 +584,10 @@ namespace AvifFileType
             }
             else
             {
-                DecodeInfo decodeInfo = new DecodeInfo
+                using (DecoderImage image = ReadImage(this.alphaItemId, null))
                 {
-                    tileColumnIndex = 0,
-                    tileRowIndex = 0,
-                    expectedWidth = (uint)fullSurface.Width,
-                    expectedHeight = (uint)fullSurface.Height
-                };
-
-                DecodeAlphaImage(this.alphaItemId, decodeInfo, fullSurface);
+                    AvifNative.ReadAlphaImageData(image, 0, 0, fullSurface);
+                }
             }
 
             if (this.parser.IsAlphaPremultiplied(this.primaryItemId, this.alphaItemId))
@@ -643,36 +616,21 @@ namespace AvifFileType
             }
             else
             {
-                DecodeInfo decodeInfo = new DecodeInfo
+                using (DecoderImage image = ReadImage(this.primaryItemId, colorConversionInfo))
                 {
-                    tileColumnIndex = 0,
-                    tileRowIndex = 0,
-                    expectedWidth = (uint)fullSurface.Width,
-                    expectedHeight = (uint)fullSurface.Height
-                };
-
-
-                DecodeColorImage(this.primaryItemId, decodeInfo, colorConversionInfo, fullSurface);
-                SetImageColorData(colorConversionInfo, decodeInfo);
+                    AvifNative.ReadColorImageData(image,
+                                                  colorConversionInfo ?? image.CICPColor,
+                                                  0,
+                                                  0,
+                                                  fullSurface);
+                    SetImageColorData(colorConversionInfo, image.CICPColor);
+                }
             }
         }
 
-        private void SetImageColorData(CICPColorData? containerColorData, DecodeInfo decodeInfo)
+        private void SetImageColorData(CICPColorData? containerColorData, CICPColorData imageColorData)
         {
-            if (containerColorData.HasValue)
-            {
-                this.ImageColorData = containerColorData;
-            }
-            else
-            {
-                this.ImageColorData = new CICPColorData
-                {
-                    colorPrimaries = decodeInfo.firstTileColorData.colorPrimaries,
-                    transferCharacteristics = decodeInfo.firstTileColorData.transferCharacteristics,
-                    matrixCoefficients = decodeInfo.firstTileColorData.matrixCoefficients,
-                    fullRange = decodeInfo.firstTileColorData.fullRange
-                };
-            }
+            this.ImageColorData = containerColorData ?? imageColorData;
         }
     }
 }

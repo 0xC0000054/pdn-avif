@@ -68,20 +68,21 @@ namespace
 
     void GetCopySizes(
         const aom_image_t* image,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         const BitmapData* bgraImage,
         uint32_t& copyWidth,
         uint32_t& copyHeight)
     {
         copyWidth = image->d_w;
-        uint32_t maxWidth = image->d_w * (decodeInfo->tileColumnIndex + 1);
+        uint32_t maxWidth = image->d_w * (tileColumnIndex + 1);
         if (maxWidth > bgraImage->width)
         {
             copyWidth -= (maxWidth - bgraImage->width);
         }
 
         copyHeight = image->d_h;
-        uint32_t maxHeight = image->d_h * (decodeInfo->tileRowIndex + 1);
+        uint32_t maxHeight = image->d_h * (tileRowIndex + 1);
         if (maxHeight > bgraImage->height)
         {
             copyHeight -= (maxHeight - bgraImage->height);
@@ -230,7 +231,8 @@ namespace
 
     void Identity16ToRGB8Color(
         const aom_image_t* image,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         const YUVLookupTables& tables,
         BitmapData* bgraImage)
     {
@@ -248,7 +250,7 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
@@ -257,8 +259,8 @@ namespace
             uint16_t* ptrU = reinterpret_cast<uint16_t*>(&image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])]);
             uint16_t* ptrV = reinterpret_cast<uint16_t*>(&image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])]);
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -294,7 +296,8 @@ namespace
 
     void Identity16ToRGB8Mono(
         const aom_image_t* image,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         const YUVLookupTables& tables,
         BitmapData* bgraImage)
     {
@@ -303,14 +306,14 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
             uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -334,7 +337,8 @@ namespace
 
     void Identity8ToRGB8Color(
         const aom_image_t* image,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         BitmapData* bgraImage)
     {
         uint32_t uPlaneIndex = AOM_PLANE_U;
@@ -348,7 +352,7 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         static constexpr std::array<uint8_t, 256> limitedToFullY = BuildIdentity8LimitedToFullYLookupTable();
 
@@ -359,8 +363,8 @@ namespace
             uint8_t* ptrU = &image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])];
             uint8_t* ptrV = &image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])];
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -391,12 +395,13 @@ namespace
 
     void Identity8ToRGB8Mono(
         const aom_image_t* image,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         BitmapData* bgraImage)
     {
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         static constexpr std::array<uint8_t, 256> limitedToFullY = BuildIdentity8LimitedToFullYLookupTable();
 
@@ -404,8 +409,8 @@ namespace
         {
             uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -434,7 +439,8 @@ namespace
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
         const YUVLookupTables& tables,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         BitmapData* bgraImage)
     {
         const float kr = yuvCoefficiants.kr;
@@ -455,7 +461,7 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
@@ -464,8 +470,8 @@ namespace
             uint16_t* ptrU = reinterpret_cast<uint16_t*>(&image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])]);
             uint16_t* ptrV = reinterpret_cast<uint16_t*>(&image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])]);
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -503,7 +509,8 @@ namespace
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
         const YUVLookupTables& tables,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         BitmapData* bgraImage)
     {
         const float kr = yuvCoefficiants.kr;
@@ -515,14 +522,14 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
             uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -555,7 +562,8 @@ namespace
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
         const YUVLookupTables& tables,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         BitmapData* bgraImage)
     {
         const float kr = yuvCoefficiants.kr;
@@ -575,7 +583,7 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
@@ -584,8 +592,8 @@ namespace
             uint8_t* ptrU = &image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])];
             uint8_t* ptrV = &image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])];
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -621,7 +629,8 @@ namespace
         const aom_image_t* image,
         const YUVCoefficiants& yuvCoefficiants,
         const YUVLookupTables& tables,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         BitmapData* bgraImage)
     {
         const float kr = yuvCoefficiants.kr;
@@ -632,14 +641,14 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
             uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -670,7 +679,8 @@ namespace
 
     void YUV16ToAlpha8(
         const aom_image_t* image,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex, 
         const YUVLookupTables& tables,
         BitmapData* bgraImage)
     {
@@ -679,14 +689,14 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
             uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -708,7 +718,8 @@ namespace
 
     void YUV8ToAlpha8(
         const aom_image_t* image,
-        const DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         const YUVLookupTables& tables,
         BitmapData* bgraImage)
     {
@@ -716,14 +727,14 @@ namespace
 
         uint32_t copyWidth;
         uint32_t copyHeight;
-        GetCopySizes(image, decodeInfo, bgraImage, copyWidth, copyHeight);
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, bgraImage, copyWidth, copyHeight);
 
         for (uint32_t y = 0; y < copyHeight; ++y)
         {
             uint8_t* ptrY = &image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])];
 
-            const size_t destX = static_cast<size_t>(decodeInfo->tileColumnIndex) * decodeInfo->expectedWidth;
-            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(decodeInfo->tileRowIndex) * decodeInfo->expectedHeight);
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
 
             ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(bgraImage->scan0 + (destY * bgraImage->stride) + (destX * sizeof(ColorBgra32)));
 
@@ -746,145 +757,19 @@ namespace
 
 DecoderStatus ConvertColorImage(
     const aom_image_t* frame,
-    const CICPColorData* containerColorInfo,
-    DecodeInfo* decodeInfo,
+    const CICPColorData* colorInfo,
+    uint32_t tileColumnIndex,
+    uint32_t tileRowIndex,
     BitmapData* outputImage)
 {
-    if (!frame || !outputImage)
+    if (!frame || !colorInfo || !outputImage)
     {
         return DecoderStatus::NullParameter;
     }
 
-    const bool isFirstTile = decodeInfo->tileColumnIndex == 0 && decodeInfo->tileRowIndex == 0;
-
-    if (isFirstTile)
-    {
-        if (decodeInfo->expectedWidth == 0 && decodeInfo->expectedHeight == 0)
-        {
-            decodeInfo->expectedWidth = frame->d_w;
-            decodeInfo->expectedHeight = frame->d_h;
-        }
-
-        decodeInfo->bitDepth = frame->bit_depth;
-        if (frame->monochrome)
-        {
-            decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling400;
-        }
-        else if (containerColorInfo && containerColorInfo->matrixCoefficients == CICPMatrixCoefficients::Identity
-                 || !containerColorInfo && frame->mc == AOM_CICP_MC_IDENTITY)
-        {
-            decodeInfo->chromaSubsampling = YUVChromaSubsampling::IdentityMatrix;
-        }
-        else
-        {
-            switch (frame->fmt)
-            {
-            case AOM_IMG_FMT_I420:
-            case AOM_IMG_FMT_AOMI420:
-            case AOM_IMG_FMT_I42016:
-            case AOM_IMG_FMT_YV12:
-            case AOM_IMG_FMT_AOMYV12:
-            case AOM_IMG_FMT_YV1216:
-                decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling420;
-                break;
-            case AOM_IMG_FMT_I422:
-            case AOM_IMG_FMT_I42216:
-                decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling422;
-                break;
-            case AOM_IMG_FMT_I444:
-            case AOM_IMG_FMT_I44416:
-                decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling444;
-                break;
-            case AOM_IMG_FMT_NONE:
-            default:
-                return DecoderStatus::UnknownYUVFormat;
-            }
-        }
-    }
-    else
-    {
-        if (frame->bit_depth != decodeInfo->bitDepth)
-        {
-            return DecoderStatus::TileFormatMismatch;
-        }
-
-        switch (decodeInfo->chromaSubsampling)
-        {
-        case YUVChromaSubsampling::Subsampling400:
-            if (!frame->monochrome)
-            {
-                return DecoderStatus::TileFormatMismatch;
-            }
-            break;
-        case YUVChromaSubsampling::Subsampling420:
-            if (frame->fmt != AOM_IMG_FMT_I420
-                && frame->fmt != AOM_IMG_FMT_AOMI420
-                && frame->fmt != AOM_IMG_FMT_I42016
-                && frame->fmt != AOM_IMG_FMT_YV12
-                && frame->fmt != AOM_IMG_FMT_AOMYV12
-                && frame->fmt != AOM_IMG_FMT_YV1216)
-            {
-                return DecoderStatus::TileFormatMismatch;
-            }
-            break;
-        case YUVChromaSubsampling::Subsampling422:
-            if (frame->fmt != AOM_IMG_FMT_I422 && frame->fmt != AOM_IMG_FMT_I42216)
-            {
-                return DecoderStatus::TileFormatMismatch;
-            }
-            break;
-        case YUVChromaSubsampling::Subsampling444:
-            if (frame->fmt != AOM_IMG_FMT_I444 && frame->fmt != AOM_IMG_FMT_I44416)
-            {
-                return DecoderStatus::TileFormatMismatch;
-            }
-            break;
-        case YUVChromaSubsampling::IdentityMatrix:
-            if (!containerColorInfo && frame->mc != AOM_CICP_MC_IDENTITY)
-            {
-                return DecoderStatus::TileFormatMismatch;
-            }
-            break;
-        default:
-            return DecoderStatus::UnknownYUVFormat;
-        }
-    }
-
-    CICPColorData colorInfo = {};
-
-    if (containerColorInfo)
-    {
-        colorInfo = *containerColorInfo;
-    }
-    else
-    {
-        colorInfo.colorPrimaries = static_cast<CICPColorPrimaries>(frame->cp);
-        colorInfo.transferCharacteristics = static_cast<CICPTransferCharacteristics>(frame->tc);
-        colorInfo.matrixCoefficients = static_cast<CICPMatrixCoefficients>(frame->mc);
-        colorInfo.fullRange = frame->range == aom_color_range::AOM_CR_FULL_RANGE;
-
-        if (isFirstTile)
-        {
-            decodeInfo->firstTileColorData.colorPrimaries = colorInfo.colorPrimaries;
-            decodeInfo->firstTileColorData.transferCharacteristics = colorInfo.transferCharacteristics;
-            decodeInfo->firstTileColorData.matrixCoefficients = colorInfo.matrixCoefficients;
-            decodeInfo->firstTileColorData.fullRange = colorInfo.fullRange;
-        }
-        else
-        {
-            if (decodeInfo->firstTileColorData.colorPrimaries != colorInfo.colorPrimaries ||
-                decodeInfo->firstTileColorData.transferCharacteristics != colorInfo.transferCharacteristics ||
-                decodeInfo->firstTileColorData.matrixCoefficients != colorInfo.matrixCoefficients ||
-                decodeInfo->firstTileColorData.fullRange != colorInfo.fullRange)
-            {
-                return DecoderStatus::TileNclxProfileMismatch;
-            }
-        }
-    }
-
     try
     {
-        if (colorInfo.matrixCoefficients == CICPMatrixCoefficients::Identity)
+        if (colorInfo->matrixCoefficients == CICPMatrixCoefficients::Identity)
         {
             // The Identity matrix coefficient contains RGB color values.
 
@@ -894,32 +779,22 @@ DecoderStatus ConvertColorImage(
 
                 if (frame->monochrome)
                 {
-                    Identity16ToRGB8Mono(frame,
-                        decodeInfo,
-                        *lookupTable,
-                        outputImage);
+                    Identity16ToRGB8Mono(frame, tileColumnIndex, tileRowIndex, *lookupTable, outputImage);
                 }
                 else
                 {
-                    Identity16ToRGB8Color(frame,
-                        decodeInfo,
-                        *lookupTable,
-                        outputImage);
+                    Identity16ToRGB8Color(frame, tileColumnIndex, tileRowIndex, *lookupTable, outputImage);
                 }
             }
             else
             {
                 if (frame->monochrome)
                 {
-                    Identity8ToRGB8Mono(frame,
-                        decodeInfo,
-                        outputImage);
+                    Identity8ToRGB8Mono(frame, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else
                 {
-                    Identity8ToRGB8Color(frame,
-                        decodeInfo,
-                        outputImage);
+                    Identity8ToRGB8Color(frame, tileColumnIndex, tileRowIndex, outputImage);
                 }
             }
         }
@@ -928,44 +803,28 @@ DecoderStatus ConvertColorImage(
             std::unique_ptr<YUVLookupTables> lookupTable = std::make_unique<YUVLookupTables>(frame, false);
 
             YUVCoefficiants yuvCoefficiants;
-            GetYUVCoefficiants(colorInfo, yuvCoefficiants);
+            GetYUVCoefficiants(*colorInfo, yuvCoefficiants);
 
             if (frame->bit_depth > 8)
             {
                 if (frame->monochrome)
                 {
-                    YUV16ToRGB8Mono(frame,
-                        yuvCoefficiants,
-                        *lookupTable,
-                        decodeInfo,
-                        outputImage);
+                    YUV16ToRGB8Mono(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else
                 {
-                    YUV16ToRGB8Color(frame,
-                        yuvCoefficiants,
-                        *lookupTable,
-                        decodeInfo,
-                        outputImage);
+                    YUV16ToRGB8Color(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
             }
             else
             {
                 if (frame->monochrome)
                 {
-                    YUV8ToRGB8Mono(frame,
-                        yuvCoefficiants,
-                        *lookupTable,
-                        decodeInfo,
-                        outputImage);
+                    YUV8ToRGB8Mono(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else
                 {
-                    YUV8ToRGB8Color(frame,
-                        yuvCoefficiants,
-                        *lookupTable,
-                        decodeInfo,
-                        outputImage);
+                    YUV8ToRGB8Color(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
             }
         }
@@ -985,32 +844,13 @@ DecoderStatus ConvertColorImage(
 
 DecoderStatus ConvertAlphaImage(
     const aom_image_t* frame,
-    DecodeInfo* decodeInfo,
+    uint32_t tileColumnIndex,
+    uint32_t tileRowIndex,
     BitmapData* outputBGRAImageData)
 {
     if (!frame || !outputBGRAImageData)
     {
         return DecoderStatus::NullParameter;
-    }
-
-    const bool isFirstTile = decodeInfo->tileColumnIndex == 0 && decodeInfo->tileRowIndex == 0;
-
-    if (isFirstTile)
-    {
-        if (decodeInfo->expectedWidth == 0 && decodeInfo->expectedHeight == 0)
-        {
-            decodeInfo->expectedWidth = frame->d_w;
-            decodeInfo->expectedHeight = frame->d_h;
-        }
-        decodeInfo->bitDepth = frame->bit_depth;
-        decodeInfo->chromaSubsampling = YUVChromaSubsampling::Subsampling400;
-    }
-    else
-    {
-        if (frame->bit_depth != decodeInfo->bitDepth)
-        {
-            return DecoderStatus::TileFormatMismatch;
-        }
     }
 
     try
@@ -1019,18 +859,11 @@ DecoderStatus ConvertAlphaImage(
 
         if (frame->bit_depth > 8)
         {
-            YUV16ToAlpha8(frame,
-                decodeInfo,
-                *lookupTable,
-                outputBGRAImageData);
+            YUV16ToAlpha8(frame, tileColumnIndex, tileRowIndex, *lookupTable, outputBGRAImageData);
         }
         else
         {
-            YUV8ToAlpha8(frame,
-                decodeInfo,
-                *lookupTable,
-                outputBGRAImageData);
-
+            YUV8ToAlpha8(frame, tileColumnIndex, tileRowIndex, *lookupTable, outputBGRAImageData);
         }
     }
     catch (const std::bad_alloc&)

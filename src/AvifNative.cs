@@ -104,7 +104,6 @@ namespace AvifFileType
 
                 CompressedAV1OutputAlloc outputAllocDelegate = new CompressedAV1OutputAlloc(allocator.Allocate);
                 EncoderStatus status = EncoderStatus.Ok;
-                NativeCICPColorData nativeCICPColorData = colorInfo.ToNative();
                 NativeEncoderOptions nativeEncoderOptions = options.ToNative();
 
                 if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
@@ -112,7 +111,7 @@ namespace AvifFileType
                     status = AvifNative_64.CompressColorImage(bitmapData,
                                                               nativeEncoderOptions,
                                                               ref progressContext,
-                                                              nativeCICPColorData,
+                                                              colorInfo,
                                                               outputAllocDelegate,
                                                               out colorImage);
                 }
@@ -121,7 +120,7 @@ namespace AvifFileType
                     status = AvifNative_ARM64.CompressColorImage(bitmapData,
                                                                  nativeEncoderOptions,
                                                                  ref progressContext,
-                                                                 nativeCICPColorData,
+                                                                 colorInfo,
                                                                  outputAllocDelegate,
                                                                  out colorImage);
                 }
@@ -144,60 +143,46 @@ namespace AvifFileType
             GC.KeepAlive(avifProgress);
         }
 
-        public static void DecompressColor(AvifItemData colorImage,
-                                           CICPColorData? colorConversionInfo,
-                                           DecodeInfo decodeInfo,
-                                           Surface fullSurface)
+        public static DecoderImage DecodeImage(AvifItemData image, CICPColorData? containerColorData, DecoderLayerInfo layerInfo)
         {
-            if (colorImage is null)
+            if (image is null)
             {
-                ExceptionUtil.ThrowArgumentNullException(nameof(colorImage));
+                ExceptionUtil.ThrowArgumentNullException(nameof(image));
             }
 
-            if (decodeInfo is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(decodeInfo));
-            }
-
-            if (fullSurface is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(fullSurface));
-            }
+            DecoderImage decoderImage = null!;
 
             unsafe
             {
-                colorImage.UseBufferPointer((ptr, length) =>
+                image.UseBufferPointer((ptr, length) =>
                 {
-                    BitmapData bitmapData = new BitmapData
-                    {
-                        scan0 = fullSurface.Scan0.Pointer,
-                        width = (uint)fullSurface.Width,
-                        height = (uint)fullSurface.Height,
-                        stride = (uint)fullSurface.Stride
-                    };
                     UIntPtr colorImageSize = new UIntPtr(length);
                     DecoderStatus status = DecoderStatus.Ok;
-                    NativeDecodeInfo nativeDecodeInfo = decodeInfo.ToNative();
 
-                    if (colorConversionInfo.HasValue)
+                    SafeDecoderImageHandle? safeDecoderImageHandle;
+                    DecoderImageInfo decoderImageInfo = new();
+
+                    if (containerColorData.HasValue)
                     {
-                        NativeCICPColorData colorData = colorConversionInfo.Value.ToNative();
+                        CICPColorData colorData = containerColorData.Value;
 
                         if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
                         {
-                            status = AvifNative_64.DecompressColorImage(ptr,
-                                                                        colorImageSize,
-                                                                        colorData,
-                                                                        ref nativeDecodeInfo,
-                                                                        bitmapData);
+                            status = AvifNative_64.DecodeImage(ptr,
+                                                               colorImageSize,
+                                                               colorData,
+                                                               layerInfo,
+                                                               out safeDecoderImageHandle,
+                                                               ref decoderImageInfo);
                         }
                         else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                         {
-                            status = AvifNative_ARM64.DecompressColorImage(ptr,
-                                                                           colorImageSize,
-                                                                           colorData,
-                                                                           ref nativeDecodeInfo,
-                                                                           bitmapData);
+                            status = AvifNative_ARM64.DecodeImage(ptr,
+                                                                  colorImageSize,
+                                                                  colorData,
+                                                                  layerInfo,
+                                                                  out safeDecoderImageHandle,
+                                                                  ref decoderImageInfo);
                         }
                         else
                         {
@@ -208,19 +193,21 @@ namespace AvifFileType
                     {
                         if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
                         {
-                            status = AvifNative_64.DecompressColorImage(ptr,
-                                                                        colorImageSize,
-                                                                        IntPtr.Zero,
-                                                                        ref nativeDecodeInfo,
-                                                                        bitmapData);
+                            status = AvifNative_64.DecodeImage(ptr,
+                                                               colorImageSize,
+                                                               nint.Zero,
+                                                               layerInfo,
+                                                               out safeDecoderImageHandle,
+                                                               ref decoderImageInfo);
                         }
                         else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                         {
-                            status = AvifNative_ARM64.DecompressColorImage(ptr,
-                                                                           colorImageSize,
-                                                                           IntPtr.Zero,
-                                                                           ref nativeDecodeInfo,
-                                                                           bitmapData);
+                            status = AvifNative_ARM64.DecodeImage(ptr,
+                                                                  colorImageSize,
+                                                                  nint.Zero,
+                                                                  layerInfo,
+                                                                  out safeDecoderImageHandle,
+                                                                  ref decoderImageInfo);
                         }
                         else
                         {
@@ -230,79 +217,106 @@ namespace AvifFileType
 
                     if (status == DecoderStatus.Ok)
                     {
-                        decodeInfo.CopyFromNative(nativeDecodeInfo);
+                        try
+                        {
+                            decoderImage = new(safeDecoderImageHandle, decoderImageInfo);
+                            safeDecoderImageHandle = null;
+                        }
+                        finally
+                        {
+                            safeDecoderImageHandle?.Dispose();
+                        }
                     }
                     else
                     {
                         HandleError(status);
                     }
                 });
+            }
+
+            return decoderImage;
+        }
+
+        public static unsafe void ReadColorImageData(DecoderImage image,
+                                                     CICPColorData colorData,
+                                                     uint tileColumnIndex,
+                                                     uint tileRowIndex,
+                                                     Surface surface)
+        {
+            BitmapData bitmapData = new()
+            {
+                scan0 = surface.Scan0.Pointer,
+                stride = (uint)surface.Stride,
+                width = (uint)surface.Width,
+                height = (uint)surface.Height
+            };
+
+            DecoderStatus status;
+
+            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+            {
+                status = AvifNative_64.ReadColorImageData(image.SafeDecoderImage,
+                                                          colorData,
+                                                          tileColumnIndex,
+                                                          tileRowIndex,
+                                                          ref bitmapData);
+            }
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            {
+                status = AvifNative_ARM64.ReadColorImageData(image.SafeDecoderImage,
+                                                             colorData,
+                                                             tileColumnIndex,
+                                                             tileRowIndex,
+                                                             ref bitmapData);
+            }
+            else
+            {
+                throw new PlatformNotSupportedException();
+            }
+
+            if (status != DecoderStatus.Ok)
+            {
+                HandleError(status);
             }
         }
 
-        public static void DecompressAlpha(AvifItemData alphaImage,
-                                           DecodeInfo decodeInfo,
-                                           Surface fullSurface)
+        public static unsafe void ReadAlphaImageData(DecoderImage image,
+                                                     uint tileColumnIndex,
+                                                     uint tileRowIndex,
+                                                     Surface surface)
         {
-            if (alphaImage is null)
+            BitmapData bitmapData = new()
             {
-                ExceptionUtil.ThrowArgumentNullException(nameof(alphaImage));
+                scan0 = surface.Scan0.Pointer,
+                stride = (uint)surface.Stride,
+                width = (uint)surface.Width,
+                height = (uint)surface.Height
+            };
+
+            DecoderStatus status;
+
+            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+            {
+                status = AvifNative_64.ReadAlphaImageData(image.SafeDecoderImage,
+                                                          tileColumnIndex,
+                                                          tileRowIndex,
+                                                          ref bitmapData);
+            }
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            {
+                status = AvifNative_ARM64.ReadAlphaImageData(image.SafeDecoderImage,
+                                                             tileColumnIndex,
+                                                             tileRowIndex,
+                                                             ref bitmapData);
+            }
+            else
+            {
+                throw new PlatformNotSupportedException();
             }
 
-            if (decodeInfo is null)
+            if (status != DecoderStatus.Ok)
             {
-                ExceptionUtil.ThrowArgumentNullException(nameof(decodeInfo));
-            }
-
-            if (fullSurface is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(fullSurface));
-            }
-
-            unsafe
-            {
-                alphaImage.UseBufferPointer((ptr, length) =>
-                {
-                    BitmapData bitmapData = new BitmapData
-                    {
-                        scan0 = fullSurface.Scan0.Pointer,
-                        width = (uint)fullSurface.Width,
-                        height = (uint)fullSurface.Height,
-                        stride = (uint)fullSurface.Stride
-                    };
-
-                    UIntPtr alphaImageSize = new UIntPtr(length);
-                    DecoderStatus status = DecoderStatus.Ok;
-                    NativeDecodeInfo nativeDecodeInfo = decodeInfo.ToNative();
-
-                    if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
-                    {
-                        status = AvifNative_64.DecompressAlphaImage(ptr,
-                                                                    alphaImageSize,
-                                                                    ref nativeDecodeInfo,
-                                                                    bitmapData);
-                    }
-                    else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
-                    {
-                        status = AvifNative_ARM64.DecompressAlphaImage(ptr,
-                                                                        alphaImageSize,
-                                                                        ref nativeDecodeInfo,
-                                                                        bitmapData);
-                    }
-                    else
-                    {
-                        throw new PlatformNotSupportedException();
-                    }
-
-                    if (status == DecoderStatus.Ok)
-                    {
-                        decodeInfo.CopyFromNative(nativeDecodeInfo);
-                    }
-                    else
-                    {
-                        HandleError(status);
-                    }
-                });
+                HandleError(status);
             }
         }
 
@@ -370,18 +384,10 @@ namespace AvifFileType
                     throw new FormatException("Unable to initialize the AV1 decoder.");
                 case DecoderStatus.DecodeFailed:
                     throw new FormatException("The AV1 decode failed.");
-                case DecoderStatus.AlphaSizeMismatch:
-                    throw new FormatException("The alpha image does not match the expected size.");
-                case DecoderStatus.ColorSizeMismatch:
-                    throw new FormatException("The color image does not match the expected size.");
-                case DecoderStatus.TileNclxProfileMismatch:
-                    throw new FormatException("The color image tiles must use an identical color profile.");
                 case DecoderStatus.UnsupportedBitDepth:
                     throw new FormatException("The image has an unsupported bit depth.");
                 case DecoderStatus.UnknownYUVFormat:
                     throw new FormatException("The YUV format is not supported by the decoder.");
-                case DecoderStatus.TileFormatMismatch:
-                    throw new FormatException("The color image tiles must use the same YUV format and bit depth.");
                 default:
                     throw new FormatException("An unknown error occurred when decoding the image.");
             }

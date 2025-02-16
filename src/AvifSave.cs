@@ -14,7 +14,6 @@ using AvifFileType.AvifContainer;
 using AvifFileType.Exif;
 using AvifFileType.Interop;
 using PaintDotNet;
-using PaintDotNet.Collections;
 using PaintDotNet.Imaging;
 using PaintDotNet.Rendering;
 using System;
@@ -51,9 +50,11 @@ namespace AvifFileType
             scratchSurface.Fill(ColorBgra.TransparentBlack);
             document.CreateRenderer().Render(scratchSurface);
 
-            bool grayscale = IsGrayscaleImage(scratchSurface);
-
             AvifMetadata metadata = CreateAvifMetadata(document);
+
+            // Images that have a non-sRGB ICC profile will not be automatically converted to gray scale.
+            bool grayscale = metadata.IccProfile.IsEmpty && IsGrayscaleImage(scratchSurface);
+
             EncoderOptions options = new EncoderOptions
             {
                 quality = quality,
@@ -275,37 +276,41 @@ namespace AvifFileType
             byte[]? iccProfileBytes = null;
             byte[]? xmpBytes = null;
 
-            Dictionary<ExifPropertyPath, ExifValue>? exifMetadata = GetExifMetadataFromDocument(doc);
+            ExifColorSpace exifColorSpace = ExifColorSpace.Srgb;
 
-            if (exifMetadata != null)
+            IColorContext? colorContext = doc.GetColorContext();
+            if (colorContext != null)
             {
-                ExifColorSpace exifColorSpace = ExifColorSpace.Srgb;
-
-                if (exifMetadata.TryGetValue(ExifPropertyKeys.Photo.ColorSpace.Path, out ExifValue? value))
+                // We do not set an ICC profile for sRGB images as AVIF can signal that
+                // using its built-in color space encoding, and sRGB is the default for
+                // images without an ICC profile.
+                if (colorContext.Type != ColorContextType.ExifColorSpace
+                    || colorContext.ExifColorSpace != PaintDotNet.Imaging.ExifColorSpace.Srgb)
                 {
-                    exifMetadata.Remove(ExifPropertyKeys.Photo.ColorSpace.Path);
+                    iccProfileBytes = colorContext.GetProfileBytes().ToArray();
 
-                    if (MetadataHelpers.TryDecodeShort(value, out ushort colorSpace))
+                    if (iccProfileBytes.Length > 0)
                     {
-                        exifColorSpace = (ExifColorSpace)colorSpace;
+                        exifColorSpace = ExifColorSpace.Uncalibrated;
                     }
                 }
+            }
 
-                ExifPropertyPath iccProfileKey = ExifPropertyKeys.Image.InterColorProfile.Path;
+            Dictionary<ExifPropertyPath, ExifValue>? propertyItems = GetExifMetadataFromDocument(doc);
 
-                if (exifMetadata.TryGetValue(iccProfileKey, out ExifValue? iccProfileItem))
+            if (propertyItems != null)
+            {
+                propertyItems.Remove(ExifPropertyKeys.Image.InterColorProfile.Path);
+
+                if (iccProfileBytes != null)
                 {
-                    iccProfileBytes = iccProfileItem.Data.ToArrayEx();
-                    exifMetadata.Remove(iccProfileKey);
-                    exifColorSpace = ExifColorSpace.Uncalibrated;
-
                     // Remove the InteroperabilityIndex and related tags, these tags should
                     // not be written if the image has an ICC color profile.
-                    exifMetadata.Remove(ExifPropertyKeys.Interop.InteroperabilityIndex.Path);
-                    exifMetadata.Remove(ExifPropertyKeys.Interop.InteroperabilityVersion.Path);
+                    propertyItems.Remove(ExifPropertyKeys.Interop.InteroperabilityIndex.Path);
+                    propertyItems.Remove(ExifPropertyKeys.Interop.InteroperabilityVersion.Path);
                 }
 
-                exifBytes = new ExifWriter(doc, exifMetadata, exifColorSpace).CreateExifBlob();
+                exifBytes = new ExifWriter(doc, propertyItems, exifColorSpace).CreateExifBlob();
             }
 
             XmpPacket? xmpPacket = doc.Metadata.TryGetXmpPacket();

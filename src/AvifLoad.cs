@@ -26,6 +26,7 @@ namespace AvifFileType
         {
             Document? doc = null;
 
+            using (IImagingFactory imagingFactory = ImagingFactory.CreateRef())
             using (AvifReader reader = new AvifReader(input, leaveOpen: true))
             {
                 Surface? surface = null;
@@ -37,7 +38,7 @@ namespace AvifFileType
 
                     doc = new Document(surface.Width, surface.Height);
 
-                    AddAvifMetadataToDocument(doc, reader);
+                    AddAvifMetadataToDocument(doc, reader, imagingFactory);
 
                     doc.Layers.Add(Layer.CreateBackgroundLayer(surface, takeOwnership: true));
                     disposeSurface = false;
@@ -54,7 +55,9 @@ namespace AvifFileType
             return doc;
         }
 
-        private static void AddAvifMetadataToDocument(Document doc, AvifReader reader)
+        private static void AddAvifMetadataToDocument(Document doc,
+                                                      AvifReader reader,
+                                                      IImagingFactory imagingFactory)
         {
             AvifItemData? exif = reader.GetExifData();
 
@@ -110,14 +113,11 @@ namespace AvifFileType
                 }
             }
 
-            ReadOnlyMemory<byte> iccProfileBytes = reader.GetICCProfile();
+            IColorContext? colorContext = GetColorContext(reader, imagingFactory);
 
-            if (iccProfileBytes.Length > 0)
+            if (colorContext != null)
             {
-                doc.Metadata.AddExifPropertyItem(ExifSection.Image,
-                                                 ExifPropertyKeys.Image.InterColorProfile.Path.TagID,
-                                                 new ExifValue(ExifValueType.Undefined,
-                                                               iccProfileBytes.Span));
+                doc.SetColorContext(colorContext);
             }
 
             AvifItemData? xmp = reader.GetXmpData();
@@ -139,6 +139,39 @@ namespace AvifFileType
                 {
                     xmp.Dispose();
                 }
+            }
+        }
+
+        private static IColorContext? GetColorContext(AvifReader reader, IImagingFactory imagingFactory)
+        {
+            try
+            {
+                ReadOnlyMemory<byte> iccProfileBytes = reader.GetICCProfile();
+
+                if (iccProfileBytes.Length > 0)
+                {
+                    if (IccProfileIsRgb(iccProfileBytes.Span))
+                    {
+                        return imagingFactory.CreateColorContext(iccProfileBytes.Span);
+                    }
+                }
+                else
+                {
+                    return ColorContextUtil.CreateFromCicpColorInfo(reader.ImageColorData, imagingFactory);
+                }
+            }
+            catch (Exception)
+            {
+                // Do nothing
+            }
+
+            return null;
+
+            static bool IccProfileIsRgb(ReadOnlySpan<byte> iccProfile)
+            {
+                ICCProfile.ProfileHeader header = new ICCProfile.ProfileHeader(iccProfile);
+
+                return header.ColorSpace == ICCProfile.ProfileColorSpace.Rgb;
             }
         }
     }

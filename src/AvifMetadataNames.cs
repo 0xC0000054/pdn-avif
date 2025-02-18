@@ -14,10 +14,6 @@ namespace AvifFileType
 {
     internal static class AvifMetadataNames
     {
-        internal const string CICPMetadataName = "AvifCICPData";
         internal const string ImageGridName = "AvifImageGrid";
-        // This value is no longer written, but it is retained to
-        // allow the data to be read from existing PDN files.
-        internal const string NclxMetadataName = "AvifNclxData";
     }
 }

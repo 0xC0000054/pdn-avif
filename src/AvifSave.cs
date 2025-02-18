@@ -92,25 +92,6 @@ namespace AvifFileType
                     fullRange = true
                 };
             }
-            else
-            {
-                Metadata docMetadata = document.Metadata;
-
-                // Look for NCLX meta-data if the CICP meta-data was not found.
-                // This preserves backwards compatibility with PDN files created by
-                // previous versions of this plugin.
-                string? serializedData = docMetadata.GetUserValue(AvifMetadataNames.CICPMetadataName) ?? docMetadata.GetUserValue(AvifMetadataNames.NclxMetadataName);
-
-                if (serializedData != null)
-                {
-                    CICPColorData? colorData = CICPSerializer.TryDeserialize(serializedData);
-
-                    if (colorData.HasValue)
-                    {
-                        colorConversionInfo = colorData.Value;
-                    }
-                }
-            }
 
             ImageGridMetadata? imageGridMetadata = TryGetImageGridMetadata(document,
                                                                            options.encoderPreset,

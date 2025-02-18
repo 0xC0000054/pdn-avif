@@ -122,13 +122,6 @@ namespace AvifFileType
                 }
             }
 
-            string? serializedCICP = CICPSerializer.TrySerialize(image.CICPColor);
-
-            if (serializedCICP != null)
-            {
-                doc.Metadata.SetUserValue(AvifMetadataNames.CICPMetadataName, serializedCICP);
-            }
-
             ImageGridMetadata? imageGridMetadata = reader.ImageGridMetadata;
 
             if (imageGridMetadata != null)

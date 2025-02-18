@@ -18,53 +18,29 @@ namespace AvifFileType
 {
     internal static class ColorContextUtil
     {
-        private enum IccProfileType
-        {
-            Unspecified = 0,
-            Srgb,
-            ScRgb,
-        }
-
-        public static IColorContext? CreateFromCicpColorInfo(CICPColorData? colorData, IImagingFactory imagingFactory)
+        public static IColorContext? CreateFromCICPColorInfo(CICPColorData? colorData, IImagingFactory imagingFactory)
         {
             IColorContext? colorContext = null;
 
             if (colorData.HasValue)
             {
-                IccProfileType type = GetIccProfileType(colorData.Value);
+                CICPColorData cicp = colorData.Value;
 
-                switch (type)
+                if (cicp.colorPrimaries == CICPColorPrimaries.BT709)
                 {
-                    case IccProfileType.Srgb:
-                        colorContext = imagingFactory.CreateColorContext(KnownColorSpace.Srgb);
-                        break;
-                    case IccProfileType.ScRgb:
-                        colorContext = imagingFactory.CreateColorContext(KnownColorSpace.ScRgb);
-                        break;
+                    switch (cicp.transferCharacteristics)
+                    {
+                        case CICPTransferCharacteristics.Linear:
+                            colorContext = imagingFactory.CreateColorContext(KnownColorSpace.ScRgb);
+                            break;
+                        case CICPTransferCharacteristics.Srgb:
+                            colorContext = imagingFactory.CreateColorContext(KnownColorSpace.Srgb);
+                            break;
+                    }
                 }
             }
 
             return colorContext;
-        }
-
-        private static IccProfileType GetIccProfileType(CICPColorData cicp)
-        {
-            IccProfileType type = IccProfileType.Unspecified;
-
-            if (cicp.colorPrimaries == CICPColorPrimaries.BT709)
-            {
-                switch (cicp.transferCharacteristics)
-                {
-                    case CICPTransferCharacteristics.Linear:
-                        type = IccProfileType.ScRgb;
-                        break;
-                    case CICPTransferCharacteristics.Srgb:
-                        type = IccProfileType.Srgb;
-                        break;
-                }
-            }
-            
-            return type;
         }
     }
 }

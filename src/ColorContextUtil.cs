@@ -38,6 +38,14 @@ namespace AvifFileType
                             break;
                     }
                 }
+                else if (cicp.colorPrimaries == CICPColorPrimaries.Smpte432)
+                {
+                    // DisplayP3 uses SMPTE EG 432-1 primaries with the sRGB transfer curve.
+                    if (cicp.transferCharacteristics == CICPTransferCharacteristics.Srgb)
+                    {
+                        colorContext = imagingFactory.CreateColorContext(KnownColorSpace.DisplayP3);
+                    }
+                }
             }
 
             return colorContext;

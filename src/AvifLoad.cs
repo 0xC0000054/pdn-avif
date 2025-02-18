@@ -13,7 +13,11 @@
 using AvifFileType.AvifContainer;
 using AvifFileType.Exif;
 using PaintDotNet;
+using PaintDotNet.Direct2D1;
+using PaintDotNet.Direct2D1.Effects;
+using PaintDotNet.Dxgi;
 using PaintDotNet.Imaging;
+using PaintDotNet.Rendering;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,27 +31,55 @@ namespace AvifFileType
             Document? doc = null;
 
             using (IImagingFactory imagingFactory = ImagingFactory.CreateRef())
-            using (AvifReader reader = new AvifReader(input, leaveOpen: true))
+            using (AvifReader reader = new AvifReader(input, leaveOpen: true, imagingFactory))
             {
-                Surface? surface = null;
-                bool disposeSurface = true;
-
-                try
+                using (AvifReaderImage image = reader.Decode())
                 {
-                    surface = reader.Decode();
+                    doc = new Document(image.Size);
 
-                    doc = new Document(surface.Width, surface.Height);
+                    BitmapLayer? layer = null;
+                    bool disposeLayer = true;
 
-                    AddAvifMetadataToDocument(doc, reader, imagingFactory);
-
-                    doc.Layers.Add(Layer.CreateBackgroundLayer(surface, takeOwnership: true));
-                    disposeSurface = false;
-                }
-                finally
-                {
-                    if (disposeSurface)
+                    try
                     {
-                        surface?.Dispose();
+                        layer = new(image.Size);
+
+                        PixelFormat pixelFormat = image.WICPixelFormat;
+
+                        if (pixelFormat == PixelFormats.Bgra32)
+                        {
+                            SetOutputLayerDataBgra32(image, layer.Surface);
+                        }
+                        else if (pixelFormat == PixelFormats.Rgba64)
+                        {
+                            SetOutputLayerDataRgba64(image, layer.Surface);
+                        }
+                        else if (pixelFormat == PixelFormats.Rgba128Float)
+                        {
+                            switch (image.HDRFormat)
+                            {
+                                case HDRFormat.PQ:
+                                    SetOutputLayerDataRgba128PQ(doc, image, layer.Surface, imagingFactory);
+                                    break;
+                                default:
+                                    throw new FormatException($"Unsupported HDR format: {image.HDRFormat}.");
+                            }
+                        }
+                        else
+                        {
+                            ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
+                        }
+
+                        doc.Layers.Add(layer);
+                        AddAvifMetadataToDocument(doc, reader, image, imagingFactory);
+                        disposeLayer = false;
+                    }
+                    finally
+                    {
+                        if (disposeLayer)
+                        {
+                            layer?.Dispose();
+                        }
                     }
                 }
             }
@@ -57,6 +89,7 @@ namespace AvifFileType
 
         private static void AddAvifMetadataToDocument(Document doc,
                                                       AvifReader reader,
+                                                      AvifReaderImage image,
                                                       IImagingFactory imagingFactory)
         {
             AvifItemData? exif = reader.GetExifData();
@@ -89,16 +122,11 @@ namespace AvifFileType
                 }
             }
 
-            CICPColorData? imageColorData = reader.ImageColorData;
+            string? serializedCICP = CICPSerializer.TrySerialize(image.CICPColor);
 
-            if (imageColorData.HasValue)
+            if (serializedCICP != null)
             {
-                string? serializedValue = CICPSerializer.TrySerialize(imageColorData.Value);
-
-                if (serializedValue != null)
-                {
-                    doc.Metadata.SetUserValue(AvifMetadataNames.CICPMetadataName, serializedValue);
-                }
+                doc.Metadata.SetUserValue(AvifMetadataNames.CICPMetadataName, serializedCICP);
             }
 
             ImageGridMetadata? imageGridMetadata = reader.ImageGridMetadata;
@@ -113,7 +141,7 @@ namespace AvifFileType
                 }
             }
 
-            IColorContext? colorContext = GetColorContext(reader, imagingFactory);
+            IColorContext? colorContext = GetColorContext(reader, image, imagingFactory);
 
             if (colorContext != null)
             {
@@ -142,22 +170,29 @@ namespace AvifFileType
             }
         }
 
-        private static IColorContext? GetColorContext(AvifReader reader, IImagingFactory imagingFactory)
+        private static IColorContext? GetColorContext(AvifReader reader,
+                                                      AvifReaderImage image,
+                                                      IImagingFactory imagingFactory)
         {
             try
             {
-                ReadOnlyMemory<byte> iccProfileBytes = reader.GetICCProfile();
+                // HDR images will set their own color context as part of the conversion
+                // to Bgra32.
+                if (image.HDRFormat == HDRFormat.None)
+                {
+                    ReadOnlyMemory<byte> iccProfileBytes = reader.GetICCProfile();
 
-                if (iccProfileBytes.Length > 0)
-                {
-                    if (IccProfileIsRgb(iccProfileBytes.Span))
+                    if (iccProfileBytes.Length > 0)
                     {
-                        return imagingFactory.CreateColorContext(iccProfileBytes.Span);
+                        if (IccProfileIsRgb(iccProfileBytes.Span))
+                        {
+                            return imagingFactory.CreateColorContext(iccProfileBytes.Span);
+                        }
                     }
-                }
-                else
-                {
-                    return ColorContextUtil.CreateFromCicpColorInfo(reader.ImageColorData, imagingFactory);
+                    else
+                    {
+                        return ColorContextUtil.CreateFromCICPColorInfo(image.CICPColor, imagingFactory);
+                    }
                 }
             }
             catch (Exception)
@@ -172,6 +207,106 @@ namespace AvifFileType
                 ICCProfile.ProfileHeader header = new ICCProfile.ProfileHeader(iccProfile);
 
                 return header.ColorSpace == ICCProfile.ProfileColorSpace.Rgb;
+            }
+        }
+
+        private static void SetOutputLayerDataBgra32(AvifReaderImage image, Surface output)
+        {
+            using (IBitmapLock bitmapLock = image.Image.Lock(BitmapLockOptions.Read))
+            {
+                RegionPtr<ColorBgra32> region = bitmapLock.AsRegionPtr<ColorBgra32>();
+
+                region.CopyTo(output.AsRegionPtr().Cast<ColorBgra32>());
+            }
+
+            if (image.IsPremultipliedAlpha)
+            {
+                output.ConvertFromPremultipliedAlpha();
+            }
+        }
+
+        private static void SetOutputLayerDataRgba64(AvifReaderImage image, Surface output)
+        {
+            if (image.IsPremultipliedAlpha)
+            {
+                using (IBitmap asPrgba64 = image.Image.Cast<ColorPrgba64>())
+                using (IBitmapSource<ColorBgra32> converted = asPrgba64.CreateFormatConverter<ColorBgra32>())
+                {
+                    converted.CopyPixels(output.AsRegionPtr().Cast<ColorBgra32>());
+                }
+            }
+            else
+            {
+                using (IBitmapSource<ColorBgra32> converted = image.Image.CreateFormatConverter<ColorBgra32>())
+                {
+                    converted.CopyPixels(output.AsRegionPtr().Cast<ColorBgra32>());
+                }
+            }
+        }
+
+        private static void SetOutputLayerDataRgba128PQ(
+            Document document,
+            AvifReaderImage image,
+            Surface output,
+            IImagingFactory imagingFactory)
+        {
+            using (IColorContext dp3ColorContext = imagingFactory.CreateColorContext(KnownColorSpace.DisplayP3))
+            using (IDirect2DFactory d2dFactory = Direct2DFactory.Create())
+            {
+                if (image.IsPremultipliedAlpha)
+                {
+                    using (IBitmapSource<ColorPbgra32> dp3Image = PQToDisplayP3(image.Image,
+                                                                                ColorManagementAlphaMode.Premultiplied,
+                                                                                imagingFactory,
+                                                                                d2dFactory,
+                                                                                dp3ColorContext))
+                    {
+                        dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
+                        output.ConvertFromPremultipliedAlpha();
+                    }
+                }
+                else
+                {
+                    // Direct2D requires everything to be "premultiplied"
+                    using (IBitmap asPrgba128Float = image.Image.Cast<ColorPrgba128Float>())
+                    using (IBitmapSource<ColorPbgra32> dp3Image = PQToDisplayP3(asPrgba128Float,
+                                                                                ColorManagementAlphaMode.Straight,
+                                                                                imagingFactory,
+                                                                                d2dFactory,
+                                                                                dp3ColorContext))
+                    {
+                        dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
+                    }
+                }
+
+                document.SetColorContext(dp3ColorContext);
+            }
+
+            static IBitmapSource<ColorPbgra32> PQToDisplayP3(
+                IBitmap bitmap,
+                ColorManagementAlphaMode alphaMode,
+                IImagingFactory imagingFactory,
+                IDirect2DFactory d2dFactory,
+                IColorContext dp3ColorContext)
+            {
+                return d2dFactory.CreateBitmapSourceFromImage<ColorPbgra32>(
+                    bitmap.Size,
+                    DevicePixelFormats.Prgba128Float,
+                    delegate (IDeviceContext dc)
+                    {
+                        using IDeviceBitmap srcImage = dc.CreateSharedBitmap(bitmap);
+                        using IDeviceColorContext srcColorContext = dc.CreateColorContext(DxgiColorSpace.RgbFullGamma2084NoneP2020);
+                        using IDeviceColorContext dstColorContext = dc.CreateColorContext(dp3ColorContext);
+
+                        ColorManagementEffect colorMgmtEffect = new ColorManagementEffect(
+                            dc,
+                            srcImage,
+                            srcColorContext,
+                            dstColorContext,
+                            alphaMode);
+
+                        return colorMgmtEffect;
+                    });
             }
         }
     }

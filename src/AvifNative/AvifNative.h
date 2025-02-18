@@ -59,6 +59,7 @@ extern "C" {
         DecodeFailed,
         UnsupportedBitDepth,
         UnknownYUVFormat,
+        UnsupportedOutputPixelFormat,
     };
 
     // This must be kept in sync with EncoderOptions.cs and NativeEncoderOptions.cs
@@ -80,12 +81,21 @@ extern "C" {
         bool fullRange;
     };
 
+    // This must be kept in sync with BitmapDataPixelFormat.cs
+    enum class BitmapDataPixelFormat : int32_t
+    {
+        Bgra32 = 0,
+        Rgba64,
+        Rgba128Float
+    };
+
     struct BitmapData
     {
         uint8_t* scan0;
         uint32_t width;
         uint32_t height;
         uint32_t stride;
+        BitmapDataPixelFormat format;
     };
 
     struct ColorBgra32
@@ -94,6 +104,22 @@ extern "C" {
         uint8_t g;
         uint8_t r;
         uint8_t a;
+    };
+
+    struct ColorRgba64
+    {
+        uint16_t r;
+        uint16_t g;
+        uint16_t b;
+        uint16_t a;
+    };
+
+    struct ColorRgba128Float
+    {
+        float r;
+        float g;
+        float b;
+        float a;
     };
 
     struct DecoderLayerInfo

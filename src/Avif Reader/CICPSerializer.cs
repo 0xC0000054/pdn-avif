@@ -66,6 +66,14 @@ namespace AvifFileType
                 return null;
             }
 
+            // Don't serialize HDR CICP data.
+            if (cicpColor.transferCharacteristics == CICPTransferCharacteristics.Smpte2084 ||
+                cicpColor.transferCharacteristics == CICPTransferCharacteristics.HLG ||
+                cicpColor.transferCharacteristics == CICPTransferCharacteristics.Smpte428)
+            {
+                return null;
+            }
+
             ushort colorPrimaries = (ushort)cicpColor.colorPrimaries;
             ushort transferCharacteristics = (ushort)cicpColor.transferCharacteristics;
             ushort matrixCoefficients = (ushort)cicpColor.matrixCoefficients;

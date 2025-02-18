@@ -12,6 +12,7 @@
 
 using AvifFileType.Interop;
 using PaintDotNet;
+using PaintDotNet.Imaging;
 using System;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
@@ -20,19 +21,20 @@ namespace AvifFileType
 {
     internal static class AvifNative
     {
-        public static void CompressAlphaImage(Surface surface,
-                                              in EncoderOptions options,
-                                              AvifProgressCallback avifProgress,
-                                              ref uint progressDone,
-                                              uint progressTotal,
-                                              out CompressedAV1Image alpha)
+        public static unsafe void CompressAlphaImage(Surface surface,
+                                                     in EncoderOptions options,
+                                                     AvifProgressCallback avifProgress,
+                                                     ref uint progressDone,
+                                                     uint progressTotal,
+                                                     out CompressedAV1Image alpha)
         {
             BitmapData bitmapData = new BitmapData
             {
-                scan0 = surface.Scan0.Pointer,
+                scan0 = surface.Scan0.VoidStar,
                 width = (uint)surface.Width,
                 height = (uint)surface.Height,
-                stride = (uint)surface.Stride
+                stride = (uint)surface.Stride,
+                pixelFormat = BitmapDataPixelFormat.Bgra32
             };
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
@@ -80,20 +82,21 @@ namespace AvifFileType
             GC.KeepAlive(avifProgress);
         }
 
-        public static void CompressColorImage(Surface surface,
-                                              in EncoderOptions options,
-                                              AvifProgressCallback avifProgress,
-                                              ref uint progressDone,
-                                              uint progressTotal,
-                                              CICPColorData colorInfo,
-                                              out CompressedAV1Image color)
+        public static unsafe void CompressColorImage(Surface surface,
+                                                     in EncoderOptions options,
+                                                     AvifProgressCallback avifProgress,
+                                                     ref uint progressDone,
+                                                     uint progressTotal,
+                                                     CICPColorData colorInfo,
+                                                     out CompressedAV1Image color)
         {
             BitmapData bitmapData = new BitmapData
             {
-                scan0 = surface.Scan0.Pointer,
+                scan0 = surface.Scan0.VoidStar,
                 width = (uint)surface.Width,
                 height = (uint)surface.Height,
-                stride = (uint)surface.Stride
+                stride = (uint)surface.Stride,
+                pixelFormat = BitmapDataPixelFormat.Bgra32
             };
 
             ProgressContext progressContext = new ProgressContext(avifProgress, progressDone, progressTotal);
@@ -241,37 +244,34 @@ namespace AvifFileType
                                                      CICPColorData colorData,
                                                      uint tileColumnIndex,
                                                      uint tileRowIndex,
-                                                     Surface surface)
+                                                     AvifReaderImage output)
         {
-            BitmapData bitmapData = new()
-            {
-                scan0 = surface.Scan0.Pointer,
-                stride = (uint)surface.Stride,
-                width = (uint)surface.Width,
-                height = (uint)surface.Height
-            };
-
             DecoderStatus status;
 
-            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+            using (IBitmapLock bitmapLock = output.Image.Lock(BitmapLockOptions.ReadWrite))
             {
-                status = AvifNative_64.ReadColorImageData(image.SafeDecoderImage,
-                                                          colorData,
-                                                          tileColumnIndex,
-                                                          tileRowIndex,
-                                                          ref bitmapData);
-            }
-            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
-            {
-                status = AvifNative_ARM64.ReadColorImageData(image.SafeDecoderImage,
-                                                             colorData,
-                                                             tileColumnIndex,
-                                                             tileRowIndex,
-                                                             ref bitmapData);
-            }
-            else
-            {
-                throw new PlatformNotSupportedException();
+                BitmapData bitmapData = CreateBitmapDataFromIBitmapLock(bitmapLock);
+
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    status = AvifNative_64.ReadColorImageData(image.SafeDecoderImage,
+                                                              colorData,
+                                                              tileColumnIndex,
+                                                              tileRowIndex,
+                                                              ref bitmapData);
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    status = AvifNative_ARM64.ReadColorImageData(image.SafeDecoderImage,
+                                                                 colorData,
+                                                                 tileColumnIndex,
+                                                                 tileRowIndex,
+                                                                 ref bitmapData);
+                }
+                else
+                {
+                    throw new PlatformNotSupportedException();
+                }
             }
 
             if (status != DecoderStatus.Ok)
@@ -283,35 +283,32 @@ namespace AvifFileType
         public static unsafe void ReadAlphaImageData(DecoderImage image,
                                                      uint tileColumnIndex,
                                                      uint tileRowIndex,
-                                                     Surface surface)
+                                                     AvifReaderImage output)
         {
-            BitmapData bitmapData = new()
-            {
-                scan0 = surface.Scan0.Pointer,
-                stride = (uint)surface.Stride,
-                width = (uint)surface.Width,
-                height = (uint)surface.Height
-            };
-
             DecoderStatus status;
 
-            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+            using (IBitmapLock bitmapLock = output.Image.Lock(BitmapLockOptions.ReadWrite))
             {
-                status = AvifNative_64.ReadAlphaImageData(image.SafeDecoderImage,
-                                                          tileColumnIndex,
-                                                          tileRowIndex,
-                                                          ref bitmapData);
-            }
-            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
-            {
-                status = AvifNative_ARM64.ReadAlphaImageData(image.SafeDecoderImage,
-                                                             tileColumnIndex,
-                                                             tileRowIndex,
-                                                             ref bitmapData);
-            }
-            else
-            {
-                throw new PlatformNotSupportedException();
+                BitmapData bitmapData = CreateBitmapDataFromIBitmapLock(bitmapLock);
+
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    status = AvifNative_64.ReadAlphaImageData(image.SafeDecoderImage,
+                                                              tileColumnIndex,
+                                                              tileRowIndex,
+                                                              ref bitmapData);
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    status = AvifNative_ARM64.ReadAlphaImageData(image.SafeDecoderImage,
+                                                                 tileColumnIndex,
+                                                                 tileRowIndex,
+                                                                 ref bitmapData);
+                }
+                else
+                {
+                    throw new PlatformNotSupportedException();
+                }
             }
 
             if (status != DecoderStatus.Ok)
@@ -338,6 +335,38 @@ namespace AvifFileType
             }
 
             return result;
+        }
+
+        private static unsafe BitmapData CreateBitmapDataFromIBitmapLock(IBitmapLock bitmapLock)
+        {
+            BitmapData bitmapData = new()
+            {
+                scan0 = bitmapLock.Buffer,
+                stride = (uint)bitmapLock.BufferStride,
+                width = (uint)bitmapLock.Size.Width,
+                height = (uint)bitmapLock.Size.Height
+            };
+
+            PixelFormat pixelFormat = bitmapLock.PixelFormat;
+
+            if (pixelFormat == PixelFormats.Bgra32)
+            {
+                bitmapData.pixelFormat = BitmapDataPixelFormat.Bgra32;
+            }
+            else if (pixelFormat == PixelFormats.Rgba64)
+            {
+                bitmapData.pixelFormat = BitmapDataPixelFormat.Rgba64;
+            }
+            else if (pixelFormat == PixelFormats.Rgba128Float)
+            {
+                bitmapData.pixelFormat = BitmapDataPixelFormat.Rgba128Float;
+            }
+            else
+            {
+                ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
+            }
+
+            return bitmapData;
         }
 
         private static void HandleError(EncoderStatus status, ExceptionDispatchInfo? exceptionDispatchInfo)
@@ -388,6 +417,8 @@ namespace AvifFileType
                     throw new FormatException("The image has an unsupported bit depth.");
                 case DecoderStatus.UnknownYUVFormat:
                     throw new FormatException("The YUV format is not supported by the decoder.");
+                case DecoderStatus.UnsupportedOutputPixelFormat:
+                    throw new FormatException("The output pixel format is not supported by the decoder.");
                 default:
                     throw new FormatException("An unknown error occurred when decoding the image.");
             }

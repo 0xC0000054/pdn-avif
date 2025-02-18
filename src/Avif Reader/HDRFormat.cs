@@ -10,17 +10,13 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-namespace AvifFileType.Interop
+namespace AvifFileType
 {
-    internal enum DecoderStatus
+    internal enum HDRFormat
     {
-        Ok,
-        NullParameter,
-        OutOfMemory,
-        CodecInitFailed,
-        DecodeFailed,
-        UnsupportedBitDepth,
-        UnknownYUVFormat,
-        UnsupportedOutputPixelFormat,
+        None = 0,
+        HLG,
+        PQ,
+        SMPTE428
     }
 }

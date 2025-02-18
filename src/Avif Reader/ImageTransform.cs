@@ -10,151 +10,89 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using AvifFileType.AvifContainer;
 using PaintDotNet;
-using System;
-using System.Drawing;
+using PaintDotNet.Imaging;
+using System.Runtime.CompilerServices;
 
 namespace AvifFileType
 {
     internal static class ImageTransform
     {
-        internal static void Crop(CleanApertureBox cleanApertureBox, ref Surface surface)
+        internal static void FlipHorizontal<T>(IBitmapLock bitmapLock) where T: unmanaged, INaturalPixelInfo
         {
-            if (cleanApertureBox is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(cleanApertureBox));
-            }
+            RegionPtr<T> region = bitmapLock.AsRegionPtr<T>();
 
-            if (cleanApertureBox.Width.Denominator == 0 ||
-                cleanApertureBox.Height.Denominator == 0 ||
-                cleanApertureBox.HorizontalOffset.Denominator == 0 ||
-                cleanApertureBox.VerticalOffset.Denominator == 0)
-            {
-                return;
-            }
+            int lastColumn = region.Width - 1;
+            int flipWidth = region.Width / 2;
 
-            int cropWidth = cleanApertureBox.Width.ToInt32();
-            int cropHeight = cleanApertureBox.Height.ToInt32();
-
-            if (cropWidth <= 0 || cropHeight <= 0)
-            {
-                // Invalid crop width/height.
-                return;
-            }
-
-            double offsetX = cleanApertureBox.HorizontalOffset.ToDouble();
-            double offsetY = cleanApertureBox.VerticalOffset.ToDouble();
-
-            double pictureCenterX = offsetX + ((surface.Width - 1) / 2.0);
-            double pictureCenterY = offsetY + ((surface.Height - 1) / 2.0);
-
-            int cropRectX = (int)Math.Round(pictureCenterX - ((cropWidth - 1) / 2.0));
-            int cropRectY = (int)Math.Round(pictureCenterY - ((cropHeight - 1) / 2.0));
-
-            Rectangle cropRect = new Rectangle(cropRectX, cropRectY, cropWidth, cropHeight);
-
-            // Check that the crop rectangle is within the surface bounds.
-            if (cropRect.IntersectsWith(surface.Bounds))
-            {
-                Surface? temp = new Surface(cropWidth, cropHeight);
-                try
-                {
-                    temp.CopySurface(surface, cropRect);
-
-                    surface.Dispose();
-                    surface = temp;
-                    temp = null;
-                }
-                finally
-                {
-                    temp?.Dispose();
-                }
-            }
-        }
-
-        internal static unsafe void FlipHorizontal(Surface surface)
-        {
-            int lastColumn = surface.Width - 1;
-            int flipWidth = surface.Width / 2;
-
-            for (int y = 0; y < surface.Height; y++)
+            for (int y = 0; y < region.Height; y++)
             {
                 for (int x = 0; x < flipWidth; x++)
                 {
                     int sampleColumn = lastColumn - x;
 
-                    (surface[sampleColumn, y], surface[x, y]) = (surface[x, y], surface[sampleColumn, y]);
+                    (region[sampleColumn, y], region[x, y]) = (region[x, y], region[sampleColumn, y]);
                 }
             }
         }
 
-        internal static unsafe void FlipVertical(Surface surface)
+        internal static void FlipVertical<T>(IBitmapLock bitmapLock) where T : unmanaged, INaturalPixelInfo
         {
-            int lastRow = surface.Height - 1;
-            int flipHeight = surface.Height / 2;
+            RegionPtr<T> region = bitmapLock.AsRegionPtr<T>();
 
-            for (int x = 0; x < surface.Width; x++)
+            int lastRow = region.Height - 1;
+            int flipHeight = region.Height / 2;
+
+            for (int x = 0; x < region.Width; x++)
             {
                 for (int y = 0; y < flipHeight; y++)
                 {
                     int sampleRow = lastRow - y;
 
-                    (surface[x, sampleRow], surface[x, y]) = (surface[x, y], surface[x, sampleRow]);
+                    (region[x, sampleRow], region[x, y]) = (region[x, y], region[x, sampleRow]);
                 }
             }
         }
 
-        internal static unsafe void Rotate90CCW(ref Surface surface)
+        internal static void Rotate90CCW<T>(IBitmapLock sourceLock, IBitmapLock destLock) where T : unmanaged, INaturalPixelInfo
         {
-            Surface? temp = null;
-            try
+            RegionPtr<T> source = sourceLock.AsRegionPtr<T>();
+            RegionPtr<T> dest = destLock.AsRegionPtr<T>();
+
+            int lastColumn = source.Width - 1;
+
+            for (int y = 0; y < dest.Height; y++)
             {
-                temp = new Surface(surface.Height, surface.Width);
+                RegionRowPtr<T> row = dest.Rows[y];
 
-                int lastColumn = surface.Width - 1;
-
-                for (int y = 0; y < temp.Height; y++)
+                for (int x = 0; x < dest.Width; x++)
                 {
-                    ColorBgra* dstPtr = temp.GetRowPointerUnchecked(y);
-
-                    for (int x = 0; x < temp.Width; x++)
-                    {
-                        ColorBgra pixel = surface[lastColumn - y, x];
-
-                        dstPtr->Bgra = pixel.Bgra;
-                        dstPtr++;
-                    }
+                    row[x] = source[lastColumn - y, x];
                 }
-
-                surface.Dispose();
-                surface = temp;
-                temp = null;
-            }
-            finally
-            {
-                temp?.Dispose();
             }
         }
 
-        internal static unsafe void Rotate180(Surface surface)
+        internal static void Rotate180<T>(IBitmapLock bitmapLock) where T : unmanaged, INaturalPixelInfo
         {
-            int width = surface.Width;
-            int height = surface.Height;
+            RegionPtr<T> region = bitmapLock.AsRegionPtr<T>();
+
+            int width = region.Width;
+            int height = region.Height;
 
             int halfHeight = height / 2;
             int lastColumn = width - 1;
 
             for (int y = 0; y < halfHeight; y++)
             {
-                ColorBgra* topPtr = surface.GetRowPointerUnchecked(y);
-                ColorBgra* bottomPtr = surface.GetPointPointerUnchecked(lastColumn, height - y - 1);
+                ref T topRef = ref region[0, y];
+                ref T bottomRef = ref region[lastColumn, height - y - 1];
 
                 for (int x = 0; x < width; x++)
                 {
-                    (*topPtr, *bottomPtr) = (*bottomPtr, *topPtr);
-                    topPtr++;
-                    bottomPtr--;
+                    (topRef, bottomRef) = (bottomRef, topRef);
+
+                    topRef = ref Unsafe.Add(ref topRef, 1);
+                    bottomRef = ref Unsafe.Subtract(ref bottomRef, 1);
                 }
             }
 
@@ -163,47 +101,34 @@ namespace AvifFileType
             {
                 int halfWidth = width / 2;
 
-                ColorBgra* leftPtr = surface.GetRowPointerUnchecked(halfHeight);
-                ColorBgra* rightPtr = surface.GetPointPointerUnchecked(lastColumn, halfHeight);
+                ref T leftRef = ref region[0, halfHeight];
+                ref T rightRef = ref region[lastColumn, halfHeight];
 
                 for (int x = 0; x < halfWidth; x++)
                 {
-                    (*leftPtr, *rightPtr) = (*rightPtr, *leftPtr);
-                    leftPtr++;
-                    rightPtr--;
+                    (leftRef, rightRef) = (rightRef, leftRef);
+
+                    leftRef = ref Unsafe.Add(ref leftRef, 1);
+                    rightRef = ref Unsafe.Subtract(ref rightRef, 1);
                 }
             }
         }
 
-        internal static unsafe void Rotate270CCW(ref Surface surface)
+        internal static void Rotate270CCW<T>(IBitmapLock sourceLock, IBitmapLock destLock) where T : unmanaged, INaturalPixelInfo
         {
-            Surface? temp = null;
-            try
+            RegionPtr<T> source = sourceLock.AsRegionPtr<T>();
+            RegionPtr<T> dest = destLock.AsRegionPtr<T>();
+
+            int lastRow = source.Height - 1;
+
+            for (int y = 0; y < dest.Height; y++)
             {
-                temp = new Surface(surface.Height, surface.Width);
+                RegionRowPtr<T> row = dest.Rows[y];
 
-                int lastRow = surface.Height - 1;
-
-                for (int y = 0; y < temp.Height; y++)
+                for (int x = 0; x < dest.Width; x++)
                 {
-                    ColorBgra* dstPtr = temp.GetRowPointerUnchecked(y);
-
-                    for (int x = 0; x < temp.Width; x++)
-                    {
-                        ColorBgra pixel = surface[y, lastRow - x];
-
-                        dstPtr->Bgra = pixel.Bgra;
-                        dstPtr++;
-                    }
+                    row[x] = source[y, lastRow - x];
                 }
-
-                surface.Dispose();
-                surface = temp;
-                temp = null;
-            }
-            finally
-            {
-                temp?.Dispose();
             }
         }
     }

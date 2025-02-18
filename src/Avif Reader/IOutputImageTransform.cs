@@ -10,17 +10,20 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-namespace AvifFileType.Interop
+namespace AvifFileType
 {
-    internal enum DecoderStatus
+    interface IOutputImageTransform
     {
-        Ok,
-        NullParameter,
-        OutOfMemory,
-        CodecInitFailed,
-        DecodeFailed,
-        UnsupportedBitDepth,
-        UnknownYUVFormat,
-        UnsupportedOutputPixelFormat,
+        void Crop(AvifContainer.CleanApertureBox cleanApertureBox);
+
+        void Rotate90CCW();
+
+        void Rotate180();
+
+        void Rotate270CCW();
+
+        void FlipHorizontal();
+
+        void FlipVertical();
     }
 }

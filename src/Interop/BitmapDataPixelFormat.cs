@@ -12,15 +12,11 @@
 
 namespace AvifFileType.Interop
 {
-    internal enum DecoderStatus
+    // This must be kept in sync with AvifNative.h
+    internal enum BitmapDataPixelFormat : int
     {
-        Ok,
-        NullParameter,
-        OutOfMemory,
-        CodecInitFailed,
-        DecodeFailed,
-        UnsupportedBitDepth,
-        UnknownYUVFormat,
-        UnsupportedOutputPixelFormat,
+        Bgra32 = 0,
+        Rgba64,
+        Rgba128Float
     }
 }

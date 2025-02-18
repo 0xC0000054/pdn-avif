@@ -10,17 +10,16 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-namespace AvifFileType.Interop
+using PaintDotNet;
+using PaintDotNet.Imaging;
+
+namespace AvifFileType
 {
-    internal enum DecoderStatus
+    internal static class IBitmapLockExtensions
     {
-        Ok,
-        NullParameter,
-        OutOfMemory,
-        CodecInitFailed,
-        DecodeFailed,
-        UnsupportedBitDepth,
-        UnknownYUVFormat,
-        UnsupportedOutputPixelFormat,
+        public static unsafe RegionPtr<T> AsRegionPtr<T>(this IBitmapLock bitmapLock) where T : unmanaged, INaturalPixelInfo
+        {
+            return new((T*)bitmapLock.Buffer, bitmapLock.Size, bitmapLock.BufferStride);
+        }
     }
 }

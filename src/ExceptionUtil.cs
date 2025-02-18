@@ -58,5 +58,11 @@ namespace AvifFileType
         {
             throw new ObjectDisposedException(objectName);
         }
+
+        [DoesNotReturn]
+        internal static void UnsupportedPixelFormat(PaintDotNet.Imaging.PixelFormat pixelFormat)
+        {
+            throw new InvalidOperationException($"Unsupported WIC PixelFormat: {pixelFormat.GetName()}");
+        }
     }
 }

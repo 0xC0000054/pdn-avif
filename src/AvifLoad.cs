@@ -298,7 +298,7 @@ namespace AvifFileType
                             dstColorContext,
                             alphaMode);
                         UnPremultiplyEffect2 unPremultiplyEffect = new UnPremultiplyEffect2(dc);
-                        unPremultiplyEffect.SetValueByName("Enabled", alphaMode == ColorManagementAlphaMode.Premultiplied);
+                        unPremultiplyEffect.Properties.Enabled.SetValue(alphaMode == ColorManagementAlphaMode.Premultiplied);
                         unPremultiplyEffect.SetInput(0, colorMgmtEffect);
 
                         return unPremultiplyEffect;

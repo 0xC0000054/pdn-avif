@@ -286,6 +286,7 @@ namespace AvifFileType
                     DevicePixelFormats.Prgba128Float,
                     delegate (IDeviceContext dc)
                     {
+                        dc.EffectBufferPrecision = BufferPrecision.Float32;
                         using IDeviceBitmap srcImage = dc.CreateSharedBitmap(bitmap);
                         using IDeviceColorContext srcColorContext = dc.CreateColorContext(DxgiColorSpace.RgbFullGamma2084NoneP2020);
                         using IDeviceColorContext dstColorContext = dc.CreateColorContext(dp3ColorContext);

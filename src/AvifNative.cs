@@ -45,12 +45,11 @@ namespace AvifFileType
 
                 CompressedAV1OutputAlloc outputAllocDelegate = new CompressedAV1OutputAlloc(allocator.Allocate);
                 EncoderStatus status = EncoderStatus.Ok;
-                NativeEncoderOptions nativeEncoderOptions = options.ToNative();
 
                 if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
                 {
                     status = AvifNative_64.CompressAlphaImage(bitmapData,
-                                                              nativeEncoderOptions,
+                                                              options,
                                                               ref progressContext,
                                                               outputAllocDelegate,
                                                               out alphaImage);
@@ -58,7 +57,7 @@ namespace AvifFileType
                 else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                 {
                     status = AvifNative_ARM64.CompressAlphaImage(bitmapData,
-                                                                 nativeEncoderOptions,
+                                                                 options,
                                                                  ref progressContext,
                                                                  outputAllocDelegate,
                                                                  out alphaImage);
@@ -107,12 +106,11 @@ namespace AvifFileType
 
                 CompressedAV1OutputAlloc outputAllocDelegate = new CompressedAV1OutputAlloc(allocator.Allocate);
                 EncoderStatus status = EncoderStatus.Ok;
-                NativeEncoderOptions nativeEncoderOptions = options.ToNative();
 
                 if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
                 {
                     status = AvifNative_64.CompressColorImage(bitmapData,
-                                                              nativeEncoderOptions,
+                                                              options,
                                                               ref progressContext,
                                                               colorInfo,
                                                               outputAllocDelegate,
@@ -121,7 +119,7 @@ namespace AvifFileType
                 else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                 {
                     status = AvifNative_ARM64.CompressColorImage(bitmapData,
-                                                                 nativeEncoderOptions,
+                                                                 options,
                                                                  ref progressContext,
                                                                  colorInfo,
                                                                  outputAllocDelegate,

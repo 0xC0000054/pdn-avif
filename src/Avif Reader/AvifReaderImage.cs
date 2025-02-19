@@ -59,7 +59,7 @@ namespace AvifFileType
             }
         }
 
-        unsafe void IOutputImageTransform.Crop(CleanApertureBox cleanApertureBox)
+        void IOutputImageTransform.Crop(CleanApertureBox cleanApertureBox)
         {
             if (cleanApertureBox is null)
             {
@@ -99,14 +99,11 @@ namespace AvifFileType
             // Check that the crop rectangle is within the surface bounds.
             if (cropRect.IntersectsWith(this.image.Bounds()))
             {
-                IBitmap? temp = this.imagingFactory.CreateBitmap(cropWidth, cropHeight, this.image.PixelFormat);
+                IBitmap? temp = this.image.CreateWindow(cropRect);
                 try
                 {
-                    using (IBitmapLock destLock = temp.Lock(BitmapLockOptions.Write))
-                    {
-                        this.image.CopyPixels(destLock.Buffer, destLock.BufferStride, destLock.BufferSize, cropRect);
-                    }
-
+                    // Calling Dispose is the correct behavior because CreateWindow
+                    // increments the reference count of the original bitmap.
                     this.image.Dispose();
                     this.image = temp;
                     temp = null;

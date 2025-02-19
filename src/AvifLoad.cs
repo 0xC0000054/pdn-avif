@@ -255,7 +255,6 @@ namespace AvifFileType
                                                                                 dp3ColorContext))
                     {
                         dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
-                        output.ConvertFromPremultipliedAlpha();
                     }
                 }
                 else
@@ -297,8 +296,11 @@ namespace AvifFileType
                             srcColorContext,
                             dstColorContext,
                             alphaMode);
+                        UnPremultiplyEffect2 unPremultiplyEffect = new UnPremultiplyEffect2(dc);
+                        unPremultiplyEffect.SetValueByName("Enabled", alphaMode == ColorManagementAlphaMode.Premultiplied);
+                        unPremultiplyEffect.SetInput(0, colorMgmtEffect);
 
-                        return colorMgmtEffect;
+                        return unPremultiplyEffect;
                     });
             }
         }

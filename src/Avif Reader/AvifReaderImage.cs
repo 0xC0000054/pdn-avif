@@ -99,62 +99,39 @@ namespace AvifFileType
             // Check that the crop rectangle is within the surface bounds.
             if (cropRect.IntersectsWith(this.image.Bounds()))
             {
-                IBitmap? temp = this.image.CreateWindow(cropRect);
-                try
-                {
-                    // Calling Dispose is the correct behavior because CreateWindow
-                    // increments the reference count of the original bitmap.
-                    this.image.Dispose();
-                    this.image = temp;
-                    temp = null;
-                }
-                finally
-                {
-                    temp?.Dispose();
-                }
+                this.image.ReplaceRef(this.image.CreateWindow(cropRect));
             }
         }
 
         void IOutputImageTransform.Rotate90CCW()
         {
-            IBitmap? temp = null;
+            SizeInt32 size = this.image.Size;
+            PixelFormat pixelFormat = this.image.PixelFormat;
 
-            try
+            IBitmap newImage = this.imagingFactory.CreateBitmap(size.Height, size.Width, pixelFormat);
+
+            using (IBitmapLock sourceLock = this.image.Lock(BitmapLockOptions.Read))
+            using (IBitmapLock destLock = newImage.Lock(BitmapLockOptions.Write))
             {
-                SizeInt32 size = this.image.Size;
-                PixelFormat pixelFormat = this.image.PixelFormat;
-
-                temp = this.imagingFactory.CreateBitmap(size.Height, size.Width, pixelFormat);
-
-                using (IBitmapLock sourceLock = this.image.Lock(BitmapLockOptions.Read))
-                using (IBitmapLock destLock = temp.Lock(BitmapLockOptions.Write))
+                if (pixelFormat == PixelFormats.Bgra32)
                 {
-                    if (pixelFormat == PixelFormats.Bgra32)
-                    {
-                        ImageTransform.Rotate90CCW<ColorBgra32>(sourceLock, destLock);
-                    }
-                    else if (pixelFormat == PixelFormats.Rgba64)
-                    {
-                        ImageTransform.Rotate90CCW<ColorRgba64>(sourceLock, destLock);
-                    }
-                    else if (pixelFormat == PixelFormats.Rgba128Float)
-                    {
-                        ImageTransform.Rotate90CCW<ColorRgba128Float>(sourceLock, destLock);
-                    }
-                    else
-                    {
-                        ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
-                    }
+                    ImageTransform.Rotate90CCW<ColorBgra32>(sourceLock, destLock);
                 }
+                else if (pixelFormat == PixelFormats.Rgba64)
+                {
+                    ImageTransform.Rotate90CCW<ColorRgba64>(sourceLock, destLock);
+                }
+                else if (pixelFormat == PixelFormats.Rgba128Float)
+                {
+                    ImageTransform.Rotate90CCW<ColorRgba128Float>(sourceLock, destLock);
+                }
+                else
+                {
+                    ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
+                }
+            }
 
-                this.image.Dispose();
-                this.image = temp;
-                temp = null;
-            }
-            finally
-            {
-                temp?.Dispose();
-            }
+            this.image.ReplaceRef(newImage);
         }
 
         void IOutputImageTransform.Rotate180()
@@ -184,44 +161,33 @@ namespace AvifFileType
 
         void IOutputImageTransform.Rotate270CCW()
         {
-            IBitmap? temp = null;
+            SizeInt32 size = this.image.Size;
+            PixelFormat pixelFormat = this.image.PixelFormat;
 
-            try
+            IBitmap newImage = this.imagingFactory.CreateBitmap(size.Height, size.Width, pixelFormat);
+
+            using (IBitmapLock sourceLock = this.image.Lock(BitmapLockOptions.Read))
+            using (IBitmapLock destLock = newImage.Lock(BitmapLockOptions.Write))
             {
-                SizeInt32 size = this.image.Size;
-                PixelFormat pixelFormat = this.image.PixelFormat;
-
-                temp = this.imagingFactory.CreateBitmap(size.Height, size.Width, pixelFormat);
-
-                using (IBitmapLock sourceLock = this.image.Lock(BitmapLockOptions.Read))
-                using (IBitmapLock destLock = temp.Lock(BitmapLockOptions.Write))
+                if (pixelFormat == PixelFormats.Bgra32)
                 {
-                    if (pixelFormat == PixelFormats.Bgra32)
-                    {
-                        ImageTransform.Rotate270CCW<ColorBgra32>(sourceLock, destLock);
-                    }
-                    else if (pixelFormat == PixelFormats.Rgba64)
-                    {
-                        ImageTransform.Rotate270CCW<ColorRgba64>(sourceLock, destLock);
-                    }
-                    else if (pixelFormat == PixelFormats.Rgba128Float)
-                    {
-                        ImageTransform.Rotate270CCW<ColorRgba128Float>(sourceLock, destLock);
-                    }
-                    else
-                    {
-                        ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
-                    }
+                    ImageTransform.Rotate270CCW<ColorBgra32>(sourceLock, destLock);
                 }
+                else if (pixelFormat == PixelFormats.Rgba64)
+                {
+                    ImageTransform.Rotate270CCW<ColorRgba64>(sourceLock, destLock);
+                }
+                else if (pixelFormat == PixelFormats.Rgba128Float)
+                {
+                    ImageTransform.Rotate270CCW<ColorRgba128Float>(sourceLock, destLock);
+                }
+                else
+                {
+                    ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
+                }
+            }
 
-                this.image.Dispose();
-                this.image = temp;
-                temp = null;
-            }
-            finally
-            {
-                temp?.Dispose();
-            }
+            this.image.ReplaceRef(newImage);
         }
 
         void IOutputImageTransform.FlipHorizontal()

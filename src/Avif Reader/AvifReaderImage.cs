@@ -133,7 +133,7 @@ namespace AvifFileType
                     {
                         ImageTransform.Rotate90CCW<ColorBgra32>(sourceLock, destLock);
                     }
-                    else if (pixelFormat == PixelFormats.Rgb64)
+                    else if (pixelFormat == PixelFormats.Rgba64)
                     {
                         ImageTransform.Rotate90CCW<ColorRgba64>(sourceLock, destLock);
                     }
@@ -167,7 +167,7 @@ namespace AvifFileType
                 {
                     ImageTransform.Rotate180<ColorBgra32>(bitmapLock);
                 }
-                else if (pixelFormat == PixelFormats.Rgb64)
+                else if (pixelFormat == PixelFormats.Rgba64)
                 {
                     ImageTransform.Rotate180<ColorRgba64>(bitmapLock);
                 }
@@ -200,7 +200,7 @@ namespace AvifFileType
                     {
                         ImageTransform.Rotate270CCW<ColorBgra32>(sourceLock, destLock);
                     }
-                    else if (pixelFormat == PixelFormats.Rgb64)
+                    else if (pixelFormat == PixelFormats.Rgba64)
                     {
                         ImageTransform.Rotate270CCW<ColorRgba64>(sourceLock, destLock);
                     }
@@ -234,7 +234,7 @@ namespace AvifFileType
                 {
                     ImageTransform.FlipHorizontal<ColorBgra32>(bitmapLock);
                 }
-                else if (pixelFormat == PixelFormats.Rgb64)
+                else if (pixelFormat == PixelFormats.Rgba64)
                 {
                     ImageTransform.FlipHorizontal<ColorRgba64>(bitmapLock);
                 }
@@ -259,7 +259,7 @@ namespace AvifFileType
                 {
                     ImageTransform.FlipVertical<ColorBgra32>(bitmapLock);
                 }
-                else if (pixelFormat == PixelFormats.Rgb64)
+                else if (pixelFormat == PixelFormats.Rgba64)
                 {
                     ImageTransform.FlipVertical<ColorRgba64>(bitmapLock);
                 }

@@ -248,11 +248,11 @@ namespace AvifFileType
             {
                 if (image.IsPremultipliedAlpha)
                 {
-                    using (IBitmapSource<ColorPbgra32> dp3Image = PQToDisplayP3(image.Image,
-                                                                                ColorManagementAlphaMode.Premultiplied,
-                                                                                imagingFactory,
-                                                                                d2dFactory,
-                                                                                dp3ColorContext))
+                    using (IBitmapSource<ColorPbgra32> dp3Image = PQToColorContext(image.Image,
+                                                                                   ColorManagementAlphaMode.Premultiplied,
+                                                                                   imagingFactory,
+                                                                                   d2dFactory,
+                                                                                   dp3ColorContext))
                     {
                         dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
                     }
@@ -261,11 +261,11 @@ namespace AvifFileType
                 {
                     // Direct2D requires everything to be "premultiplied"
                     using (IBitmap asPrgba128Float = image.Image.Cast<ColorPrgba128Float>())
-                    using (IBitmapSource<ColorPbgra32> dp3Image = PQToDisplayP3(asPrgba128Float,
-                                                                                ColorManagementAlphaMode.Straight,
-                                                                                imagingFactory,
-                                                                                d2dFactory,
-                                                                                dp3ColorContext))
+                    using (IBitmapSource<ColorPbgra32> dp3Image = PQToColorContext(asPrgba128Float,
+                                                                                   ColorManagementAlphaMode.Straight,
+                                                                                   imagingFactory,
+                                                                                   d2dFactory,
+                                                                                   dp3ColorContext))
                     {
                         dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
                     }
@@ -274,12 +274,12 @@ namespace AvifFileType
                 document.SetColorContext(dp3ColorContext);
             }
 
-            static IBitmapSource<ColorPbgra32> PQToDisplayP3(
+            static IBitmapSource<ColorPbgra32> PQToColorContext(
                 IBitmap bitmap,
                 ColorManagementAlphaMode alphaMode,
                 IImagingFactory imagingFactory,
                 IDirect2DFactory d2dFactory,
-                IColorContext dp3ColorContext)
+                IColorContext colorContext)
             {
                 return d2dFactory.CreateBitmapSourceFromImage<ColorPbgra32>(
                     bitmap.Size,
@@ -289,7 +289,7 @@ namespace AvifFileType
                         dc.EffectBufferPrecision = BufferPrecision.Float32;
                         using IDeviceBitmap srcImage = dc.CreateSharedBitmap(bitmap);
                         using IDeviceColorContext srcColorContext = dc.CreateColorContext(DxgiColorSpace.RgbFullGamma2084NoneP2020);
-                        using IDeviceColorContext dstColorContext = dc.CreateColorContext(dp3ColorContext);
+                        using IDeviceColorContext dstColorContext = dc.CreateColorContext(colorContext);
 
                         ColorManagementEffect colorMgmtEffect = new ColorManagementEffect(
                             dc,

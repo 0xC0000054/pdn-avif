@@ -14,15 +14,25 @@
 
 #include "AvifNative.h"
 
-DecoderStatus DecodeColorImage(
-    const uint8_t* compressedColorImage,
-    size_t compressedColorImageSize,
+DecoderStatus DecoderLoadImage(
+    const uint8_t* compressedImage,
+    size_t compressedImageSize,
+    const CICPColorData* containerColorInfo,
+    const DecoderLayerInfo* layerInfo,
+    DecoderImageHandle** imageHandle,
+    DecoderImageInfo* imageInfo);
+
+void DecoderFreeImageHandle(DecoderImageHandle* handle);
+
+DecoderStatus DecoderConvertColorImage(
+    const DecoderImageHandle* imageHandle,
     const CICPColorData* colorInfo,
-    DecodeInfo* decodeInfo,
+    uint32_t tileColumnIndex,
+    uint32_t tileRowIndex,
     BitmapData* outputImage);
 
-DecoderStatus DecodeAlphaImage(
-    const uint8_t* compressedAlphaImage,
-    size_t compressedAlphaImageSize,
-    DecodeInfo* decodeInfo,
+DecoderStatus DecoderConvertAlphaImage(
+    const DecoderImageHandle* imageHandle,
+    uint32_t tileColumnIndex,
+    uint32_t tileRowIndex,
     BitmapData* outputImage);

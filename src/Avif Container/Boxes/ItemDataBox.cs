@@ -10,8 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using System;
-
 namespace AvifFileType.AvifContainer
 {
     internal sealed class ItemDataBox : Box

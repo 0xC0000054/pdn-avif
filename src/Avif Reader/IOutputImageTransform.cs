@@ -12,8 +12,18 @@
 
 namespace AvifFileType
 {
-    internal static class AvifMetadataNames
+    interface IOutputImageTransform
     {
-        internal const string ImageGridName = "AvifImageGrid";
+        void Crop(AvifContainer.CleanApertureBox cleanApertureBox);
+
+        void Rotate90CCW();
+
+        void Rotate180();
+
+        void Rotate270CCW();
+
+        void FlipHorizontal();
+
+        void FlipVertical();
     }
 }

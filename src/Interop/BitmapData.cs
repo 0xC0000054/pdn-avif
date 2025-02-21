@@ -10,17 +10,17 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using System;
 using System.Runtime.InteropServices;
 
 namespace AvifFileType.Interop
 {
     [StructLayout(LayoutKind.Sequential)]
-    internal struct BitmapData
+    internal unsafe struct BitmapData
     {
-        public IntPtr scan0;
+        public void* scan0;
         public uint width;
         public uint height;
         public uint stride;
+        public BitmapDataPixelFormat pixelFormat;
     }
 }

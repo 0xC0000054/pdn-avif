@@ -10,10 +10,20 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using PaintDotNet.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+
 namespace AvifFileType
 {
-    internal static class AvifMetadataNames
+    internal static class ObjectRefExtensions
     {
-        internal const string ImageGridName = "AvifImageGrid";
+        [return: NotNullIfNotNull(nameof(newObjectRef))]
+        internal static T? ReplaceRef<T, U>(this T? objectRef, U? newObjectRef)
+            where T : class, IObjectRef
+            where U : class, T
+        {
+            objectRef?.Dispose();
+            return newObjectRef;
+        }
     }
 }

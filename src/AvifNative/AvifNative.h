@@ -57,12 +57,9 @@ extern "C" {
         OutOfMemory,
         CodecInitFailed,
         DecodeFailed,
-        AlphaSizeMismatch,
-        ColorSizeMismatch,
-        TileNclxProfileMismatch,
         UnsupportedBitDepth,
         UnknownYUVFormat,
-        TileFormatMismatch
+        UnsupportedOutputPixelFormat,
     };
 
     // This must be kept in sync with EncoderOptions.cs and NativeEncoderOptions.cs
@@ -84,18 +81,12 @@ extern "C" {
         bool fullRange;
     };
 
-    struct DecodeInfo
+    // This must be kept in sync with BitmapDataPixelFormat.cs
+    enum class BitmapDataPixelFormat : int32_t
     {
-        uint32_t expectedWidth;
-        uint32_t expectedHeight;
-        uint32_t tileColumnIndex;
-        uint32_t tileRowIndex;
-        YUVChromaSubsampling chromaSubsampling;
-        uint32_t bitDepth;
-        CICPColorData firstTileColorData;
-        uint16_t spatialLayerId; // Only valid if allLayers is true.
-        bool allLayers;
-        uint8_t operatingPoint;
+        Bgra32 = 0,
+        Rgba64,
+        Rgba128Float
     };
 
     struct BitmapData
@@ -104,6 +95,7 @@ extern "C" {
         uint32_t width;
         uint32_t height;
         uint32_t stride;
+        BitmapDataPixelFormat format;
     };
 
     struct ColorBgra32
@@ -112,6 +104,40 @@ extern "C" {
         uint8_t g;
         uint8_t r;
         uint8_t a;
+    };
+
+    struct ColorRgba64
+    {
+        uint16_t r;
+        uint16_t g;
+        uint16_t b;
+        uint16_t a;
+    };
+
+    struct ColorRgba128Float
+    {
+        float r;
+        float g;
+        float b;
+        float a;
+    };
+
+    struct DecoderLayerInfo
+    {
+        uint16_t spatialLayerId; // Only valid if allLayers is true.
+        bool allLayers;
+        uint8_t operatingPoint;
+    };
+
+    typedef void* DecoderImageHandle;
+
+    struct DecoderImageInfo
+    {
+        uint32_t width;
+        uint32_t height;
+        uint32_t bitDepth;
+        YUVChromaSubsampling chromaSubsampling;
+        CICPColorData cicpData;
     };
 
     typedef bool(__stdcall* ProgressProc)(uint32_t done, uint32_t total);
@@ -125,17 +151,27 @@ extern "C" {
 
     typedef void*(__stdcall* CompressedAV1OutputAlloc)(size_t sizeInBytes);
 
-    __declspec(dllexport) DecoderStatus __stdcall DecompressColorImage(
-        const uint8_t* compressedColorImage,
-        size_t compressedColorImageSize,
+    __declspec(dllexport) DecoderStatus __stdcall DecodeImage(
+        const uint8_t* compressedImage,
+        size_t compressedImageSize,
+        const CICPColorData* containerColorInfo,
+        const DecoderLayerInfo* layerInfo,
+        DecoderImageHandle** imageHandle,
+        DecoderImageInfo* imageInfo);
+
+    __declspec(dllexport) void FreeDecoderImageHandle(DecoderImageHandle* imageHandle);
+
+    __declspec(dllexport) DecoderStatus __stdcall ReadColorImageData(
+        const DecoderImageHandle* imageHandle,
         const CICPColorData* colorInfo,
-        DecodeInfo* decodeInfo,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         BitmapData* outputImage);
 
-    __declspec(dllexport) DecoderStatus __stdcall DecompressAlphaImage(
-        const uint8_t* compressedAlphaImage,
-        size_t compressedAlphaImageSize,
-        DecodeInfo* decodeInfo,
+    __declspec(dllexport) DecoderStatus __stdcall ReadAlphaImageData(
+        const DecoderImageHandle* imageHandle,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
         BitmapData* outputImage);
 
     __declspec(dllexport) EncoderStatus __stdcall CompressColorImage(

@@ -10,10 +10,13 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-namespace AvifFileType
+namespace AvifFileType.ICCProfile
 {
-    internal static class AvifMetadataNames
+    internal enum RenderingIntent : uint
     {
-        internal const string ImageGridName = "AvifImageGrid";
+        Perceptual = 0,
+        RelativeColorimetric = 1,
+        Saturation = 2,
+        AbsoluteColorimetric = 3,
     }
 }

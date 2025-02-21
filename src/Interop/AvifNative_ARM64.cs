@@ -25,9 +25,9 @@ namespace AvifFileType.Interop
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
         internal static unsafe partial EncoderStatus CompressColorImage(
             in BitmapData image,
-            in NativeEncoderOptions options,
+            [MarshalUsing(typeof(EncoderOptionsMarshaller))] in EncoderOptions options,
             ref ProgressContext progressContext,
-            in NativeCICPColorData colorInfo,
+            [MarshalUsing(typeof(CICPColorDataMarshaller))] in CICPColorData colorInfo,
             [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
             out IntPtr colorImage);
 
@@ -35,36 +35,51 @@ namespace AvifFileType.Interop
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
         internal static unsafe partial EncoderStatus CompressAlphaImage(
             in BitmapData image,
-            in NativeEncoderOptions options,
+            [MarshalUsing(typeof(EncoderOptionsMarshaller))] in EncoderOptions options,
             ref ProgressContext progressContext,
             [MarshalAs(UnmanagedType.FunctionPtr)] CompressedAV1OutputAlloc outputAllocator,
             out IntPtr alphaImage);
 
         [LibraryImport(DllName)]
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
-        internal static unsafe partial DecoderStatus DecompressColorImage(
+        internal static unsafe partial DecoderStatus DecodeImage(
             byte* compressedColorImage,
             UIntPtr compressedColorImageSize,
-            in NativeCICPColorData colorInfo,
-            ref NativeDecodeInfo decodeInfo,
-            in BitmapData fullImage);
+            [MarshalUsing(typeof(CICPColorDataMarshaller))] in CICPColorData colorData,
+            [MarshalUsing(typeof(DecoderLayerInfoMarshaller))] in DecoderLayerInfo layerInfo,
+            out SafeDecoderImageHandle handle,
+            [MarshalUsing(typeof(DecoderImageInfoMarshaller))] ref DecoderImageInfo info);
 
         [LibraryImport(DllName)]
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
-        internal static unsafe partial DecoderStatus DecompressColorImage(
+        internal static unsafe partial DecoderStatus DecodeImage(
             byte* compressedColorImage,
             UIntPtr compressedColorImageSize,
-            IntPtr colorInfo_MustBeZero,
-            ref NativeDecodeInfo decodeInfo,
-            in BitmapData fullImage);
+            IntPtr colorData_MustBeZero,
+            [MarshalUsing(typeof(DecoderLayerInfoMarshaller))] in DecoderLayerInfo frameInfo,
+            out SafeDecoderImageHandle handle,
+            [MarshalUsing(typeof(DecoderImageInfoMarshaller))] ref DecoderImageInfo info);
 
         [LibraryImport(DllName)]
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
-        internal static unsafe partial DecoderStatus DecompressAlphaImage(
-            byte* compressedAlphaImage,
-            UIntPtr compressedAlphaImageSize,
-            ref NativeDecodeInfo decodeInfo,
-            in BitmapData fullImage);
+        internal static unsafe partial void FreeDecoderImageHandle(IntPtr handle);
+
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+        internal static unsafe partial DecoderStatus ReadColorImageData(
+            SafeDecoderImageHandle handle,
+            [MarshalUsing(typeof(CICPColorDataMarshaller))] in CICPColorData colorData,
+            uint tileColumnIndex,
+            uint tileRowIndex,
+            ref BitmapData bitmapData);
+
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+        internal static unsafe partial DecoderStatus ReadAlphaImageData(
+            SafeDecoderImageHandle handle,
+            uint tileColumnIndex,
+            uint tileRowIndex,
+            ref BitmapData bitmapData);
 
         [LibraryImport(DllName)]
         [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]

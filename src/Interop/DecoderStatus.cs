@@ -19,11 +19,8 @@ namespace AvifFileType.Interop
         OutOfMemory,
         CodecInitFailed,
         DecodeFailed,
-        AlphaSizeMismatch,
-        ColorSizeMismatch,
-        TileNclxProfileMismatch,
         UnsupportedBitDepth,
         UnknownYUVFormat,
-        TileFormatMismatch
+        UnsupportedOutputPixelFormat,
     }
 }

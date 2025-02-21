@@ -46,6 +46,9 @@
     <Reference Include="PaintDotNet.Data">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Data.dll</HintPath>
     </Reference>
+    <Reference Include="PaintDotNet.Framework">
+      <HintPath>..\..\..\Program Files\paint.net\PaintDotNet.Framework.dll</HintPath>
+    </Reference>
     <Reference Include="PaintDotNet.Fundamentals">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Fundamentals.dll</HintPath>
     </Reference>
@@ -54,6 +57,15 @@
     </Reference>
     <Reference Include="PaintDotNet.PropertySystem">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.PropertySystem.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Windows">
+      <HintPath>..\..\..\Program Files\paint.net\PaintDotNet.Windows.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Windows.Core">
+      <HintPath>..\..\..\Program Files\paint.net\PaintDotNet.Windows.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Windows.Framework">
+      <HintPath>..\..\..\Program Files\paint.net\PaintDotNet.Windows.Framework.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

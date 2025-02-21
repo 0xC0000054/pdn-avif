@@ -10,10 +10,13 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-namespace AvifFileType
+namespace AvifFileType.Interop
 {
-    internal static class AvifMetadataNames
+    // This must be kept in sync with AvifNative.h
+    internal enum BitmapDataPixelFormat : int
     {
-        internal const string ImageGridName = "AvifImageGrid";
+        Bgra32 = 0,
+        Rgba64,
+        Rgba128Float
     }
 }

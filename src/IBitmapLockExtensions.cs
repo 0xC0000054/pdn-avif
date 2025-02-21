@@ -10,10 +10,16 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using PaintDotNet;
+using PaintDotNet.Imaging;
+
 namespace AvifFileType
 {
-    internal static class AvifMetadataNames
+    internal static class IBitmapLockExtensions
     {
-        internal const string ImageGridName = "AvifImageGrid";
+        public static unsafe RegionPtr<T> AsRegionPtr<T>(this IBitmapLock bitmapLock) where T : unmanaged, INaturalPixelInfo
+        {
+            return new((T*)bitmapLock.Buffer, bitmapLock.Size, bitmapLock.BufferStride);
+        }
     }
 }

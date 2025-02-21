@@ -11,28 +11,58 @@
 ////////////////////////////////////////////////////////////////////////
 
 using AvifFileType.AvifContainer;
-using AvifFileType.Interop;
+using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AvifFileType
 {
-    internal struct CICPColorData
+    internal struct CICPColorData : IEquatable<CICPColorData>
     {
         public CICPColorPrimaries colorPrimaries;
         public CICPTransferCharacteristics transferCharacteristics;
         public CICPMatrixCoefficients matrixCoefficients;
         public bool fullRange;
 
-        public CICPColorData(NativeCICPColorData native)
+        public CICPColorData(CICPColorPrimaries colorPrimaries,
+                             CICPTransferCharacteristics transferCharacteristics,
+                             CICPMatrixCoefficients matrixCoefficients,
+                             bool fullRange)
         {
-            this.colorPrimaries = native.colorPrimaries;
-            this.transferCharacteristics = native.transferCharacteristics;
-            this.matrixCoefficients = native.matrixCoefficients;
-            this.fullRange = native.fullRange != 0;
+            this.colorPrimaries = colorPrimaries;
+            this.transferCharacteristics = transferCharacteristics;
+            this.matrixCoefficients = matrixCoefficients;
+            this.fullRange = fullRange;
         }
 
-        public NativeCICPColorData ToNative()
+        public override readonly bool Equals([NotNullWhen(true)] object? obj)
         {
-            return new NativeCICPColorData(this);
+            return obj is CICPColorData other && Equals(other);
+        }
+
+        public readonly bool Equals(CICPColorData other)
+        {
+            return this.colorPrimaries == other.colorPrimaries
+                && this.transferCharacteristics == other.transferCharacteristics
+                && this.matrixCoefficients == other.matrixCoefficients
+                && this.fullRange == other.fullRange;
+        }
+
+        public override readonly int GetHashCode()
+        {
+            return HashCode.Combine(this.colorPrimaries,
+                                    this.transferCharacteristics,
+                                    this.matrixCoefficients,
+                                    this.fullRange);
+        }
+
+        public static bool operator ==(CICPColorData left, CICPColorData right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(CICPColorData left, CICPColorData right)
+        {
+            return !left.Equals(right);
         }
     }
 }

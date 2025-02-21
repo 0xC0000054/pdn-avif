@@ -12,8 +12,17 @@
 
 namespace AvifFileType
 {
-    internal static class AvifMetadataNames
+    internal readonly struct DecoderLayerInfo
     {
-        internal const string ImageGridName = "AvifImageGrid";
+        public readonly ushort spatialLayerId;
+        public readonly bool allLayers;
+        public readonly byte operatingPoint;
+
+        public DecoderLayerInfo(ushort spatialLayerId, bool allLayers, byte operatingPoint)
+        {
+            this.spatialLayerId = spatialLayerId;
+            this.allLayers = allLayers;
+            this.operatingPoint = operatingPoint;
+        }
     }
 }

@@ -12,8 +12,11 @@
 
 namespace AvifFileType
 {
-    internal static class AvifMetadataNames
+    internal enum HDRFormat
     {
-        internal const string ImageGridName = "AvifImageGrid";
+        None = 0,
+        HLG,
+        PQ,
+        SMPTE428
     }
 }

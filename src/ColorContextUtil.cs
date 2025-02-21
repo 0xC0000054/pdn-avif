@@ -18,33 +18,28 @@ namespace AvifFileType
 {
     internal static class ColorContextUtil
     {
-        public static IColorContext? CreateFromCICPColorInfo(CICPColorData? colorData, IImagingFactory imagingFactory)
+        public static IColorContext? CreateFromCICPColorInfo(CICPColorData colorData, IImagingFactory imagingFactory)
         {
             IColorContext? colorContext = null;
 
-            if (colorData.HasValue)
+            if (colorData.colorPrimaries == CICPColorPrimaries.BT709)
             {
-                CICPColorData cicp = colorData.Value;
-
-                if (cicp.colorPrimaries == CICPColorPrimaries.BT709)
+                switch (colorData.transferCharacteristics)
                 {
-                    switch (cicp.transferCharacteristics)
-                    {
-                        case CICPTransferCharacteristics.Linear:
-                            colorContext = imagingFactory.CreateColorContext(KnownColorSpace.ScRgb);
-                            break;
-                        case CICPTransferCharacteristics.Srgb:
-                            colorContext = imagingFactory.CreateColorContext(KnownColorSpace.Srgb);
-                            break;
-                    }
+                    case CICPTransferCharacteristics.Linear:
+                        colorContext = imagingFactory.CreateColorContext(KnownColorSpace.ScRgb);
+                        break;
+                    case CICPTransferCharacteristics.Srgb:
+                        colorContext = imagingFactory.CreateColorContext(KnownColorSpace.Srgb);
+                        break;
                 }
-                else if (cicp.colorPrimaries == CICPColorPrimaries.Smpte432)
+            }
+            else if (colorData.colorPrimaries == CICPColorPrimaries.Smpte432)
+            {
+                // DisplayP3 uses SMPTE EG 432-1 primaries with the sRGB transfer curve.
+                if (colorData.transferCharacteristics == CICPTransferCharacteristics.Srgb)
                 {
-                    // DisplayP3 uses SMPTE EG 432-1 primaries with the sRGB transfer curve.
-                    if (cicp.transferCharacteristics == CICPTransferCharacteristics.Srgb)
-                    {
-                        colorContext = imagingFactory.CreateColorContext(KnownColorSpace.DisplayP3);
-                    }
+                    colorContext = imagingFactory.CreateColorContext(KnownColorSpace.DisplayP3);
                 }
             }
 

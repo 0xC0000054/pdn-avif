@@ -246,29 +246,14 @@ namespace AvifFileType
             using (IColorContext dp3ColorContext = imagingFactory.CreateColorContext(KnownColorSpace.DisplayP3))
             using (IDirect2DFactory d2dFactory = Direct2DFactory.Create())
             {
-                if (image.IsPremultipliedAlpha)
+                // Our premultiplied image uses ColorRgba128, casting it to ColorPrgba128Float makes Direct2D treat the image as premultiplied.
+                using (IBitmap bitmap = image.IsPremultipliedAlpha ? image.Image.Cast<ColorPrgba128Float>() : image.Image.CreateRef())
+                using (IBitmapSource<ColorPbgra32> dp3Image = PQToColorContext(bitmap,
+                                                                               imagingFactory,
+                                                                               d2dFactory,
+                                                                               dp3ColorContext))
                 {
-                    using (IBitmapSource<ColorPbgra32> dp3Image = PQToColorContext(image.Image,
-                                                                                   ColorManagementAlphaMode.Premultiplied,
-                                                                                   imagingFactory,
-                                                                                   d2dFactory,
-                                                                                   dp3ColorContext))
-                    {
-                        dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
-                    }
-                }
-                else
-                {
-                    // Direct2D requires everything to be "premultiplied"
-                    using (IBitmap asPrgba128Float = image.Image.Cast<ColorPrgba128Float>())
-                    using (IBitmapSource<ColorPbgra32> dp3Image = PQToColorContext(asPrgba128Float,
-                                                                                   ColorManagementAlphaMode.Straight,
-                                                                                   imagingFactory,
-                                                                                   d2dFactory,
-                                                                                   dp3ColorContext))
-                    {
-                        dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
-                    }
+                    dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
                 }
 
                 document.SetColorContext(dp3ColorContext);
@@ -276,7 +261,6 @@ namespace AvifFileType
 
             static IBitmapSource<ColorPbgra32> PQToColorContext(
                 IBitmap bitmap,
-                ColorManagementAlphaMode alphaMode,
                 IImagingFactory imagingFactory,
                 IDirect2DFactory d2dFactory,
                 IColorContext colorContext)
@@ -287,7 +271,7 @@ namespace AvifFileType
                     delegate (IDeviceContext dc)
                     {
                         dc.EffectBufferPrecision = BufferPrecision.Float32;
-                        using IDeviceBitmap srcImage = dc.CreateSharedBitmap(bitmap);
+                        using IDeviceImage srcImage = dc.CreateImageFromBitmap(bitmap, null, BitmapImageOptions.UseStraightAlpha | BitmapImageOptions.DisableColorSpaceConversion);
                         using IDeviceColorContext srcColorContext = dc.CreateColorContext(DxgiColorSpace.RgbFullGamma2084NoneP2020);
                         using IDeviceColorContext dstColorContext = dc.CreateColorContext(colorContext);
 
@@ -296,12 +280,9 @@ namespace AvifFileType
                             srcImage,
                             srcColorContext,
                             dstColorContext,
-                            alphaMode);
-                        UnPremultiplyEffect2 unPremultiplyEffect = new UnPremultiplyEffect2(dc);
-                        unPremultiplyEffect.Properties.Enabled.SetValue(alphaMode == ColorManagementAlphaMode.Premultiplied);
-                        unPremultiplyEffect.SetInput(0, colorMgmtEffect);
+                            ColorManagementAlphaMode.Straight);
 
-                        return unPremultiplyEffect;
+                        return colorMgmtEffect;
                     });
             }
         }

@@ -42,7 +42,7 @@ namespace AvifFileType
 
                     try
                     {
-                        layer = new(image.Size);
+                        layer = Layer.CreateBackgroundLayer(image.Size);
 
                         PixelFormat pixelFormat = image.WICPixelFormat;
 

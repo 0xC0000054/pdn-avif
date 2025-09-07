@@ -10,7 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using PaintDotNet.Collections;
 using System.Collections.Generic;
 
 namespace AvifFileType.Exif
@@ -24,7 +23,7 @@ namespace AvifFileType.Exif
                 ExceptionUtil.ThrowArgumentNullException(nameof(items));
             }
 
-            return items is T[] asArray ? asArray : items.ToArrayEx();
+            return items is T[] asArray ? asArray : [.. items];
         }
     }
 }

@@ -10,7 +10,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using PaintDotNet.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -216,7 +215,7 @@ namespace AvifFileType.AvifContainer
             }
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public KeyValuePair<uint, List<ItemPropertyAssociationEntry>>[] Items => this.itemPropertyAssociationBox.entries.ToArrayEx();
+            public KeyValuePair<uint, List<ItemPropertyAssociationEntry>>[] Items => [.. this.itemPropertyAssociationBox.entries];
         }
     }
 }

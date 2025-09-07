@@ -27,7 +27,12 @@ namespace AvifFileType
         public static string PluginVersion => pluginVersion.Value;
 
         private static string GetAOMVersion()
-            => AvifNative.GetAOMVersionString();
+        {
+            string version = AvifNative.GetAOMVersionString();
+
+            // Remove the v prefix (if present) because the plugin adds its own.
+            return version.StartsWith('v') ? version.Substring(1) : version;
+        }
 
         private static string GetPluginVersion()
             => typeof(VersionInfo).Assembly.GetName().Version!.ToString();

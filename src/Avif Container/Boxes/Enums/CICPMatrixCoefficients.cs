@@ -12,8 +12,8 @@
 
 namespace AvifFileType.AvifContainer
 {
-    // These values are from the ITU-T H.273 (2016) specification.
-    // https://www.itu.int/rec/T-REC-H.273-201612-I/en
+    // These values are from the ITU-T H.273 (2024) specification.
+    // https://www.itu.int/rec/T-REC-H.273-202407-I/en
 
     internal enum CICPMatrixCoefficients : ushort
     {
@@ -90,6 +90,21 @@ namespace AvifFileType.AvifContainer
         /// <summary>
         /// BT.2100 ICtCp
         /// </summary>
-        ICtCp = 14
+        ICtCp = 14,
+
+        /// <summary>
+        /// Color representation developed in SMPTE as IPT-PQ-C2
+        /// </summary>
+        IptC2 = 15,
+
+        /// <summary>
+        /// YCgCo-R where the number of bits added to a source RGB bit depth is 2 (i.e., even).
+        /// </summary>
+        YCgCoRe = 16,
+
+        /// <summary>
+        /// YCgCo-R where the number of bits added to a source RGB bit depth is 1 (i.e., odd).
+        /// </summary>
+        YCgCoRo = 17,
     }
 }

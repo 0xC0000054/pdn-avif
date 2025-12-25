@@ -520,9 +520,29 @@ namespace AvifFileType
                                 }
 
                                 colorData = containerColorInfo ?? firstTileInfo.CICPColor;
+                                uint targetBitDepth = image.BitDepth;
+
+                                if (colorData.matrixCoefficients == CICPMatrixCoefficients.YCgCoRe
+                                    || colorData.matrixCoefficients == CICPMatrixCoefficients.YCgCoRo)
+                                {
+                                    if (image.ChromaSubsampling == YUVChromaSubsampling.Subsampling444)
+                                    {
+                                        // The YCgCo-R uses up to 2 extra bits to implement its reversible transforms.
+                                        // This results in an 8-bit image being encoded as 10-bit, and a 10-bit image being encoded as 12-bit. 
+
+                                        uint bitOffset = colorData.matrixCoefficients == CICPMatrixCoefficients.YCgCoRe ? 2U : 1U;
+
+                                        targetBitDepth -= bitOffset;
+                                    }
+                                    else
+                                    {
+                                        // YCgCo-R with limited range is not supported.
+                                        colorData.matrixCoefficients = CICPMatrixCoefficients.BT601;
+                                    }
+                                }
 
                                 outputImage = new(outputImageSize,
-                                                  GetAvifReaderImageFormat(image.BitDepth, colorData),
+                                                  GetAvifReaderImageFormat(targetBitDepth, colorData),
                                                   colorData,
                                                   this.imagingFactory);
                             }
@@ -658,9 +678,30 @@ namespace AvifFileType
                 using (DecoderImage image = ReadImage(this.primaryItemId, containerColorData))
                 {
                     CICPColorData colorData = containerColorData ?? image.CICPColor;
+                    uint targetBitDepth = image.BitDepth;
+
+                    if (colorData.matrixCoefficients == CICPMatrixCoefficients.YCgCoRe
+                        || colorData.matrixCoefficients == CICPMatrixCoefficients.YCgCoRo)
+                    {
+                        if (image.ChromaSubsampling == YUVChromaSubsampling.Subsampling444)
+                        {
+                            // The YCgCo-R uses up to 2 extra bits to implement its reversible transforms.
+                            // This results in an 8-bit image being encoded as 9-bit or 10-bit, and a
+                            // 10-bit image being encoded as 11-bit or 12-bit.
+
+                            uint bitOffset = colorData.matrixCoefficients == CICPMatrixCoefficients.YCgCoRe ? 2U : 1U;
+
+                            targetBitDepth -= bitOffset;
+                        }
+                        else
+                        {
+                            // YCgCo-R with limited range is not supported.
+                            colorData.matrixCoefficients = CICPMatrixCoefficients.BT601;
+                        }
+                    }
 
                     outputImage = new(imageSize,
-                                      GetAvifReaderImageFormat(image.BitDepth, colorData),
+                                      GetAvifReaderImageFormat(targetBitDepth, colorData),
                                       colorData,
                                       this.imagingFactory);
 

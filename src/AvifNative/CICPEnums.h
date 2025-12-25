@@ -253,5 +253,20 @@ enum class CICPMatrixCoefficients : uint16_t
     /// <summary>
     /// BT.2100 ICtCp
     /// </summary>
-    ICtCp = 14
+    ICtCp = 14,
+
+    /// <summary>
+    /// Color representation developed in SMPTE as IPT-PQ-C2
+    /// </summary>
+    IptC2 = 15,
+
+    /// <summary>
+    /// YCgCo-R where the number of bits added to a source RGB bit depth is 2 (i.e., even).
+    /// </summary>
+    YCgCoRe = 16,
+
+    /// <summary>
+    /// YCgCo-R where the number of bits added to a source RGB bit depth is 1 (i.e., odd).
+    /// </summary>
+    YCgCoRo = 17,
 };

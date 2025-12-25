@@ -48,6 +48,63 @@
 
 namespace
 {
+    enum class YUVDecodingMode : uint32_t
+    {
+        YUVCoefficiants = 0,
+        YCgCo,
+        YCgCoRe,
+        YCgCoRo,
+    };
+
+    struct YUVDecodeInfo
+    {
+        YUVCoefficiants yuvCoefficiants;
+        YUVDecodingMode mode;
+    };
+
+    YUVDecodeInfo GetYUVDecodeInfo(const aom_image_t* image, const CICPColorData& colorInfo)
+    {
+        YUVDecodeInfo info{};
+
+        if (image->fmt == AOM_IMG_FMT_I444 || image->fmt == AOM_IMG_FMT_I44416)
+        {
+            // The Identity matrix coefficient is handled
+            // before this method is called.
+            switch (colorInfo.matrixCoefficients)
+            {
+            case CICPMatrixCoefficients::YCgCo:
+                info.mode = YUVDecodingMode::YCgCo;
+                break;
+            case CICPMatrixCoefficients::YCgCoRe:
+                info.mode = YUVDecodingMode::YCgCoRe;
+                break;
+            case CICPMatrixCoefficients::YCgCoRo:
+                info.mode = YUVDecodingMode::YCgCoRo;
+                break;
+            default:
+                info.mode = YUVDecodingMode::YUVCoefficiants;
+                break;
+            }
+        }
+        else
+        {
+            info.mode = YUVDecodingMode::YUVCoefficiants;
+        }
+
+        if (info.mode == YUVDecodingMode::YUVCoefficiants)
+        {
+            GetYUVCoefficiants(colorInfo, info.yuvCoefficiants);
+        }
+        else
+        {
+            info.yuvCoefficiants.kr = 0.0f;
+            info.yuvCoefficiants.kg = 0.0f;
+            info.yuvCoefficiants.kb = 0.0f;
+        }
+
+        return info;
+    }
+
     inline float Clamp(float value, float min, float max)
     {
         if (value < min)
@@ -99,67 +156,10 @@ namespace
 
     };
 
-    #define AVIF_CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
-
-    // Limited -> Full
-    // Plan: subtract limited offset, then multiply by ratio of FULLSIZE/LIMITEDSIZE (rounding), then clamp.
-    // RATIO = (FULLY - 0) / (MAXLIMITEDY - MINLIMITEDY)
-    // -----------------------------------------
-    // ( ( (v - MINLIMITEDY)                    | subtract limited offset
-    //     * FULLY                              | multiply numerator of ratio
-    //   ) + ((MAXLIMITEDY - MINLIMITEDY) / 2)  | add 0.5 (half of denominator) to round
-    // ) / (MAXLIMITEDY - MINLIMITEDY)          | divide by denominator of ratio
-    // AVIF_CLAMP(v, 0, FULLY)                  | clamp to full range
-    // -----------------------------------------
-    #define LIMITED_TO_FULL(MINLIMITEDY, MAXLIMITEDY, FULLY)                                                 \
-        v = (((v - MINLIMITEDY) * FULLY) + ((MAXLIMITEDY - MINLIMITEDY) / 2)) / (MAXLIMITEDY - MINLIMITEDY); \
-        v = AVIF_CLAMP(v, 0, FULLY)
-
-
-    constexpr int avifLimitedToFullY(int depth, int v)
+    float avifRoundf(float v)
     {
-        switch (depth) {
-        case 8:
-            LIMITED_TO_FULL(16, 235, 255);
-            break;
-        case 10:
-            LIMITED_TO_FULL(64, 940, 1023);
-            break;
-        case 12:
-            LIMITED_TO_FULL(256, 3760, 4095);
-            break;
-        case 16:
-            LIMITED_TO_FULL(1024, 60160, 65535);
-            break;
-        default:
-            throw unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
-        }
-        return v;
+        return floorf(v + 0.5f);
     }
-
-    int avifLimitedToFullUV(int depth, int v)
-    {
-        switch (depth) {
-        case 8:
-            LIMITED_TO_FULL(16, 240, 255);
-            break;
-        case 10:
-            LIMITED_TO_FULL(64, 960, 1023);
-            break;
-        case 12:
-            LIMITED_TO_FULL(256, 3840, 4095);
-            break;
-        case 16:
-            LIMITED_TO_FULL(1024, 61440, 65535);
-            break;
-        default:
-            throw unknown_bit_depth_error("The image has an unsupported bit depth, must be 8, 10, 12 or 16.");
-        }
-        return v;
-    }
-
-    #undef AVIF_CLAMP
-    #undef LIMITED_TO_FULL
 
     struct YUVLookupTables
     {
@@ -185,23 +185,20 @@ namespace
                 unormFloatTableUV = std::make_unique<float[]>(count);
             }
 
-            float yuvMaxChannel = static_cast<float>((1 << image->bit_depth) - 1);
+            const float yuvMaxChannel = static_cast<float>((1 << image->bit_depth) - 1);
+            const uint32_t limitedRangeShift = image->bit_depth - 8;
+
+            const float biasY = image->range == AOM_CR_STUDIO_RANGE ? (16 << limitedRangeShift) : 0.0f;
+            const float biasUV = static_cast<float>(1 << (image->bit_depth - 1));
+            const float rangeY = image->range == AOM_CR_STUDIO_RANGE ? (219 << limitedRangeShift) : yuvMaxChannel;
+            const float rangeUV = image->range == AOM_CR_STUDIO_RANGE ? (224 << limitedRangeShift) : yuvMaxChannel;
 
             for (int i = 0; i < count; ++i)
             {
-                int unormY = i;
-                int unormUV = i;
+                const float unormY = static_cast<float>(i);
+                const float unormUV = static_cast<float>(i);
 
-                if (image->range == AOM_CR_STUDIO_RANGE)
-                {
-                    unormY = avifLimitedToFullY(image->bit_depth, unormY);
-                    if (isColorImage)
-                    {
-                        unormUV = avifLimitedToFullUV(image->bit_depth, unormUV);
-                    }
-                }
-
-                unormFloatTableY[i] = static_cast<float>(unormY) / yuvMaxChannel;
+                unormFloatTableY[i] = (unormY - biasY) / rangeY;
 
                 if (isColorImage)
                 {
@@ -211,7 +208,7 @@ namespace
                     }
                     else
                     {
-                        unormFloatTableUV[i] = static_cast<float>(unormUV) / yuvMaxChannel - 0.5f;
+                        unormFloatTableUV[i] = (unormUV - biasUV) / rangeUV;
                     }
                 }
             }
@@ -222,9 +219,14 @@ namespace
     {
         std::array<uint8_t, 256> table = {};
 
+        constexpr float biasY = 16.0f;
+        constexpr float rangeY = 224.0f;
+
         for (size_t i = 0; i < table.size(); ++i)
         {
-            table[i] = static_cast<uint8_t>(avifLimitedToFullY(8, static_cast<int>(i)));
+            const float unormY = (static_cast<float>(i) - biasY) / rangeY;
+
+            table[i] = static_cast<uint8_t>(unormY);
         }
 
         return table;
@@ -537,17 +539,17 @@ namespace
 
     void YUV16ToRGB32Color(
         const aom_image_t* image,
-        const YUVCoefficiants& yuvCoefficiants,
+        const YUVDecodeInfo& yuvDecodeInfo,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvCoefficiants.kr;
-        const float kg = yuvCoefficiants.kg;
-        const float kb = yuvCoefficiants.kb;
-
-        uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
+        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
+        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
+        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
+        const YUVDecodingMode yuvDecodingMode = yuvDecodeInfo.mode;
+        const uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
 
         uint32_t uPlaneIndex = AOM_PLANE_U;
         uint32_t vPlaneIndex = AOM_PLANE_V;
@@ -589,9 +591,29 @@ namespace
                 const float Cb = tables.unormFloatTableUV[unormU];
                 const float Cr = tables.unormFloatTableUV[unormV];
 
-                float R = Y + (2 * (1 - kr)) * Cr;
-                float B = Y + (2 * (1 - kb)) * Cb;
-                float G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
+
+                float R = 0.0f;
+                float G = 0.0f;
+                float B = 0.0f;
+
+                if (yuvDecodingMode == YUVDecodingMode::YCgCo)
+                {
+                    // YCgCo: Formulas 54, 55, 56, 57.
+                    // https://www.itu.int/rec/T-REC-H.273-202407-I/en
+
+                    const float t = Y - Cb;
+                    G = Y + Cb;
+                    B = t - Cr;
+                    R = t + Cr;
+                }
+                else
+                {
+                    // YUV
+
+                    R = Y + (2 * (1 - kr)) * Cr;
+                    B = Y + (2 * (1 - kb)) * Cb;
+                    G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
+                }
 
                 dstPtr->r = R;
                 dstPtr->g = G;
@@ -603,17 +625,16 @@ namespace
 
     void YUV16ToRGB32Mono(
         const aom_image_t* image,
-        const YUVCoefficiants& yuvCoefficiants,
+        const YUVDecodeInfo& yuvDecodeInfo,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvCoefficiants.kr;
-        const float kg = yuvCoefficiants.kg;
-        const float kb = yuvCoefficiants.kb;
-
-        uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
+        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
+        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
+        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
+        const uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
 
         uint32_t copyWidth;
         uint32_t copyHeight;
@@ -652,18 +673,19 @@ namespace
 
     void YUV16ToRGB16Color(
         const aom_image_t* image,
-        const YUVCoefficiants& yuvCoefficiants,
+        const YUVDecodeInfo& yuvDecodeInfo,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvCoefficiants.kr;
-        const float kg = yuvCoefficiants.kg;
-        const float kb = yuvCoefficiants.kb;
-
-        uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
-        constexpr float rgbMaxChannel = std::numeric_limits<uint16_t>::max();
+        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
+        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
+        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
+        const YUVDecodingMode yuvDecodingMode = yuvDecodeInfo.mode;
+        const uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
+        constexpr int32_t rgbMaxChannel = std::numeric_limits<uint16_t>::max();
+        constexpr float rgbMaxChannelFloat = rgbMaxChannel;
 
         uint32_t uPlaneIndex = AOM_PLANE_U;
         uint32_t vPlaneIndex = AOM_PLANE_V;
@@ -705,16 +727,36 @@ namespace
                 const float Cb = tables.unormFloatTableUV[unormU];
                 const float Cr = tables.unormFloatTableUV[unormV];
 
-                float R = Y + (2 * (1 - kr)) * Cr;
-                float B = Y + (2 * (1 - kb)) * Cb;
-                float G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
-                R = Clamp(R, 0.0f, 1.0f);
-                G = Clamp(G, 0.0f, 1.0f);
-                B = Clamp(B, 0.0f, 1.0f);
+                float R = 0.0f;
+                float G = 0.0f;
+                float B = 0.0f;
 
-                dstPtr->r = static_cast<uint16_t>(0.5f + (R * rgbMaxChannel));
-                dstPtr->g = static_cast<uint16_t>(0.5f + (G * rgbMaxChannel));
-                dstPtr->b = static_cast<uint16_t>(0.5f + (B * rgbMaxChannel));
+                if (yuvDecodingMode == YUVDecodingMode::YCgCo)
+                {
+                    // YCgCo: Formulas 54, 55, 56, 57.
+                    // https://www.itu.int/rec/T-REC-H.273-202407-I/en
+
+                    const float t = Y - Cb;
+                    G = Y + Cb;
+                    B = t - Cr;
+                    R = t + Cr;
+                }
+                else
+                {
+                    // YUV
+
+                    R = Y + (2 * (1 - kr)) * Cr;
+                    B = Y + (2 * (1 - kb)) * Cb;
+                    G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
+                }
+
+                const float clampedR = Clamp(R, 0.0f, 1.0f);
+                const float clampedG = Clamp(G, 0.0f, 1.0f);
+                const float clampedB = Clamp(B, 0.0f, 1.0f);
+
+                dstPtr->r = static_cast<uint16_t>(0.5f + (clampedR * rgbMaxChannelFloat));
+                dstPtr->g = static_cast<uint16_t>(0.5f + (clampedG * rgbMaxChannelFloat));
+                dstPtr->b = static_cast<uint16_t>(0.5f + (clampedB * rgbMaxChannelFloat));
                 ++dstPtr;
             }
         }
@@ -722,17 +764,17 @@ namespace
 
     void YUV16ToRGB16Mono(
         const aom_image_t* image,
-        const YUVCoefficiants& yuvCoefficiants,
+        const YUVDecodeInfo& yuvDecodeInfo,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvCoefficiants.kr;
-        const float kg = yuvCoefficiants.kg;
-        const float kb = yuvCoefficiants.kb;
+        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
+        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
+        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
 
-        uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
+        const uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
         constexpr float rgbMaxChannel = std::numeric_limits<uint16_t>::max();
 
         uint32_t copyWidth;
@@ -773,19 +815,184 @@ namespace
         }
     }
 
-    void YUV8ToRGB8Color(
+    void YUV16ToRGB16ColorYCoCgR(
         const aom_image_t* image,
-        const YUVCoefficiants& yuvCoefficiants,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvCoefficiants.kr;
-        const float kg = yuvCoefficiants.kg;
-        const float kb = yuvCoefficiants.kb;
+        const uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
+        constexpr int32_t rgbMaxChannel = std::numeric_limits<uint16_t>::max();
+        constexpr float rgbMaxChannelFloat = rgbMaxChannel;
 
-        constexpr float rgbMaxChannel = std::numeric_limits<uint8_t>::max();
+        uint32_t uPlaneIndex = AOM_PLANE_U;
+        uint32_t vPlaneIndex = AOM_PLANE_V;
+
+        if (image->fmt & AOM_IMG_FMT_UV_FLIP)
+        {
+            uPlaneIndex = AOM_PLANE_V;
+            vPlaneIndex = AOM_PLANE_U;
+        }
+
+        uint32_t copyWidth;
+        uint32_t copyHeight;
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, outputImage, copyWidth, copyHeight);
+
+        for (uint32_t y = 0; y < copyHeight; ++y)
+        {
+            const uint32_t uvJ = y >> image->y_chroma_shift;
+            uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
+            uint16_t* ptrU = reinterpret_cast<uint16_t*>(&image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])]);
+            uint16_t* ptrV = reinterpret_cast<uint16_t*>(&image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])]);
+
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
+
+            ColorRgba64* dstPtr = reinterpret_cast<ColorRgba64*>(outputImage->scan0 + (destY * outputImage->stride) + (destX * sizeof(ColorRgba64)));
+
+            for (uint32_t x = 0; x < copyWidth; ++x)
+            {
+                // Unpack YUV into unorm
+                uint32_t uvI = x >> image->x_chroma_shift;
+
+                // Clamp the values to the lookup table range
+                uint32_t unormY = Min(ptrY[x], yuvMaxChannel);
+                uint32_t unormU = Min(ptrU[uvI], yuvMaxChannel);
+                uint32_t unormV = Min(ptrV[uvI], yuvMaxChannel);
+
+                // Convert unorm to float
+                const float Cb = tables.unormFloatTableUV[unormU];
+                const float Cr = tables.unormFloatTableUV[unormV];
+
+                float R = 0.0f;
+                float G = 0.0f;
+                float B = 0.0f;
+
+
+                // YCgCoRe/YCgCoRo: Formulas 62,63,64,65 from
+                // https://www.itu.int/rec/T-REC-H.273-202407-P
+
+                const int YY = unormY;
+                const int Cg = (int)avifRoundf(Cb * yuvMaxChannel);
+                const int Co = (int)avifRoundf(Cr * yuvMaxChannel);
+                const int t = YY - (Cg / 2);
+
+                G = Clamp(static_cast<float>(t + Cg), 0, rgbMaxChannel);
+                B = Clamp(static_cast<float>(t - (Co / 2)), 0, rgbMaxChannel);
+                R = Clamp(B + Co, 0.0f, rgbMaxChannelFloat);
+
+                G /= rgbMaxChannelFloat;
+                B /= rgbMaxChannelFloat;
+                R /= rgbMaxChannelFloat;
+
+                const float clampedR = Clamp(R, 0.0f, 1.0f);
+                const float clampedG = Clamp(G, 0.0f, 1.0f);
+                const float clampedB = Clamp(B, 0.0f, 1.0f);
+
+                dstPtr->r = static_cast<uint16_t>(0.5f + (clampedR * rgbMaxChannelFloat));
+                dstPtr->g = static_cast<uint16_t>(0.5f + (clampedG * rgbMaxChannelFloat));
+                dstPtr->b = static_cast<uint16_t>(0.5f + (clampedB * rgbMaxChannelFloat));
+                ++dstPtr;
+            }
+        }
+    }
+
+    void YUV16ToRGB8ColorYCoCgR(
+        const aom_image_t* image,
+        const YUVLookupTables& tables,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
+        BitmapData* outputImage)
+    {
+        const uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
+        constexpr int32_t rgbMaxChannel = std::numeric_limits<uint8_t>::max();
+        constexpr float rgbMaxChannelFloat = rgbMaxChannel;
+
+        uint32_t uPlaneIndex = AOM_PLANE_U;
+        uint32_t vPlaneIndex = AOM_PLANE_V;
+
+        if (image->fmt & AOM_IMG_FMT_UV_FLIP)
+        {
+            uPlaneIndex = AOM_PLANE_V;
+            vPlaneIndex = AOM_PLANE_U;
+        }
+
+        uint32_t copyWidth;
+        uint32_t copyHeight;
+        GetCopySizes(image, tileColumnIndex, tileRowIndex, outputImage, copyWidth, copyHeight);
+
+        for (uint32_t y = 0; y < copyHeight; ++y)
+        {
+            const uint32_t uvJ = y >> image->y_chroma_shift;
+            uint16_t* ptrY = reinterpret_cast<uint16_t*>(&image->planes[AOM_PLANE_Y][(y * image->stride[AOM_PLANE_Y])]);
+            uint16_t* ptrU = reinterpret_cast<uint16_t*>(&image->planes[uPlaneIndex][(uvJ * image->stride[uPlaneIndex])]);
+            uint16_t* ptrV = reinterpret_cast<uint16_t*>(&image->planes[vPlaneIndex][(uvJ * image->stride[vPlaneIndex])]);
+
+            const size_t destX = static_cast<size_t>(tileColumnIndex) * image->d_w;
+            const size_t destY = static_cast<size_t>(y) + (static_cast<size_t>(tileRowIndex) * image->d_h);
+
+            ColorBgra32* dstPtr = reinterpret_cast<ColorBgra32*>(outputImage->scan0 + (destY * outputImage->stride) + (destX * sizeof(ColorBgra32)));
+
+            for (uint32_t x = 0; x < copyWidth; ++x)
+            {
+                // Unpack YUV into unorm
+                uint32_t uvI = x >> image->x_chroma_shift;
+
+                // Clamp the values to the lookup table range
+                uint32_t unormY = Min(ptrY[x], yuvMaxChannel);
+                uint32_t unormU = Min(ptrU[uvI], yuvMaxChannel);
+                uint32_t unormV = Min(ptrV[uvI], yuvMaxChannel);
+
+                // Convert unorm to float
+                const float Cb = tables.unormFloatTableUV[unormU];
+                const float Cr = tables.unormFloatTableUV[unormV];
+
+                float R = 0.0f;
+                float G = 0.0f;
+                float B = 0.0f;
+
+                // YCgCoRe/YCgCoRo: Formulas 62,63,64,65 from
+                // https://www.itu.int/rec/T-REC-H.273-202407-P
+
+                const int YY = unormY;
+                const int Cg = (int)avifRoundf(Cb * yuvMaxChannel);
+                const int Co = (int)avifRoundf(Cr * yuvMaxChannel);
+                const int t = YY - (Cg / 2);
+
+                G = Clamp(static_cast<float>(t + Cg), 0, rgbMaxChannel);
+                B = Clamp(static_cast<float>(t - (Co / 2)), 0, rgbMaxChannel);
+                R = Clamp(B + Co, 0.0f, rgbMaxChannelFloat);
+
+                G /= rgbMaxChannelFloat;
+                B /= rgbMaxChannelFloat;
+                R /= rgbMaxChannelFloat;
+
+                const float clampedR = Clamp(R, 0.0f, 1.0f);
+                const float clampedG = Clamp(G, 0.0f, 1.0f);
+                const float clampedB = Clamp(B, 0.0f, 1.0f);
+
+                dstPtr->r = static_cast<uint8_t>(0.5f + (clampedR * rgbMaxChannelFloat));
+                dstPtr->g = static_cast<uint8_t>(0.5f + (clampedG * rgbMaxChannelFloat));
+                dstPtr->b = static_cast<uint8_t>(0.5f + (clampedB * rgbMaxChannelFloat));
+                ++dstPtr;
+            }
+        }
+    }
+
+    void YUV8ToRGB8Color(
+        const aom_image_t* image,
+        const YUVDecodeInfo& yuvDecodeInfo,
+        const YUVLookupTables& tables,
+        uint32_t tileColumnIndex,
+        uint32_t tileRowIndex,
+        BitmapData* outputImage)
+    {
+        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
+        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
+        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
+        const YUVDecodingMode yuvDecodingMode = yuvDecodeInfo.mode;
+        constexpr float rgbMaxChannelFloat = std::numeric_limits<uint8_t>::max();
 
         uint32_t uPlaneIndex = AOM_PLANE_U;
         uint32_t vPlaneIndex = AOM_PLANE_V;
@@ -825,16 +1032,36 @@ namespace
                 const float Cb = tables.unormFloatTableUV[unormU];
                 const float Cr = tables.unormFloatTableUV[unormV];
 
-                float R = Y + (2 * (1 - kr)) * Cr;
-                float B = Y + (2 * (1 - kb)) * Cb;
-                float G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
-                R = Clamp(R, 0.0f, 1.0f);
-                G = Clamp(G, 0.0f, 1.0f);
-                B = Clamp(B, 0.0f, 1.0f);
+                float R = 0.0f;
+                float G = 0.0f;
+                float B = 0.0f;
 
-                dstPtr->r = static_cast<uint8_t>(0.5f + (R * rgbMaxChannel));
-                dstPtr->g = static_cast<uint8_t>(0.5f + (G * rgbMaxChannel));
-                dstPtr->b = static_cast<uint8_t>(0.5f + (B * rgbMaxChannel));
+                if (yuvDecodingMode == YUVDecodingMode::YCgCo)
+                {
+                    // YCgCo: Formulas 54, 55, 56, 57.
+                    // https://www.itu.int/rec/T-REC-H.273-202407-I/en
+
+                    const float t = Y - Cb;
+                    G = Y + Cb;
+                    B = t - Cr;
+                    R = t + Cr;
+                }
+                else
+                {
+                    // YUV
+
+                    R = Y + (2 * (1 - kr)) * Cr;
+                    B = Y + (2 * (1 - kb)) * Cb;
+                    G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
+                }
+
+                const float clampedR = Clamp(R, 0.0f, 1.0f);
+                const float clampedG = Clamp(G, 0.0f, 1.0f);
+                const float clampedB = Clamp(B, 0.0f, 1.0f);
+
+                dstPtr->r = static_cast<uint8_t>(0.5f + (clampedR * rgbMaxChannelFloat));
+                dstPtr->g = static_cast<uint8_t>(0.5f + (clampedG * rgbMaxChannelFloat));
+                dstPtr->b = static_cast<uint8_t>(0.5f + (clampedB * rgbMaxChannelFloat));
                 ++dstPtr;
             }
         }
@@ -842,15 +1069,15 @@ namespace
 
     void YUV8ToRGB8Mono(
         const aom_image_t* image,
-        const YUVCoefficiants& yuvCoefficiants,
+        const YUVDecodeInfo& yuvDecodeInfo,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvCoefficiants.kr;
-        const float kg = yuvCoefficiants.kg;
-        const float kb = yuvCoefficiants.kb;
+        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
+        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
+        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
 
         constexpr float rgbMaxChannel = std::numeric_limits<uint8_t>::max();
 
@@ -1071,40 +1298,49 @@ DecoderStatus ConvertColorImage(
         {
             std::unique_ptr<YUVLookupTables> lookupTable = std::make_unique<YUVLookupTables>(frame, false);
 
-            YUVCoefficiants yuvCoefficiants;
-            GetYUVCoefficiants(*colorInfo, yuvCoefficiants);
+            const YUVDecodeInfo yuvDecodeInfo = GetYUVDecodeInfo(frame, *colorInfo);
 
             if (outputImage->format == BitmapDataPixelFormat::Bgra32)
             {
                 if (frame->monochrome)
                 {
-                    YUV8ToRGB8Mono(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV8ToRGB8Mono(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                }
+                else if (colorInfo->matrixCoefficients == CICPMatrixCoefficients::YCgCoRe
+                     || colorInfo->matrixCoefficients == CICPMatrixCoefficients::YCgCoRo)
+                {
+                    YUV16ToRGB8ColorYCoCgR(frame, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else
                 {
-                    YUV8ToRGB8Color(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV8ToRGB8Color(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
             }
             else if (outputImage->format == BitmapDataPixelFormat::Rgba64)
             {
                 if (frame->monochrome)
                 {
-                    YUV16ToRGB16Mono(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV16ToRGB16Mono(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                }
+                else if (colorInfo->matrixCoefficients == CICPMatrixCoefficients::YCgCoRe
+                    || colorInfo->matrixCoefficients == CICPMatrixCoefficients::YCgCoRo)
+                {
+                    YUV16ToRGB16ColorYCoCgR(frame, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else
                 {
-                    YUV16ToRGB16Color(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV16ToRGB16Color(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
             }
             else if (outputImage->format == BitmapDataPixelFormat::Rgba128Float)
             {
                 if (frame->monochrome)
                 {
-                    YUV16ToRGB32Mono(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV16ToRGB32Mono(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else
                 {
-                    YUV16ToRGB32Color(frame, yuvCoefficiants, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV16ToRGB32Color(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
             }
             else

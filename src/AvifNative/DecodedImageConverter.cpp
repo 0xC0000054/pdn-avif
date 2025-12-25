@@ -625,15 +625,11 @@ namespace
 
     void YUV16ToRGB32Mono(
         const aom_image_t* image,
-        const YUVDecodeInfo& yuvDecodeInfo,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
-        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
-        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
         const uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
 
         uint32_t copyWidth;
@@ -656,16 +652,10 @@ namespace
 
                 // Convert unorm to float
                 const float Y = Clamp(tables.unormFloatTableY[unormY], 0.0f, 1.0f);
-                const float Cb = 0.0f;
-                const float Cr = 0.0f;
 
-                float R = Y + (2 * (1 - kr)) * Cr;
-                float B = Y + (2 * (1 - kb)) * Cb;
-                float G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
-
-                dstPtr->r = R;
-                dstPtr->g = G;
-                dstPtr->b = B;
+                dstPtr->r = Y;
+                dstPtr->g = Y;
+                dstPtr->b = Y;
                 ++dstPtr;
             }
         }
@@ -764,16 +754,11 @@ namespace
 
     void YUV16ToRGB16Mono(
         const aom_image_t* image,
-        const YUVDecodeInfo& yuvDecodeInfo,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
-        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
-        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
-
         const uint32_t yuvMaxChannel = (1 << image->bit_depth) - 1;
         constexpr float rgbMaxChannel = std::numeric_limits<uint16_t>::max();
 
@@ -797,19 +782,12 @@ namespace
 
                 // Convert unorm to float
                 const float Y = Clamp(tables.unormFloatTableY[unormY], 0.0f, 1.0f);
-                const float Cb = 0.0f;
-                const float Cr = 0.0f;
 
-                float R = Y + (2 * (1 - kr)) * Cr;
-                float B = Y + (2 * (1 - kb)) * Cb;
-                float G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
-                R = Clamp(R, 0.0f, 1.0f);
-                G = Clamp(G, 0.0f, 1.0f);
-                B = Clamp(B, 0.0f, 1.0f);
+                const uint16_t clampedGray = static_cast<uint16_t>(0.5f + (Y * rgbMaxChannel));
 
-                dstPtr->r = static_cast<uint16_t>(0.5f + (R * rgbMaxChannel));
-                dstPtr->g = static_cast<uint16_t>(0.5f + (G * rgbMaxChannel));
-                dstPtr->b = static_cast<uint16_t>(0.5f + (B * rgbMaxChannel));
+                dstPtr->r = clampedGray;
+                dstPtr->g = clampedGray;
+                dstPtr->b = clampedGray;
                 ++dstPtr;
             }
         }
@@ -1069,16 +1047,11 @@ namespace
 
     void YUV8ToRGB8Mono(
         const aom_image_t* image,
-        const YUVDecodeInfo& yuvDecodeInfo,
         const YUVLookupTables& tables,
         uint32_t tileColumnIndex,
         uint32_t tileRowIndex,
         BitmapData* outputImage)
     {
-        const float kr = yuvDecodeInfo.yuvCoefficiants.kr;
-        const float kg = yuvDecodeInfo.yuvCoefficiants.kg;
-        const float kb = yuvDecodeInfo.yuvCoefficiants.kb;
-
         constexpr float rgbMaxChannel = std::numeric_limits<uint8_t>::max();
 
         uint32_t copyWidth;
@@ -1101,19 +1074,12 @@ namespace
 
                 // Convert unorm to float
                 const float Y = tables.unormFloatTableY[unormY];
-                const float Cb = 0.0f;
-                const float Cr = 0.0f;
 
-                float R = Y + (2 * (1 - kr)) * Cr;
-                float B = Y + (2 * (1 - kb)) * Cb;
-                float G = Y - ((2 * ((kr * (1 - kr) * Cr) + (kb * (1 - kb) * Cb))) / kg);
-                R = Clamp(R, 0.0f, 1.0f);
-                G = Clamp(G, 0.0f, 1.0f);
-                B = Clamp(B, 0.0f, 1.0f);
+                const uint8_t clampedGray = static_cast<uint8_t>(0.5f + (Y * rgbMaxChannel));
 
-                dstPtr->r = static_cast<uint8_t>(0.5f + (R * rgbMaxChannel));
-                dstPtr->g = static_cast<uint8_t>(0.5f + (G * rgbMaxChannel));
-                dstPtr->b = static_cast<uint8_t>(0.5f + (B * rgbMaxChannel));
+                dstPtr->r = clampedGray;
+                dstPtr->g = clampedGray;
+                dstPtr->b = clampedGray;
                 ++dstPtr;
             }
         }
@@ -1304,7 +1270,7 @@ DecoderStatus ConvertColorImage(
             {
                 if (frame->monochrome)
                 {
-                    YUV8ToRGB8Mono(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV8ToRGB8Mono(frame, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else if (colorInfo->matrixCoefficients == CICPMatrixCoefficients::YCgCoRe
                      || colorInfo->matrixCoefficients == CICPMatrixCoefficients::YCgCoRo)
@@ -1320,7 +1286,7 @@ DecoderStatus ConvertColorImage(
             {
                 if (frame->monochrome)
                 {
-                    YUV16ToRGB16Mono(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV16ToRGB16Mono(frame, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else if (colorInfo->matrixCoefficients == CICPMatrixCoefficients::YCgCoRe
                     || colorInfo->matrixCoefficients == CICPMatrixCoefficients::YCgCoRo)
@@ -1336,7 +1302,7 @@ DecoderStatus ConvertColorImage(
             {
                 if (frame->monochrome)
                 {
-                    YUV16ToRGB32Mono(frame, yuvDecodeInfo, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
+                    YUV16ToRGB32Mono(frame, *lookupTable, tileColumnIndex, tileRowIndex, outputImage);
                 }
                 else
                 {

@@ -71,7 +71,6 @@ namespace
             {
             case EncoderPreset::Fast:
                 cpuUsed = 8;
-                usage = AOM_USAGE_REALTIME;
                 break;
             case EncoderPreset::Slow:
             case EncoderPreset::VerySlow:

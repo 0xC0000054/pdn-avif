@@ -69,9 +69,9 @@ namespace AvifFileType.Exif
 
         private readonly Dictionary<ExifSection, Dictionary<ushort, ExifValue>> metadata;
 
-        public ExifWriter(Document doc, IDictionary<ExifPropertyPath, ExifValue> entries, ExifColorSpace exifColorSpace)
+        public ExifWriter(SizeInt32 docSize, IDictionary<ExifPropertyPath, ExifValue> entries, ExifColorSpace exifColorSpace)
         {
-            this.metadata = CreateTagDictionary(doc, entries, exifColorSpace);
+            this.metadata = CreateTagDictionary(docSize, entries, exifColorSpace);
         }
 
         public byte[] CreateExifBlob()

@@ -99,145 +99,42 @@ namespace AvifFileType
             // Check that the crop rectangle is within the surface bounds.
             if (cropRect.IntersectsWith(this.image.Bounds()))
             {
-                this.image.ReplaceRef(this.image.CreateWindow(cropRect));
+                this.image = this.image.ReplaceRef(this.image.CreateWindow(cropRect));
             }
         }
 
+        private void ApplyWicFlipRotate(BitmapTransformOptions options)
+        {
+            using IBitmapSource newImage = this.image.CreateFlipRotator(options);
+            IBitmap newBitmap = newImage.ToBitmap();
+            this.image = this.image.ReplaceRef(newBitmap);
+        }
+
+        // WIC's BitmapTransformOptions.Rotate values are for clockwise rotations, so they are
+        // reversed here to match the counter-clockwise rotation that AVIF metadata uses.
         void IOutputImageTransform.Rotate90CCW()
         {
-            SizeInt32 size = this.image.Size;
-            PixelFormat pixelFormat = this.image.PixelFormat;
-
-            IBitmap newImage = this.imagingFactory.CreateBitmap(size.Height, size.Width, pixelFormat);
-
-            using (IBitmapLock sourceLock = this.image.Lock(BitmapLockOptions.Read))
-            using (IBitmapLock destLock = newImage.Lock(BitmapLockOptions.Write))
-            {
-                if (pixelFormat == PixelFormats.Bgra32)
-                {
-                    ImageTransform.Rotate90CCW<ColorBgra32>(sourceLock, destLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba64)
-                {
-                    ImageTransform.Rotate90CCW<ColorRgba64>(sourceLock, destLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba128Float)
-                {
-                    ImageTransform.Rotate90CCW<ColorRgba128Float>(sourceLock, destLock);
-                }
-                else
-                {
-                    ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
-                }
-            }
-
-            this.image.ReplaceRef(newImage);
+            ApplyWicFlipRotate(BitmapTransformOptions.Rotate270); // WIC Rotate270 CW = 90 CCW
         }
 
         void IOutputImageTransform.Rotate180()
         {
-            using (IBitmapLock bitmapLock = this.image.Lock(BitmapLockOptions.ReadWrite))
-            {
-                PixelFormat pixelFormat = bitmapLock.PixelFormat;
-
-                if (pixelFormat == PixelFormats.Bgra32)
-                {
-                    ImageTransform.Rotate180<ColorBgra32>(bitmapLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba64)
-                {
-                    ImageTransform.Rotate180<ColorRgba64>(bitmapLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba128Float)
-                {
-                    ImageTransform.Rotate180<ColorRgba128Float>(bitmapLock);
-                }
-                else
-                {
-                    ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
-                }
-            }
+            ApplyWicFlipRotate(BitmapTransformOptions.Rotate180);
         }
 
         void IOutputImageTransform.Rotate270CCW()
         {
-            SizeInt32 size = this.image.Size;
-            PixelFormat pixelFormat = this.image.PixelFormat;
-
-            IBitmap newImage = this.imagingFactory.CreateBitmap(size.Height, size.Width, pixelFormat);
-
-            using (IBitmapLock sourceLock = this.image.Lock(BitmapLockOptions.Read))
-            using (IBitmapLock destLock = newImage.Lock(BitmapLockOptions.Write))
-            {
-                if (pixelFormat == PixelFormats.Bgra32)
-                {
-                    ImageTransform.Rotate270CCW<ColorBgra32>(sourceLock, destLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba64)
-                {
-                    ImageTransform.Rotate270CCW<ColorRgba64>(sourceLock, destLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba128Float)
-                {
-                    ImageTransform.Rotate270CCW<ColorRgba128Float>(sourceLock, destLock);
-                }
-                else
-                {
-                    ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
-                }
-            }
-
-            this.image.ReplaceRef(newImage);
+            ApplyWicFlipRotate(BitmapTransformOptions.Rotate90); // WIC Rotate90 CW = 270 CCW
         }
 
         void IOutputImageTransform.FlipHorizontal()
         {
-            using (IBitmapLock bitmapLock = this.image.Lock(BitmapLockOptions.ReadWrite))
-            {
-                PixelFormat pixelFormat = bitmapLock.PixelFormat;
-
-                if (pixelFormat == PixelFormats.Bgra32)
-                {
-                    ImageTransform.FlipHorizontal<ColorBgra32>(bitmapLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba64)
-                {
-                    ImageTransform.FlipHorizontal<ColorRgba64>(bitmapLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba128Float)
-                {
-                    ImageTransform.FlipHorizontal<ColorRgba128Float>(bitmapLock);
-                }
-                else
-                {
-                    ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
-                }
-            }
+            ApplyWicFlipRotate(BitmapTransformOptions.FlipHorizontal);
         }
 
         void IOutputImageTransform.FlipVertical()
         {
-            using (IBitmapLock bitmapLock = this.image.Lock(BitmapLockOptions.ReadWrite))
-            {
-                PixelFormat pixelFormat = bitmapLock.PixelFormat;
-
-                if (pixelFormat == PixelFormats.Bgra32)
-                {
-                    ImageTransform.FlipVertical<ColorBgra32>(bitmapLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba64)
-                {
-                    ImageTransform.FlipVertical<ColorRgba64>(bitmapLock);
-                }
-                else if (pixelFormat == PixelFormats.Rgba128Float)
-                {
-                    ImageTransform.FlipVertical<ColorRgba128Float>(bitmapLock);
-                }
-                else
-                {
-                    ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
-                }
-            }
+            ApplyWicFlipRotate(BitmapTransformOptions.FlipVertical);
         }
     }
 }

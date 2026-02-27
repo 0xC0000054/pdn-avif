@@ -14,6 +14,7 @@ using AvifFileType.AvifContainer;
 using AvifFileType.Exif;
 using AvifFileType.Interop;
 using PaintDotNet;
+using PaintDotNet.FileTypes;
 using PaintDotNet.Imaging;
 using PaintDotNet.Rendering;
 using System;
@@ -21,6 +22,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 
 using ExifColorSpace = AvifFileType.Exif.ExifColorSpace;
 
@@ -28,7 +30,7 @@ namespace AvifFileType
 {
     internal static class AvifSave
     {
-        public static void Save(Document document,
+        public static void Save(IReadOnlyFileTypeDocument document,
                                 Stream output,
                                 int quality,
                                 bool lossless,
@@ -37,23 +39,30 @@ namespace AvifFileType
                                 YUVChromaSubsampling chromaSubsampling,
                                 bool preserveExistingTileSize,
                                 bool premultipliedAlpha,
-                                Surface scratchSurface,
                                 ProgressEventHandler progressCallback)
         {
+            using IFileTypeCompositeBitmap<ColorBgra32> docComposite = document.GetCompositeBitmapBgra32();
+
+            IBitmapSource<ColorBgra32> docBitmapSource = docComposite.CreateRefT();
             if (lossless)
             {
                 losslessAlpha = true;
                 // The premultiplied alpha conversion can cause the colors to drift, so it is disabled for lossless encoding.
                 premultipliedAlpha = false;
+
+                using IBitmapSource<ColorPbgra32> docBitmapSourcePbgra32 = docBitmapSource.CreateFormatConverter<ColorPbgra32>();
+                IBitmapSource<ColorBgra32> docBitmapSourceAsBgra32 = docBitmapSourcePbgra32.Cast<ColorBgra32>();
+                docBitmapSource = docBitmapSource.ReplaceRef(docBitmapSourceAsBgra32);
             }
 
-            scratchSurface.Fill(ColorBgra.TransparentBlack);
-            document.CreateRenderer().Render(scratchSurface);
+            using IBitmap<ColorBgra32> docBitmap = docBitmapSource.ToBitmap();
+            using IBitmapLock<ColorBgra32> docBitmapLock = docBitmap.Lock(BitmapLockOptions.Read);
+            RegionPtr<ColorBgra32> docRegion = docBitmapLock.AsRegionPtr();
 
             AvifMetadata metadata = CreateAvifMetadata(document);
 
             // Images that have a non-sRGB ICC profile will not be automatically converted to gray scale.
-            bool grayscale = metadata.IccProfile.IsEmpty && IsGrayscaleImage(scratchSurface);
+            bool grayscale = metadata.IccProfile.IsEmpty && IsGrayscaleImage(docRegion);
 
             EncoderOptions options = new EncoderOptions
             {
@@ -98,12 +107,7 @@ namespace AvifFileType
                                                                            options.yuvFormat,
                                                                            preserveExistingTileSize);
 
-            bool hasTransparency = HasTransparency(scratchSurface);
-
-            if (hasTransparency && premultipliedAlpha)
-            {
-                scratchSurface.ConvertToPremultipliedAlpha();
-            }
+            bool hasTransparency = HasTransparency(docRegion);
 
             CompressedAV1ImageCollection colorImages = new CompressedAV1ImageCollection(imageGridMetadata?.TileCount ?? 1);
             CompressedAV1ImageCollection? alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
@@ -125,8 +129,8 @@ namespace AvifFileType
 
             try
             {
-                Rectangle[] windowRectangles = GetTileWindowRectangles(imageGridMetadata, document);
-                HomogeneousTileInfo homogeneousTileInfo = GetHomogeneousTileInfo(scratchSurface, windowRectangles, hasTransparency);
+                Rectangle[] windowRectangles = GetTileWindowRectangles(imageGridMetadata, document.Size);
+                HomogeneousTileInfo homogeneousTileInfo = GetHomogeneousTileInfo(docRegion, windowRectangles, hasTransparency);
 
                 for (int i = 0; i < colorImages.Capacity; i++)
                 {
@@ -148,16 +152,14 @@ namespace AvifFileType
                         try
                         {
                             Rectangle windowRect = windowRectangles[i];
-                            using (Surface window = scratchSurface.CreateWindow(windowRect))
-                            {
-                                AvifNative.CompressColorImage(window,
-                                                              options,
-                                                              ReportCompressionProgress,
-                                                              ref progressDone,
-                                                              progressTotal,
-                                                              colorConversionInfo,
-                                                              out color);
-                            }
+                            RegionPtr<ColorBgra32> window = docRegion.Slice(windowRect);
+                            AvifNative.CompressColorImage(window,
+                                                          options,
+                                                          ReportCompressionProgress,
+                                                          ref progressDone,
+                                                          progressTotal,
+                                                          colorConversionInfo,
+                                                          out color);
 
                             colorImages.Add(color);
                             color = null;
@@ -184,15 +186,13 @@ namespace AvifFileType
                             try
                             {
                                 Rectangle windowRect = windowRectangles[i];
-                                using (Surface window = scratchSurface.CreateWindow(windowRect))
-                                {
-                                    AvifNative.CompressAlphaImage(window,
-                                                                  options,
-                                                                  ReportCompressionProgress,
-                                                                  ref progressDone,
-                                                                  progressTotal,
-                                                                  out alpha);
-                                }
+                                RegionPtr<ColorBgra32> window = docRegion.Slice(windowRect);
+                                AvifNative.CompressAlphaImage(window,
+                                                              options,
+                                                              ReportCompressionProgress,
+                                                              ref progressDone,
+                                                              progressTotal,
+                                                              out alpha);
 
                                 alphaImages.Add(alpha);
                                 alpha = null;
@@ -251,7 +251,7 @@ namespace AvifFileType
             }
         }
 
-        private static AvifMetadata CreateAvifMetadata(Document doc)
+        private static AvifMetadata CreateAvifMetadata(IReadOnlyFileTypeDocument doc)
         {
             byte[]? exifBytes = null;
             byte[]? iccProfileBytes = null;
@@ -291,10 +291,10 @@ namespace AvifFileType
                     propertyItems.Remove(ExifPropertyKeys.Interop.InteroperabilityVersion.Path);
                 }
 
-                exifBytes = new ExifWriter(doc, propertyItems, exifColorSpace).CreateExifBlob();
+                exifBytes = new ExifWriter(doc.Size, propertyItems, exifColorSpace).CreateExifBlob();
             }
 
-            XmpPacket? xmpPacket = doc.Metadata.TryGetXmpPacket();
+            XmpPacket? xmpPacket = doc.Metadata.Xmp.XmpPacket;
             if (xmpPacket != null)
             {
                 string packetAsString = xmpPacket.ToString(XmpPacketWrapperType.ReadOnly);
@@ -305,26 +305,22 @@ namespace AvifFileType
             return new AvifMetadata(exifBytes, iccProfileBytes, xmpBytes);
         }
 
-        private static Dictionary<ExifPropertyPath, ExifValue>? GetExifMetadataFromDocument(Document doc)
+        private static Dictionary<ExifPropertyPath, ExifValue>? GetExifMetadataFromDocument(IReadOnlyFileTypeDocument doc)
         {
-            Dictionary<ExifPropertyPath, ExifValue>? items = null;
-
-            ExifPropertyItem[] exifProperties = doc.Metadata.GetExifPropertyItems();
-
-            if (exifProperties.Length > 0)
+            Dictionary<ExifPropertyPath, ExifValue> items = new();
+            foreach (KeyValuePair<ExifPropertyPath, IEnumerable<ExifValue>> property in doc.Metadata.Exif)
             {
-                items = new Dictionary<ExifPropertyPath, ExifValue>(exifProperties.Length);
-
-                foreach (ExifPropertyItem property in exifProperties)
+                ExifValue? value = property.Value.FirstOrDefault();
+                if (value is not null)
                 {
-                    items.TryAdd(property.Path, property.Value);
+                    items.Add(property.Key, value);
                 }
             }
 
-            return items;
+            return items.Count > 0 ? items : null;
         }
 
-        private static HomogeneousTileInfo GetHomogeneousTileInfo(Surface surface, Rectangle[] tileRects, bool includeAlphaTiles)
+        private static HomogeneousTileInfo GetHomogeneousTileInfo(RegionPtr<ColorBgra32> region, Rectangle[] tileRects, bool includeAlphaTiles)
         {
             Dictionary<int, int> duplicateColorTileMap = [];
             HashSet<int> homogeneousColorTiles = [];
@@ -336,7 +332,7 @@ namespace AvifFileType
                 Dictionary<uint, int> homogeneousColorTileCache = [];
                 Dictionary<uint, int> homogeneousAlphaTileCache = [];
 
-                RegionPtr<uint> sourceRegion = surface.AsRegionPtr().Cast<uint>();
+                RegionPtr<uint> sourceRegion = region.Cast<uint>();
 
                 for (int i = 0; i < tileRects.Length; i++)
                 {
@@ -382,13 +378,13 @@ namespace AvifFileType
                                            homogeneousAlphaTiles);
         }
 
-        private static Rectangle[] GetTileWindowRectangles(ImageGridMetadata? imageGridMetadata, Document document)
+        private static Rectangle[] GetTileWindowRectangles(ImageGridMetadata? imageGridMetadata, SizeInt32 docSize)
         {
             Rectangle[] rects;
 
             if (imageGridMetadata is null)
             {
-                rects = [document.Bounds];
+                rects = [new Rectangle(Point2Int32.Zero, docSize)];
             }
             else
             {
@@ -417,41 +413,32 @@ namespace AvifFileType
             return rects;
         }
 
-        private static unsafe bool HasTransparency(Surface surface)
+        private static unsafe bool HasTransparency(RegionPtr<ColorBgra32> region)
         {
-            for (int y = 0; y < surface.Height; y++)
+            foreach (RegionRowPtr<ColorBgra32> row in region.Rows)
             {
-                ColorBgra* ptr = surface.GetRowPointerUnchecked(y);
-                ColorBgra* ptrEnd = ptr + surface.Width;
-
-                while (ptr < ptrEnd)
+                foreach (ColorBgra32 color in row)
                 {
-                    if (ptr->A < 255)
+                    if (color.A < 255)
                     {
                         return true;
                     }
-
-                    ptr++;
                 }
             }
 
             return false;
         }
 
-        private static unsafe bool IsGrayscaleImage(Surface surface)
+        private static unsafe bool IsGrayscaleImage(RegionPtr<ColorBgra32> region)
         {
-            for (int y = 0; y < surface.Height; y++)
+            foreach (RegionRowPtr<ColorBgra32> row in region.Rows)
             {
-                ColorBgra* ptr = surface.GetRowPointerUnchecked(y);
-                ColorBgra* ptrEnd = ptr + surface.Width;
-
-                while (ptr < ptrEnd)
+                foreach (ColorBgra32 color in row)
                 {
-                    if (!(ptr->R == ptr->G && ptr->G == ptr->B))
+                    if (!(color.R == color.G && color.G == color.B))
                     {
                         return false;
                     }
-                    ptr++;
                 }
             }
 
@@ -492,7 +479,7 @@ namespace AvifFileType
             return true;
         }
 
-        private static ImageGridMetadata? TryCalculateBestTileSize(Document document, EncoderPreset encoderPreset)
+        private static ImageGridMetadata? TryCalculateBestTileSize(SizeInt32 docSize, EncoderPreset encoderPreset)
         {
             // Although the HEIF specification (ISO/IEC 23008-12:2017) allows an image grid to have up to 256 tiles
             // in each direction (65536 total), the ISO base media file format (ISO/IEC 14496-12:2015) limits
@@ -528,22 +515,22 @@ namespace AvifFileType
             }
 
             int bestTileColumnCount = 1;
-            int bestTileWidth = document.Width;
+            int bestTileWidth = docSize.Width;
             int bestTileRowCount = 1;
-            int bestTileHeight = document.Height;
+            int bestTileHeight = docSize.Height;
 
-            if (document.Width > maxTileSize)
+            if (docSize.Width > maxTileSize)
             {
                 for (int tileColumnCount = 2; tileColumnCount <= MaxTileCount; tileColumnCount++)
                 {
-                    int tileWidth = document.Width / tileColumnCount;
+                    int tileWidth = docSize.Width / tileColumnCount;
 
                     if (tileWidth < MinTileSize)
                     {
                         break;
                     }
 
-                    if ((tileWidth & 1) == 0 && (tileWidth * tileColumnCount) == document.Width)
+                    if ((tileWidth & 1) == 0 && (tileWidth * tileColumnCount) == docSize.Width)
                     {
                         bestTileWidth = tileWidth;
                         bestTileColumnCount = tileColumnCount;
@@ -556,9 +543,9 @@ namespace AvifFileType
                 }
             }
 
-            if (document.Height > maxTileSize)
+            if (docSize.Height > maxTileSize)
             {
-                if (document.Width == document.Height)
+                if (docSize.Width == docSize.Height)
                 {
                     // Square images use the same number of horizontal and vertical tiles.
                     bestTileHeight = bestTileWidth;
@@ -568,14 +555,14 @@ namespace AvifFileType
                 {
                     for (int tileRowCount = 2; tileRowCount <= MaxTileCount; tileRowCount++)
                     {
-                        int tileHeight = document.Height / tileRowCount;
+                        int tileHeight = docSize.Height / tileRowCount;
 
                         if (tileHeight < MinTileSize)
                         {
                             break;
                         }
 
-                        if ((tileHeight & 1) == 0 && (tileHeight * tileRowCount) == document.Height)
+                        if ((tileHeight & 1) == 0 && (tileHeight * tileRowCount) == docSize.Height)
                         {
                             bestTileHeight = tileHeight;
                             bestTileRowCount = tileRowCount;
@@ -595,8 +582,8 @@ namespace AvifFileType
             {
                 metadata = new ImageGridMetadata(bestTileColumnCount,
                                                  bestTileRowCount,
-                                                 (uint)document.Height,
-                                                 (uint)document.Width,
+                                                 (uint)docSize.Height,
+                                                 (uint)docSize.Width,
                                                  (uint)bestTileHeight,
                                                  (uint)bestTileWidth);
             }
@@ -605,7 +592,7 @@ namespace AvifFileType
         }
 
         private static ImageGridMetadata? TryGetImageGridMetadata(
-            Document document,
+            IReadOnlyFileTypeDocument document,
             EncoderPreset encoderPreset,
             YUVChromaSubsampling yuvFormat,
             bool preserveExistingTileSize)
@@ -616,25 +603,24 @@ namespace AvifFileType
             if (encoderPreset != EncoderPreset.VerySlow)
             {
                 // The image must have an even size to be eligible for tiling.
-                if ((document.Width & 1) == 0 && (document.Height & 1) == 0)
+                if ((document.Size.Width & 1) == 0 && (document.Size.Height & 1) == 0)
                 {
                     if (preserveExistingTileSize)
                     {
-                        string? value = document.Metadata.GetUserValue(AvifMetadataNames.ImageGridName);
-
+                        document.Metadata.Custom.TryGetValue(AvifMetadataNames.ImageGridName, out string? value);
                         if (!string.IsNullOrEmpty(value))
                         {
                             ImageGridMetadata? serializedData = ImageGridMetadata.TryDeserialize(value);
 
                             if (serializedData != null
-                                && serializedData.IsValidForImage((uint)document.Width, (uint)document.Height, yuvFormat))
+                                && serializedData.IsValidForImage((uint)document.Size.Width, (uint)document.Size.Height, yuvFormat))
                             {
                                 metadata = serializedData;
                             }
                         }
                     }
 
-                    metadata ??= TryCalculateBestTileSize(document, encoderPreset);
+                    metadata ??= TryCalculateBestTileSize(document.Size, encoderPreset);
                 }
             }
 

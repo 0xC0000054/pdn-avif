@@ -11,6 +11,9 @@
 ////////////////////////////////////////////////////////////////////////
 
 using PaintDotNet;
+using PaintDotNet.ComponentModel;
+using PaintDotNet.FileTypes;
+using PaintDotNet.Imaging;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
@@ -47,16 +50,18 @@ namespace AvifFileType
         /// <param name="host">The host.</param>
         public AvifFileTypePlugin(IFileTypeHost host)
              : base(
+                host,
                 "AV1 (AVIF)",
-                new FileTypeOptions
+                FileTypeOptions.Create() with
                 {
-                    LoadExtensions = new string[] { ".avif" },
-                    SaveExtensions = new string[] { ".avif" },
-                    SupportsCancellation = true,
-                    SupportsLayers = false
+                    LoadExtensions = [".avif"],
+                    SaveExtensions = [".avif"],
+                    SupportsSavingLayers = false,
+                    IsSavingConfigurable = true,
+                    SupportsCancellationExceptions = true,
                 })
         {
-            PaintDotNet.Avif.IAvifFileTypeStrings? avifFileTypeStrings = host?.Services.GetService<PaintDotNet.Avif.IAvifFileTypeStrings>();
+            PaintDotNet.FileTypes.Avif.IAvifFileTypeStrings? avifFileTypeStrings = host?.Services.GetService<PaintDotNet.FileTypes.Avif.IAvifFileTypeStrings>();
 
             if (avifFileTypeStrings != null)
             {
@@ -68,147 +73,178 @@ namespace AvifFileType
             }
         }
 
-        /// <summary>
-        /// Add properties to the dialog
-        /// </summary>
-        public override PropertyCollection OnCreateSavePropertyCollection()
+        protected override PropertyBasedFileTypeSaver OnCreatePropertyBasedSaver()
         {
-            Property[] props =
-            [
-                new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
-                new BooleanProperty(PropertyNames.Lossless, false),
-                new BooleanProperty(PropertyNames.LosslessAlphaCompression, true),
-                StaticListChoiceProperty.CreateForEnum(PropertyNames.EncoderPreset, EncoderPreset.Fast),
-                CreateChromaSubsampling(),
-                new BooleanProperty(PropertyNames.PreserveExistingTileSize, true),
-                new BooleanProperty(PropertyNames.PremultipliedAlpha, false),
-                new UriProperty(PropertyNames.ForumLink, new Uri("https://forums.getpaint.net/topic/116233-avif-filetype")),
-                new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif")),
-                new StringProperty(PropertyNames.PluginVersion),
-                new StringProperty(PropertyNames.AOMVersion),
-            ];
+            return new Saver(this);
+        }
 
-            List<PropertyCollectionRule> rules =
-            [
-                new ReadOnlyBoundToBooleanRule(PropertyNames.Quality, PropertyNames.Lossless, false),
-                new ReadOnlyBoundToBooleanRule(PropertyNames.LosslessAlphaCompression, PropertyNames.Lossless, false),
-                new ReadOnlyBoundToBooleanRule(PropertyNames.YUVChromaSubsampling, PropertyNames.Lossless, false),
-                new ReadOnlyBoundToBooleanRule(PropertyNames.PremultipliedAlpha, PropertyNames.Lossless, false)
-            ];
+        protected override PropertyBasedFileTypeLoader OnCreatePropertyBasedLoader()
+        {
+            return new Loader(this);
+        }
 
-            return new PropertyCollection(props, rules);
+        private sealed class Saver
+            : PropertyBasedFileTypeSaver
+        {
+            private readonly AvifFileTypePlugin fileType;
+            private IObjectRef fileTypeRef;
 
-            static StaticListChoiceProperty CreateChromaSubsampling()
+            public Saver(AvifFileTypePlugin fileType)
+                : base(fileType)
             {
-                // The list is created manually because some of the YUVChromaSubsampling enumeration values
-                // are used for internal signaling.
+                this.fileType = fileType;
+                this.fileTypeRef = fileType.CreateRef(); // for keep-alive purposes
+            }
 
-                object[] choiceValues =
+            /// <summary>
+            /// Add properties to the dialog
+            /// </summary>
+            protected override PropertyCollection OnCreateDefaultSaveProperties()
+            {
+                Property[] props =
                 [
-                    YUVChromaSubsampling.Subsampling420,
-                    YUVChromaSubsampling.Subsampling422,
-                    YUVChromaSubsampling.Subsampling444
+                    new Int32Property(PropertyNames.Quality, 85, 0, 100, false),
+                    new BooleanProperty(PropertyNames.Lossless, false),
+                    new BooleanProperty(PropertyNames.LosslessAlphaCompression, true),
+                    StaticListChoiceProperty.CreateForEnum(PropertyNames.EncoderPreset, EncoderPreset.Fast),
+                    CreateChromaSubsampling(),
+                    new BooleanProperty(PropertyNames.PreserveExistingTileSize, true),
+                    new BooleanProperty(PropertyNames.PremultipliedAlpha, false),
+                    new UriProperty(PropertyNames.ForumLink, new Uri("https://forums.getpaint.net/topic/116233-avif-filetype")),
+                    new UriProperty(PropertyNames.GitHubLink, new Uri("https://github.com/0xC0000054/pdn-avif")),
+                    new StringProperty(PropertyNames.PluginVersion),
+                    new StringProperty(PropertyNames.AOMVersion),
                 ];
 
-                int defaultChoiceIndex = Array.IndexOf(choiceValues, YUVChromaSubsampling.Subsampling422);
+                List<PropertyCollectionRule> rules =
+                [
+                    new ReadOnlyBoundToBooleanRule(PropertyNames.Quality, PropertyNames.Lossless, false),
+                    new ReadOnlyBoundToBooleanRule(PropertyNames.LosslessAlphaCompression, PropertyNames.Lossless, false),
+                    new ReadOnlyBoundToBooleanRule(PropertyNames.YUVChromaSubsampling, PropertyNames.Lossless, false),
+                    new ReadOnlyBoundToBooleanRule(PropertyNames.PremultipliedAlpha, PropertyNames.Lossless, false)
+                ];
 
-                return new StaticListChoiceProperty(PropertyNames.YUVChromaSubsampling, choiceValues, defaultChoiceIndex);
+                return new PropertyCollection(props, rules);
+
+                static StaticListChoiceProperty CreateChromaSubsampling()
+                {
+                    // The list is created manually because some of the YUVChromaSubsampling enumeration values
+                    // are used for internal signaling.
+
+                    object[] choiceValues =
+                    [
+                        YUVChromaSubsampling.Subsampling420,
+                        YUVChromaSubsampling.Subsampling422,
+                        YUVChromaSubsampling.Subsampling444
+                    ];
+
+                    int defaultChoiceIndex = Array.IndexOf(choiceValues, YUVChromaSubsampling.Subsampling422);
+
+                    return new StaticListChoiceProperty(PropertyNames.YUVChromaSubsampling, choiceValues, defaultChoiceIndex);
+                }
+            }
+
+            /// <summary>
+            /// Adapt properties in the dialog (DisplayName, ...)
+            /// </summary>
+            protected override ControlInfo OnCreateSaveOptionsUI(PropertyCollection props)
+            {
+                ControlInfo configUI = CreateDefaultSaveOptionsUI(props);
+
+                PropertyControlInfo qualityPCI = configUI.FindControlForPropertyName(PropertyNames.Quality)!;
+                qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.fileType.strings.GetString("Quality_DisplayName");
+                qualityPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = string.Empty;
+
+                PropertyControlInfo losslessPCI = configUI.FindControlForPropertyName(PropertyNames.Lossless)!;
+                losslessPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+                losslessPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.fileType.strings.GetString("Lossless_Description");
+
+                PropertyControlInfo losslessAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.LosslessAlphaCompression)!;
+                losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+                losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.fileType.strings.GetString("LosslessAlphaCompression_Description");
+
+                PropertyControlInfo encoderPresetPCI = configUI.FindControlForPropertyName(PropertyNames.EncoderPreset)!;
+                encoderPresetPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.fileType.strings.GetString("EncoderPreset_DisplayName");
+                encoderPresetPCI.SetValueDisplayName(EncoderPreset.Fast, this.fileType.strings.GetString("EncoderPreset_Fast_DisplayName")!);
+                encoderPresetPCI.SetValueDisplayName(EncoderPreset.Medium, this.fileType.strings.GetString("EncoderPreset_Medium_DisplayName")!);
+                encoderPresetPCI.SetValueDisplayName(EncoderPreset.Slow, this.fileType.strings.GetString("EncoderPreset_Slow_DisplayName")!);
+                encoderPresetPCI.SetValueDisplayName(EncoderPreset.VerySlow, this.fileType.strings.GetString("EncoderPreset_VerySlow_DisplayName")!);
+
+                PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling)!;
+                subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.fileType.strings.GetString("ChromaSubsampling_DisplayName");
+                subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling420, this.fileType.strings.GetString("ChromaSubsampling_420_DisplayName")!);
+                subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling422, this.fileType.strings.GetString("ChromaSubsampling_422_DisplayName")!);
+                subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling444, this.fileType.strings.GetString("ChromaSubsampling_444_DisplayName")!);
+
+                PropertyControlInfo preserveExistingTileSizePCI = configUI.FindControlForPropertyName(PropertyNames.PreserveExistingTileSize)!;
+                preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+                preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.fileType.strings.GetString("PreserveExistingTileSize_Description");
+
+                PropertyControlInfo premultipliedAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.PremultipliedAlpha)!;
+                premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+                premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.fileType.strings.GetString("PremultipliedAlpha_Description");
+
+                PropertyControlInfo forumLinkPCI = configUI.FindControlForPropertyName(PropertyNames.ForumLink)!;
+                forumLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.fileType.strings.GetString("ForumLink_DisplayName");
+                forumLinkPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.fileType.strings.GetString("ForumLink_Description");
+
+                PropertyControlInfo githubLinkPCI = configUI.FindControlForPropertyName(PropertyNames.GitHubLink)!;
+                githubLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+                githubLinkPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "GitHub"; // GitHub is a brand name that should not be localized.
+
+                PropertyControlInfo pluginVersionPCI = configUI.FindControlForPropertyName(PropertyNames.PluginVersion)!;
+                pluginVersionPCI.ControlType.Value = PropertyControlType.Label;
+                pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+                pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "AvifFileType v" + VersionInfo.PluginVersion;
+
+                PropertyControlInfo aomVersionPCI = configUI.FindControlForPropertyName(PropertyNames.AOMVersion)!;
+                aomVersionPCI.ControlType.Value = PropertyControlType.Label;
+                aomVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
+                aomVersionPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "AOM v" + VersionInfo.AOMVersion;
+
+                return configUI;
+            }
+
+            /// <summary>
+            /// Saves a document to a stream respecting the properties
+            /// </summary>
+            protected override void OnSave(IPropertyBasedFileTypeSaveContext context)
+            {
+                IPropertyBasedFileTypeSaveOptions options = context.Options;
+                int quality = options.GetProperty<Int32Property>(PropertyNames.Quality)!.Value;
+                bool lossless = options.GetProperty<BooleanProperty>(PropertyNames.Lossless)!.Value;
+                bool losslessAlpha = options.GetProperty<BooleanProperty>(PropertyNames.LosslessAlphaCompression)!.Value;
+                EncoderPreset encoderPreset = (EncoderPreset)options.GetProperty(PropertyNames.EncoderPreset)!.Value!;
+                YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)options.GetProperty(PropertyNames.YUVChromaSubsampling)!.Value!;
+                bool preserveExistingTileSize = options.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize)!.Value;
+                bool premultipliedAlpha = options.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha)!.Value;
+
+                AvifSave.Save(context.Document,
+                              context.Output,
+                              quality,
+                              lossless,
+                              losslessAlpha,
+                              encoderPreset,
+                              chromaSubsampling,
+                              preserveExistingTileSize,
+                              premultipliedAlpha,
+                              context.ProgressCallback);
             }
         }
 
-        /// <summary>
-        /// Adapt properties in the dialog (DisplayName, ...)
-        /// </summary>
-        public override ControlInfo OnCreateSaveConfigUI(PropertyCollection props)
+        private sealed class Loader
+            : PropertyBasedFileTypeLoader
         {
-            ControlInfo configUI = CreateDefaultSaveConfigUI(props);
+            public Loader(AvifFileTypePlugin fileType)
+                : base(fileType)
+            {
+            }
 
-            PropertyControlInfo qualityPCI = configUI.FindControlForPropertyName(PropertyNames.Quality)!;
-            qualityPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.strings.GetString("Quality_DisplayName");
-            qualityPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = string.Empty;
-
-            PropertyControlInfo losslessPCI = configUI.FindControlForPropertyName(PropertyNames.Lossless)!;
-            losslessPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
-            losslessPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("Lossless_Description");
-
-            PropertyControlInfo losslessAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.LosslessAlphaCompression)!;
-            losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
-            losslessAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("LosslessAlphaCompression_Description");
-
-            PropertyControlInfo encoderPresetPCI = configUI.FindControlForPropertyName(PropertyNames.EncoderPreset)!;
-            encoderPresetPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.strings.GetString("EncoderPreset_DisplayName");
-            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Fast, this.strings.GetString("EncoderPreset_Fast_DisplayName")!);
-            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Medium, this.strings.GetString("EncoderPreset_Medium_DisplayName")!);
-            encoderPresetPCI.SetValueDisplayName(EncoderPreset.Slow, this.strings.GetString("EncoderPreset_Slow_DisplayName")!);
-            encoderPresetPCI.SetValueDisplayName(EncoderPreset.VerySlow, this.strings.GetString("EncoderPreset_VerySlow_DisplayName")!);
-
-            PropertyControlInfo subsamplingPCI = configUI.FindControlForPropertyName(PropertyNames.YUVChromaSubsampling)!;
-            subsamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.strings.GetString("ChromaSubsampling_DisplayName");
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling420, this.strings.GetString("ChromaSubsampling_420_DisplayName")!);
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling422, this.strings.GetString("ChromaSubsampling_422_DisplayName")!);
-            subsamplingPCI.SetValueDisplayName(YUVChromaSubsampling.Subsampling444, this.strings.GetString("ChromaSubsampling_444_DisplayName")!);
-
-            PropertyControlInfo preserveExistingTileSizePCI = configUI.FindControlForPropertyName(PropertyNames.PreserveExistingTileSize)!;
-            preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
-            preserveExistingTileSizePCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("PreserveExistingTileSize_Description");
-
-            PropertyControlInfo premultipliedAlphaPCI = configUI.FindControlForPropertyName(PropertyNames.PremultipliedAlpha)!;
-            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
-            premultipliedAlphaPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("PremultipliedAlpha_Description");
-
-            PropertyControlInfo forumLinkPCI = configUI.FindControlForPropertyName(PropertyNames.ForumLink)!;
-            forumLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = this.strings.GetString("ForumLink_DisplayName");
-            forumLinkPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = this.strings.GetString("ForumLink_Description");
-
-            PropertyControlInfo githubLinkPCI = configUI.FindControlForPropertyName(PropertyNames.GitHubLink)!;
-            githubLinkPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
-            githubLinkPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "GitHub"; // GitHub is a brand name that should not be localized.
-
-            PropertyControlInfo pluginVersionPCI = configUI.FindControlForPropertyName(PropertyNames.PluginVersion)!;
-            pluginVersionPCI.ControlType.Value = PropertyControlType.Label;
-            pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
-            pluginVersionPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "AvifFileType v" + VersionInfo.PluginVersion;
-
-            PropertyControlInfo aomVersionPCI = configUI.FindControlForPropertyName(PropertyNames.AOMVersion)!;
-            aomVersionPCI.ControlType.Value = PropertyControlType.Label;
-            aomVersionPCI.ControlProperties[ControlInfoPropertyNames.DisplayName]!.Value = string.Empty;
-            aomVersionPCI.ControlProperties[ControlInfoPropertyNames.Description]!.Value = "AOM v" + VersionInfo.AOMVersion;
-
-            return configUI;
-        }
-
-        /// <summary>
-        /// Saves a document to a stream respecting the properties
-        /// </summary>
-        protected override void OnSaveT(Document input, Stream output, PropertyBasedSaveConfigToken token, Surface scratchSurface, ProgressEventHandler progressCallback)
-        {
-            int quality = token.GetProperty<Int32Property>(PropertyNames.Quality)!.Value;
-            bool lossless = token.GetProperty<BooleanProperty>(PropertyNames.Lossless)!.Value;
-            bool losslessAlpha = token.GetProperty<BooleanProperty>(PropertyNames.LosslessAlphaCompression)!.Value;
-            EncoderPreset encoderPreset = (EncoderPreset)token.GetProperty(PropertyNames.EncoderPreset)!.Value!;
-            YUVChromaSubsampling chromaSubsampling = (YUVChromaSubsampling)token.GetProperty(PropertyNames.YUVChromaSubsampling)!.Value!;
-            bool preserveExistingTileSize = token.GetProperty<BooleanProperty>(PropertyNames.PreserveExistingTileSize)!.Value;
-            bool premultipliedAlpha = token.GetProperty<BooleanProperty>(PropertyNames.PremultipliedAlpha)!.Value;
-
-            AvifSave.Save(input,
-                          output,
-                          quality,
-                          lossless,
-                          losslessAlpha,
-                          encoderPreset,
-                          chromaSubsampling,
-                          preserveExistingTileSize,
-                          premultipliedAlpha,
-                          scratchSurface,
-                          progressCallback);
-        }
-
-        /// <summary>
-        /// Creates a document from a stream
-        /// </summary>
-        protected override Document OnLoad(Stream input)
-        {
-            return AvifLoad.Load(input);
+            protected override IFileTypeDocument OnLoad(IPropertyBasedFileTypeLoadContext context)
+            {
+                IImagingFactory imagingFactory = this.Services.GetService<IImagingFactory>() ?? throw new ArgumentNullException(nameof(IImagingFactory));
+                return AvifLoad.Load(context.Factory, imagingFactory, context.Input);
+            }
         }
     }
 }

@@ -13,9 +13,8 @@
 using AvifFileType.AvifContainer;
 using AvifFileType.Exif;
 using PaintDotNet;
-using PaintDotNet.Direct2D1;
-using PaintDotNet.Direct2D1.Effects;
 using PaintDotNet.Dxgi;
+using PaintDotNet.FileTypes;
 using PaintDotNet.Imaging;
 using PaintDotNet.Rendering;
 using System;
@@ -26,40 +25,40 @@ namespace AvifFileType
 {
     internal static class AvifLoad
     {
-        public static Document Load(Stream input)
+        public static IFileTypeDocument Load(IFileTypeDocumentFactory factory, IImagingFactory imagingFactory, Stream input)
         {
-            Document? doc = null;
+            IFileTypeDocument<ColorBgra32>? doc = null;
 
-            using (IImagingFactory imagingFactory = ImagingFactory.CreateRef())
             using (AvifReader reader = new AvifReader(input, leaveOpen: true, imagingFactory))
             {
                 using (AvifReaderImage image = reader.Decode())
                 {
-                    doc = new Document(image.Size);
+                    doc = factory.CreateDocument<ColorBgra32>(image.Size);
 
-                    BitmapLayer? layer = null;
+                    IFileTypeBitmapLayer<ColorBgra32>? layer = null;
                     bool disposeLayer = true;
 
                     try
                     {
-                        layer = Layer.CreateBackgroundLayer(image.Size);
+                        layer = doc.CreateBitmapLayer();
+                        using IFileTypeBitmapSink<ColorBgra32> layerBitmapSink = layer.GetBitmap();
 
                         PixelFormat pixelFormat = image.WICPixelFormat;
 
                         if (pixelFormat == PixelFormats.Bgra32)
                         {
-                            SetOutputLayerDataBgra32(image, layer.Surface);
+                            SetOutputLayerDataBgra32(image, layerBitmapSink);
                         }
                         else if (pixelFormat == PixelFormats.Rgba64)
                         {
-                            SetOutputLayerDataRgba64(image, layer.Surface);
+                            SetOutputLayerDataRgba64(image, layerBitmapSink);
                         }
                         else if (pixelFormat == PixelFormats.Rgba128Float)
                         {
                             switch (image.HDRFormat)
                             {
                                 case HDRFormat.PQ:
-                                    SetOutputLayerDataRgba128PQ(doc, image, layer.Surface, imagingFactory);
+                                    SetOutputLayerDataRgba128PQ(doc, image, layerBitmapSink, imagingFactory);
                                     break;
                                 default:
                                     throw new FormatException($"Unsupported HDR format: {image.HDRFormat}.");
@@ -87,7 +86,7 @@ namespace AvifFileType
             return doc;
         }
 
-        private static void AddAvifMetadataToDocument(Document doc,
+        private static void AddAvifMetadataToDocument(IFileTypeDocument doc,
                                                       AvifReader reader,
                                                       AvifReaderImage image,
                                                       IImagingFactory imagingFactory)
@@ -108,11 +107,9 @@ namespace AvifFileType
                         // See https://github.com/strukturag/libheif/issues/227#issuecomment-642165942
                         exifValues.Remove(ExifPropertyKeys.Image.Orientation.Path);
 
-                        foreach (KeyValuePair<ExifPropertyPath, ExifValue> item in exifValues)
+                        using (IFileTypeExifMetadataTransaction exifTx = doc.Metadata.Exif.CreateTransaction())
                         {
-                            ExifPropertyPath path = item.Key;
-
-                            doc.Metadata.AddExifPropertyItem(path.Section, path.TagID, item.Value);
+                            exifTx.SetItems(exifValues);
                         }
                     }
                 }
@@ -126,11 +123,15 @@ namespace AvifFileType
 
             if (imageGridMetadata != null)
             {
+                // TODO: Instead of serializing the data to XML, maybe make use of IFileTypePropertyBag ability to deal with arbitrary T's that implement IParsable<T>
+                // customTx.Add("AvifImageGrid.TileColumnCount", imageGridMetadata.TileColumnCount); // Add<T>() supports any IParsable<T>
+
                 string serializedValue = imageGridMetadata.SerializeToString();
 
                 if (serializedValue != null)
                 {
-                    doc.Metadata.SetUserValue(AvifMetadataNames.ImageGridName, serializedValue);
+                    using IFileTypeCustomMetadataTransaction customTx = doc.Metadata.Custom.CreateTransaction();
+                    customTx.Add(AvifMetadataNames.ImageGridName, serializedValue);
                 }
             }
 
@@ -150,10 +151,8 @@ namespace AvifFileType
                     using (Stream stream = xmp.GetStream())
                     {
                         XmpPacket? xmpPacket = XmpPacket.TryParse(stream);
-                        if (xmpPacket != null)
-                        {
-                            doc.Metadata.SetXmpPacket(xmpPacket);
-                        }
+                        using IFileTypeXmpMetadataTransaction xmpTx = doc.Metadata.Xmp.CreateTransaction();
+                        xmpTx.XmpPacket = xmpPacket;
                     }
                 }
                 finally
@@ -203,88 +202,44 @@ namespace AvifFileType
             }
         }
 
-        private static void SetOutputLayerDataBgra32(AvifReaderImage image, Surface output)
+        private static void SetOutputLayerDataBgra32(AvifReaderImage image, IFileTypeBitmapSink<ColorBgra32> output)
         {
-            using (IBitmapLock bitmapLock = image.Image.Lock(BitmapLockOptions.Read))
+            using (IBitmapSource imageSource = image.IsPremultipliedAlpha ? image.Image.CreateFormatConverter<ColorPbgra32>() : image.Image.CreateRef())
             {
-                RegionPtr<ColorBgra32> region = bitmapLock.AsRegionPtr<ColorBgra32>();
-
-                region.CopyTo(output.AsRegionPtr().Cast<ColorBgra32>());
-            }
-
-            if (image.IsPremultipliedAlpha)
-            {
-                output.ConvertFromPremultipliedAlpha();
+                output.WriteSource(imageSource);
             }
         }
 
-        private static void SetOutputLayerDataRgba64(AvifReaderImage image, Surface output)
+        private static void SetOutputLayerDataRgba64(AvifReaderImage image, IFileTypeBitmapSink<ColorBgra32> output)
         {
             if (image.IsPremultipliedAlpha)
             {
                 using (IBitmap asPrgba64 = image.Image.Cast<ColorPrgba64>())
                 using (IBitmapSource<ColorBgra32> converted = asPrgba64.CreateFormatConverter<ColorBgra32>())
                 {
-                    converted.CopyPixels(output.AsRegionPtr().Cast<ColorBgra32>());
+                    output.WriteSource(converted);
                 }
             }
             else
             {
                 using (IBitmapSource<ColorBgra32> converted = image.Image.CreateFormatConverter<ColorBgra32>())
                 {
-                    converted.CopyPixels(output.AsRegionPtr().Cast<ColorBgra32>());
+                    output.WriteSource(converted);
                 }
             }
         }
 
         private static void SetOutputLayerDataRgba128PQ(
-            Document document,
+            IFileTypeDocument document,
             AvifReaderImage image,
-            Surface output,
+            IFileTypeBitmapSink<ColorBgra32> output,
             IImagingFactory imagingFactory)
         {
-            using (IColorContext dp3ColorContext = imagingFactory.CreateColorContext(KnownColorSpace.DisplayP3))
-            using (IDirect2DFactory d2dFactory = Direct2DFactory.Create())
-            {
-                // Our premultiplied image uses ColorRgba128, casting it to ColorPrgba128Float makes Direct2D treat the image as premultiplied.
-                using (IBitmap bitmap = image.IsPremultipliedAlpha ? image.Image.Cast<ColorPrgba128Float>() : image.Image.CreateRef())
-                using (IBitmapSource<ColorPbgra32> dp3Image = PQToColorContext(bitmap,
-                                                                               imagingFactory,
-                                                                               d2dFactory,
-                                                                               dp3ColorContext))
-                {
-                    dp3Image.CopyPixels(output.AsRegionPtr().Cast<ColorPbgra32>());
-                }
-
-                document.SetColorContext(dp3ColorContext);
-            }
-
-            static IBitmapSource<ColorPbgra32> PQToColorContext(
-                IBitmap bitmap,
-                IImagingFactory imagingFactory,
-                IDirect2DFactory d2dFactory,
-                IColorContext colorContext)
-            {
-                return d2dFactory.CreateBitmapSourceFromImage<ColorPbgra32>(
-                    bitmap.Size,
-                    DevicePixelFormats.Prgba128Float,
-                    delegate (IDeviceContext dc)
-                    {
-                        dc.EffectBufferPrecision = BufferPrecision.Float32;
-                        using IDeviceImage srcImage = dc.CreateImageFromBitmap(bitmap, null, BitmapImageOptions.UseStraightAlpha | BitmapImageOptions.DisableColorSpaceConversion);
-                        using IDeviceColorContext srcColorContext = dc.CreateColorContext(DxgiColorSpace.RgbFullGamma2084NoneP2020);
-                        using IDeviceColorContext dstColorContext = dc.CreateColorContext(colorContext);
-
-                        ColorManagementEffect colorMgmtEffect = new ColorManagementEffect(
-                            dc,
-                            srcImage,
-                            srcColorContext,
-                            dstColorContext,
-                            ColorManagementAlphaMode.Straight);
-
-                        return colorMgmtEffect;
-                    });
-            }
+            using IBitmap sourceBitmap = image.IsPremultipliedAlpha ? image.Image.Cast<ColorPrgba128Float>() : image.Image.CreateRef();
+            using IColorContext dp3ColorContext = imagingFactory.CreateColorContext(KnownColorSpace.DisplayP3);
+            document.SetColorContext(dp3ColorContext);
+            using IBitmapSource<ColorBgra32> outputBitmap = sourceBitmap.CreateColorTransformer<ColorBgra32>(DxgiColorSpace.RgbFullGamma2084NoneP2020, dp3ColorContext);
+            output.WriteSource(outputBitmap);
         }
     }
 }

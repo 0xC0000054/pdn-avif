@@ -111,7 +111,7 @@ namespace AvifFileType
         }
 
         // WIC's BitmapTransformOptions.Rotate values are for clockwise rotations, so they are
-        // reversed here to match the counter-clockwise rotation that AVIF metadata uses.
+        // reversed here to match the counter-clockwise rotation that AVIF uses.
         void IOutputImageTransform.Rotate90CCW()
         {
             ApplyWicFlipRotate(BitmapTransformOptions.Rotate270); // WIC Rotate270 CW = 90 CCW

@@ -18,7 +18,6 @@ using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace AvifFileType
 {
@@ -83,8 +82,7 @@ namespace AvifFileType
             return new Loader(this);
         }
 
-        private sealed class Saver
-            : PropertyBasedFileTypeSaver
+        private sealed class Saver : PropertyBasedFileTypeSaver
         {
             private readonly AvifFileTypePlugin fileType;
             private IObjectRef fileTypeRef;
@@ -232,8 +230,7 @@ namespace AvifFileType
             }
         }
 
-        private sealed class Loader
-            : PropertyBasedFileTypeLoader
+        private sealed class Loader : PropertyBasedFileTypeLoader
         {
             public Loader(AvifFileTypePlugin fileType)
                 : base(fileType)

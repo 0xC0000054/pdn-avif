@@ -27,61 +27,42 @@ namespace AvifFileType
     {
         public static IFileTypeDocument Load(IFileTypeDocumentFactory factory, IImagingFactory imagingFactory, Stream input)
         {
-            IFileTypeDocument<ColorBgra32>? doc = null;
+            using AvifReader reader = new AvifReader(input, leaveOpen: true, imagingFactory);
+            using AvifReaderImage image = reader.Decode();
 
-            using (AvifReader reader = new AvifReader(input, leaveOpen: true, imagingFactory))
+            IFileTypeDocument<ColorBgra32>? doc = factory.CreateDocument<ColorBgra32>(image.Size);
+
+            using IFileTypeBitmapLayer<ColorBgra32> layer = doc.CreateBitmapLayer();
+            using IFileTypeBitmapSink<ColorBgra32> layerBitmapSink = layer.GetBitmap();
+
+            PixelFormat pixelFormat = image.WICPixelFormat;
+
+            if (pixelFormat == PixelFormats.Bgra32)
             {
-                using (AvifReaderImage image = reader.Decode())
+                SetOutputLayerDataBgra32(image, layerBitmapSink);
+            }
+            else if (pixelFormat == PixelFormats.Rgba64)
+            {
+                SetOutputLayerDataRgba64(image, layerBitmapSink);
+            }
+            else if (pixelFormat == PixelFormats.Rgba128Float)
+            {
+                switch (image.HDRFormat)
                 {
-                    doc = factory.CreateDocument<ColorBgra32>(image.Size);
-
-                    IFileTypeBitmapLayer<ColorBgra32>? layer = null;
-                    bool disposeLayer = true;
-
-                    try
-                    {
-                        layer = doc.CreateBitmapLayer();
-                        using IFileTypeBitmapSink<ColorBgra32> layerBitmapSink = layer.GetBitmap();
-
-                        PixelFormat pixelFormat = image.WICPixelFormat;
-
-                        if (pixelFormat == PixelFormats.Bgra32)
-                        {
-                            SetOutputLayerDataBgra32(image, layerBitmapSink);
-                        }
-                        else if (pixelFormat == PixelFormats.Rgba64)
-                        {
-                            SetOutputLayerDataRgba64(image, layerBitmapSink);
-                        }
-                        else if (pixelFormat == PixelFormats.Rgba128Float)
-                        {
-                            switch (image.HDRFormat)
-                            {
-                                case HDRFormat.PQ:
-                                    SetOutputLayerDataRgba128PQ(doc, image, layerBitmapSink, imagingFactory);
-                                    break;
-                                default:
-                                    throw new FormatException($"Unsupported HDR format: {image.HDRFormat}.");
-                            }
-                        }
-                        else
-                        {
-                            ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
-                        }
-
-                        doc.Layers.Add(layer);
-                        AddAvifMetadataToDocument(doc, reader, image, imagingFactory);
-                        disposeLayer = false;
-                    }
-                    finally
-                    {
-                        if (disposeLayer)
-                        {
-                            layer?.Dispose();
-                        }
-                    }
+                    case HDRFormat.PQ:
+                        SetOutputLayerDataRgba128PQ(doc, image, layerBitmapSink, imagingFactory);
+                        break;
+                    default:
+                        throw new FormatException($"Unsupported HDR format: {image.HDRFormat}.");
                 }
             }
+            else
+            {
+                ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
+            }
+
+            doc.Layers.Add(layer);
+            AddAvifMetadataToDocument(doc, reader, image, imagingFactory);
 
             return doc;
         }

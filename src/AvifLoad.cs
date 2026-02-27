@@ -204,7 +204,7 @@ namespace AvifFileType
 
         private static void SetOutputLayerDataBgra32(AvifReaderImage image, IFileTypeBitmapSink<ColorBgra32> output)
         {
-            using (IBitmapSource imageSource = image.IsPremultipliedAlpha ? image.Image.CreateFormatConverter<ColorPbgra32>() : image.Image.CreateRef())
+            using (IBitmapSource imageSource = image.IsPremultipliedAlpha ? image.Image.CreateFormatConverter<ColorBgra32>() : image.Image.CreateRef())
             {
                 output.WriteSource(imageSource);
             }

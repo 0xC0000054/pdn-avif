@@ -25,40 +25,82 @@ namespace AvifFileType
 {
     internal static class AvifLoad
     {
-        public static IFileTypeDocument Load(IFileTypeDocumentFactory factory, IImagingFactory imagingFactory, Stream input)
+        public static IFileTypeDocument Load(IFileTypeDocumentFactory factory, Stream input, IImagingFactory imagingFactory)
         {
             using AvifReader reader = new AvifReader(input, leaveOpen: true, imagingFactory);
             using AvifReaderImage image = reader.Decode();
 
-            IFileTypeDocument<ColorBgra32>? doc = factory.CreateDocument<ColorBgra32>(image.Size);
-
-            using IFileTypeBitmapLayer<ColorBgra32> layer = doc.CreateBitmapLayer();
-            using IFileTypeBitmapSink<ColorBgra32> layerBitmapSink = layer.GetBitmap();
-
+            // Dispatch from pixel format enum to the pixel format's Color struct type
             PixelFormat pixelFormat = image.WICPixelFormat;
 
             if (pixelFormat == PixelFormats.Bgra32)
             {
-                SetOutputLayerDataBgra32(image, layerBitmapSink);
+                return image.IsPremultipliedAlpha
+                    ? Load<ColorPbgra32>(factory, reader, image, imagingFactory)
+                    : Load<ColorBgra32>(factory, reader, image, imagingFactory);
             }
             else if (pixelFormat == PixelFormats.Rgba64)
             {
-                SetOutputLayerDataRgba64(image, layerBitmapSink);
+                return image.IsPremultipliedAlpha
+                    ? Load<ColorPrgba64>(factory, reader, image, imagingFactory)
+                    : Load<ColorRgba64>(factory, reader, image, imagingFactory);
             }
             else if (pixelFormat == PixelFormats.Rgba128Float)
             {
-                switch (image.HDRFormat)
-                {
-                    case HDRFormat.PQ:
-                        SetOutputLayerDataRgba128PQ(doc, image, layerBitmapSink, imagingFactory);
-                        break;
-                    default:
-                        throw new FormatException($"Unsupported HDR format: {image.HDRFormat}.");
-                }
+                return image.IsPremultipliedAlpha
+                    ? Load<ColorPrgba128Float>(factory, reader, image, imagingFactory)
+                    : Load<ColorRgba128Float>(factory, reader, image, imagingFactory);
             }
             else
             {
                 ExceptionUtil.UnsupportedPixelFormat(pixelFormat);
+                return null!; // Unreachable
+            }
+        }
+
+        private static IFileTypeDocument Load<TPixel>(IFileTypeDocumentFactory factory,
+                                                      AvifReader reader,
+                                                      AvifReaderImage image,
+                                                      IImagingFactory imagingFactory)
+                                                      where TPixel : unmanaged, INaturalPixelInfo
+        {
+            using IBitmap<TPixel> source = image.Image.Cast<TPixel>();
+            IFileTypeDocument<TPixel> doc = factory.CreateDocument<TPixel>(image.Size);
+
+            using IFileTypeBitmapLayer<TPixel> layer = doc.CreateBitmapLayer();
+            using IFileTypeBitmapSink<TPixel> layerBitmapSink = layer.GetBitmap();
+
+            PixelFormatNumericRepresentation formatRepresentation = default(TPixel).NumericRepresentation;
+
+            if (formatRepresentation == PixelFormatNumericRepresentation.Float)
+            {
+                // Floating-point formats are HDR
+                if (image.HDRFormat != HDRFormat.PQ)
+                {
+                    throw new FormatException($"Unsupported HDR format for PixelFormat.{default(TPixel).PixelFormat.GetName()}: {image.HDRFormat}.");
+                }
+
+                // Convert to scRGB and let PDN figure out how best to handle it (e.g. PDN 5.2 will transform to SDR BGRA32 Display P3)
+                using IColorContext scRgbColorContext = imagingFactory.CreateColorContext(KnownColorSpace.ScRgb);
+                doc.SetColorContext(scRgbColorContext);
+
+                using IBitmapSource<TPixel> converted = source.CreateColorTransformer(DxgiColorSpace.RgbFullGamma2084NoneP2020, scRgbColorContext);
+                layerBitmapSink.WriteSource(converted);
+            }
+            else if (formatRepresentation == PixelFormatNumericRepresentation.UnsignedInteger)
+            {
+                // Integer pixel formats are SDR
+                if (image.HDRFormat != HDRFormat.None)
+                {
+                    throw new FormatException($"Unsupported HDR format for PixelFormat.{default(TPixel).PixelFormat.GetName()}: {image.HDRFormat}.");
+                }
+
+                layerBitmapSink.WriteSource(source);
+            }
+            else
+            {
+                // Fixed-point, signed integer, and indexed are not supported
+                throw new FormatException($"PixelFormat.{default(TPixel).PixelFormat.GetName()} is unsupported because of its numeric representation: {formatRepresentation}");
             }
 
             doc.Layers.Add(layer);
@@ -105,7 +147,8 @@ namespace AvifFileType
             if (imageGridMetadata != null)
             {
                 // TODO: Instead of serializing the data to XML, maybe make use of IFileTypePropertyBag ability to deal with arbitrary T's that implement IParsable<T>
-                // customTx.Add("AvifImageGrid.TileColumnCount", imageGridMetadata.TileColumnCount); // Add<T>() supports any IParsable<T>
+                //       e.g. Add<int>(int) automatically calls ToString() on the int, and then [Try]GetValue<int>(...) will use IParsable<int>.[Try]Parse(...)
+                // customTx.Add("AvifImageGrid.TileColumnCount", imageGridMetadata.TileColumnCount);
 
                 string serializedValue = imageGridMetadata.SerializeToString();
 
@@ -149,8 +192,7 @@ namespace AvifFileType
         {
             try
             {
-                // HDR images will set their own color context as part of the conversion
-                // to Bgra32.
+                // HDR images will handle their own conversion from BT.2020 to scRGB
                 if (image.HDRFormat == HDRFormat.None)
                 {
                     ReadOnlyMemory<byte> iccProfileBytes = reader.GetICCProfile();
@@ -181,46 +223,6 @@ namespace AvifFileType
 
                 return header.ColorSpace == ICCProfile.ProfileColorSpace.Rgb;
             }
-        }
-
-        private static void SetOutputLayerDataBgra32(AvifReaderImage image, IFileTypeBitmapSink<ColorBgra32> output)
-        {
-            using (IBitmapSource imageSource = image.IsPremultipliedAlpha ? image.Image.CreateFormatConverter<ColorBgra32>() : image.Image.CreateRef())
-            {
-                output.WriteSource(imageSource);
-            }
-        }
-
-        private static void SetOutputLayerDataRgba64(AvifReaderImage image, IFileTypeBitmapSink<ColorBgra32> output)
-        {
-            if (image.IsPremultipliedAlpha)
-            {
-                using (IBitmap asPrgba64 = image.Image.Cast<ColorPrgba64>())
-                using (IBitmapSource<ColorBgra32> converted = asPrgba64.CreateFormatConverter<ColorBgra32>())
-                {
-                    output.WriteSource(converted);
-                }
-            }
-            else
-            {
-                using (IBitmapSource<ColorBgra32> converted = image.Image.CreateFormatConverter<ColorBgra32>())
-                {
-                    output.WriteSource(converted);
-                }
-            }
-        }
-
-        private static void SetOutputLayerDataRgba128PQ(
-            IFileTypeDocument document,
-            AvifReaderImage image,
-            IFileTypeBitmapSink<ColorBgra32> output,
-            IImagingFactory imagingFactory)
-        {
-            using IBitmap sourceBitmap = image.IsPremultipliedAlpha ? image.Image.Cast<ColorPrgba128Float>() : image.Image.CreateRef();
-            using IColorContext dp3ColorContext = imagingFactory.CreateColorContext(KnownColorSpace.DisplayP3);
-            document.SetColorContext(dp3ColorContext);
-            using IBitmapSource<ColorBgra32> outputBitmap = sourceBitmap.CreateColorTransformer<ColorBgra32>(DxgiColorSpace.RgbFullGamma2084NoneP2020, dp3ColorContext);
-            output.WriteSource(outputBitmap);
         }
     }
 }

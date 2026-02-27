@@ -243,7 +243,7 @@ namespace AvifFileType
             protected override IFileTypeDocument OnLoad(IPropertyBasedFileTypeLoadContext context)
             {
                 IImagingFactory imagingFactory = this.Services.GetService<IImagingFactory>() ?? throw new ArgumentNullException(nameof(IImagingFactory));
-                return AvifLoad.Load(context.Factory, imagingFactory, context.Input);
+                return AvifLoad.Load(context.Factory, context.Input, imagingFactory);
             }
         }
     }

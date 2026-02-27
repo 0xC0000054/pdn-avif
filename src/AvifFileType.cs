@@ -85,13 +85,11 @@ namespace AvifFileType
         private sealed class Saver : PropertyBasedFileTypeSaver
         {
             private readonly AvifFileTypePlugin fileType;
-            private IObjectRef fileTypeRef;
 
             public Saver(AvifFileTypePlugin fileType)
                 : base(fileType)
             {
                 this.fileType = fileType;
-                this.fileTypeRef = fileType.CreateRef(); // for keep-alive purposes
             }
 
             /// <summary>

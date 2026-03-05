@@ -42,9 +42,6 @@ namespace AvifFileType
                                 ProgressEventHandler progressCallback,
                                 IImagingFactory imagingFactory)
         {
-            using IFileTypeCompositeBitmap<ColorBgra32> docComposite = document.GetCompositeBitmapBgra32();
-
-            IBitmapSource<ColorBgra32> docBitmapSource = docComposite.CreateRefT();
             if (lossless)
             {
                 losslessAlpha = true;
@@ -52,21 +49,32 @@ namespace AvifFileType
                 premultipliedAlpha = false;
             }
 
-            bool hasTransparency = HasTransparency(docBitmapSource, imagingFactory);
-            if (hasTransparency && premultipliedAlpha)
+            IFileTypeCompositeBitmap docComposite;
+            IFileTypeBitmapLock docCompositeLock;
+            RegionPtr<ColorBgra32> docCompositeRegion;
+            bool hasTransparency;
             {
-                using IBitmapSource<ColorPbgra32> docBitmapSourceP = docBitmapSource.CreateFormatConverter<ColorPbgra32>();
-                docBitmapSource = docBitmapSource.ReplaceRef(docBitmapSourceP.Cast<ColorBgra32>());
-            }
+                IFileTypeCompositeBitmap<ColorBgra32> docCompositeBgra32 = document.GetCompositeBitmap<ColorBgra32>();
+                hasTransparency = HasTransparency(docCompositeBgra32, imagingFactory);
 
-            using IBitmap<ColorBgra32> docBitmap = docBitmapSource.ToBitmap();
-            using IBitmapLock<ColorBgra32> docBitmapLock = docBitmap.Lock(BitmapLockOptions.Read);
-            RegionPtr<ColorBgra32> docRegion = docBitmapLock.AsRegionPtr();
+                if (premultipliedAlpha && hasTransparency)
+                {
+                    docComposite = document.GetCompositeBitmap<ColorPbgra32>();
+                    docCompositeLock = docComposite.Lock();
+                    docCompositeRegion = docCompositeLock.AsRegionPtr<ColorPbgra32>().Cast<ColorBgra32>();
+                }
+                else
+                {
+                    docComposite = docCompositeBgra32;
+                    docCompositeLock = docComposite.Lock();
+                    docCompositeRegion = docCompositeLock.AsRegionPtr<ColorBgra32>();
+                }
+            }
 
             AvifMetadata metadata = CreateAvifMetadata(document);
 
             // Images that have a non-sRGB ICC profile will not be automatically converted to gray scale.
-            bool grayscale = metadata.IccProfile.IsEmpty && IsGrayscaleImage(docRegion);
+            bool grayscale = metadata.IccProfile.IsEmpty && IsGrayscaleImage(docCompositeRegion);
 
             EncoderOptions options = new EncoderOptions
             {
@@ -132,7 +140,7 @@ namespace AvifFileType
             try
             {
                 Rectangle[] windowRectangles = GetTileWindowRectangles(imageGridMetadata, document.Size);
-                HomogeneousTileInfo homogeneousTileInfo = GetHomogeneousTileInfo(docRegion, windowRectangles, hasTransparency);
+                HomogeneousTileInfo homogeneousTileInfo = GetHomogeneousTileInfo(docCompositeRegion, windowRectangles, hasTransparency);
 
                 for (int i = 0; i < colorImages.Capacity; i++)
                 {
@@ -154,7 +162,7 @@ namespace AvifFileType
                         try
                         {
                             Rectangle windowRect = windowRectangles[i];
-                            RegionPtr<ColorBgra32> window = docRegion.Slice(windowRect);
+                            RegionPtr<ColorBgra32> window = docCompositeRegion.Slice(windowRect);
                             AvifNative.CompressColorImage(window,
                                                           options,
                                                           ReportCompressionProgress,
@@ -188,7 +196,7 @@ namespace AvifFileType
                             try
                             {
                                 Rectangle windowRect = windowRectangles[i];
-                                RegionPtr<ColorBgra32> window = docRegion.Slice(windowRect);
+                                RegionPtr<ColorBgra32> window = docCompositeRegion.Slice(windowRect);
                                 AvifNative.CompressAlphaImage(window,
                                                               options,
                                                               ReportCompressionProgress,
@@ -237,6 +245,8 @@ namespace AvifFileType
             {
                 colorImages?.Dispose();
                 alphaImages?.Dispose();
+                docCompositeLock.Dispose();
+                docComposite.Dispose();
             }
 
             bool ReportCompressionProgress(uint done, uint total)
@@ -261,26 +271,22 @@ namespace AvifFileType
 
             ExifColorSpace exifColorSpace = ExifColorSpace.Srgb;
 
-            IColorContext? colorContext = doc.GetColorContext();
-            if (colorContext != null)
+            // We do not set an ICC profile for sRGB images as AVIF can signal that
+            // using its built-in color space encoding, and sRGB is the default for
+            // images without an ICC profile.
+            IColorContext colorContext = doc.GetColorContext();
+            if (colorContext.Type != ColorContextType.ExifColorSpace
+                || colorContext.ExifColorSpace != PaintDotNet.Imaging.ExifColorSpace.Srgb)
             {
-                // We do not set an ICC profile for sRGB images as AVIF can signal that
-                // using its built-in color space encoding, and sRGB is the default for
-                // images without an ICC profile.
-                if (colorContext.Type != ColorContextType.ExifColorSpace
-                    || colorContext.ExifColorSpace != PaintDotNet.Imaging.ExifColorSpace.Srgb)
-                {
-                    iccProfileBytes = colorContext.GetProfileBytes().ToArray();
+                iccProfileBytes = colorContext.GetProfileBytes().ToArray();
 
-                    if (iccProfileBytes.Length > 0)
-                    {
-                        exifColorSpace = ExifColorSpace.Uncalibrated;
-                    }
+                if (iccProfileBytes.Length > 0)
+                {
+                    exifColorSpace = ExifColorSpace.Uncalibrated;
                 }
             }
 
-            Dictionary<ExifPropertyPath, ExifValue>? propertyItems = GetExifMetadataFromDocument(doc);
-
+            Dictionary<ExifPropertyPath, ExifValue>? propertyItems = GetExifMetadata(doc.Metadata);
             if (propertyItems != null)
             {
                 propertyItems.Remove(ExifPropertyKeys.Image.InterColorProfile.Path);
@@ -307,10 +313,10 @@ namespace AvifFileType
             return new AvifMetadata(exifBytes, iccProfileBytes, xmpBytes);
         }
 
-        private static Dictionary<ExifPropertyPath, ExifValue>? GetExifMetadataFromDocument(IReadOnlyFileTypeDocument doc)
+        private static Dictionary<ExifPropertyPath, ExifValue>? GetExifMetadata(IReadOnlyFileTypeDocumentMetadata metadata)
         {
             Dictionary<ExifPropertyPath, ExifValue> items = new();
-            foreach (KeyValuePair<ExifPropertyPath, IEnumerable<ExifValue>> property in doc.Metadata.Exif)
+            foreach (KeyValuePair<ExifPropertyPath, IEnumerable<ExifValue>> property in metadata.Exif)
             {
                 ExifValue? value = property.Value.FirstOrDefault();
                 if (value is not null)

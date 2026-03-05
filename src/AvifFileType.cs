@@ -206,6 +206,8 @@ namespace AvifFileType
             /// </summary>
             protected override void OnSave(IPropertyBasedFileTypeSaveContext context)
             {
+                IImagingFactory imagingFactory = this.Services.GetService<IImagingFactory>();
+
                 IPropertyBasedFileTypeSaveOptions options = context.Options;
                 int quality = options.GetProperty<Int32Property>(PropertyNames.Quality)!.Value;
                 bool lossless = options.GetProperty<BooleanProperty>(PropertyNames.Lossless)!.Value;
@@ -224,7 +226,8 @@ namespace AvifFileType
                               chromaSubsampling,
                               preserveExistingTileSize,
                               premultipliedAlpha,
-                              context.ProgressCallback);
+                              context.ProgressCallback,
+                              imagingFactory);
             }
         }
 

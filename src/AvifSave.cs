@@ -39,7 +39,8 @@ namespace AvifFileType
                                 YUVChromaSubsampling chromaSubsampling,
                                 bool preserveExistingTileSize,
                                 bool premultipliedAlpha,
-                                ProgressEventHandler progressCallback)
+                                ProgressEventHandler progressCallback,
+                                IImagingFactory imagingFactory)
         {
             using IFileTypeCompositeBitmap<ColorBgra32> docComposite = document.GetCompositeBitmapBgra32();
 
@@ -49,10 +50,13 @@ namespace AvifFileType
                 losslessAlpha = true;
                 // The premultiplied alpha conversion can cause the colors to drift, so it is disabled for lossless encoding.
                 premultipliedAlpha = false;
+            }
 
-                using IBitmapSource<ColorPbgra32> docBitmapSourcePbgra32 = docBitmapSource.CreateFormatConverter<ColorPbgra32>();
-                IBitmapSource<ColorBgra32> docBitmapSourceAsBgra32 = docBitmapSourcePbgra32.Cast<ColorBgra32>();
-                docBitmapSource = docBitmapSource.ReplaceRef(docBitmapSourceAsBgra32);
+            bool hasTransparency = HasTransparency(docBitmapSource, imagingFactory);
+            if (hasTransparency && premultipliedAlpha)
+            {
+                using IBitmapSource<ColorPbgra32> docBitmapSourceP = docBitmapSource.CreateFormatConverter<ColorPbgra32>();
+                docBitmapSource = docBitmapSource.ReplaceRef(docBitmapSourceP.Cast<ColorBgra32>());
             }
 
             using IBitmap<ColorBgra32> docBitmap = docBitmapSource.ToBitmap();
@@ -106,8 +110,6 @@ namespace AvifFileType
                                                                            options.encoderPreset,
                                                                            options.yuvFormat,
                                                                            preserveExistingTileSize);
-
-            bool hasTransparency = HasTransparency(docRegion);
 
             CompressedAV1ImageCollection colorImages = new CompressedAV1ImageCollection(imageGridMetadata?.TileCount ?? 1);
             CompressedAV1ImageCollection? alphaImages = hasTransparency ? new CompressedAV1ImageCollection(colorImages.Capacity) : null;
@@ -411,6 +413,25 @@ namespace AvifFileType
             }
 
             return rects;
+        }
+
+        private static bool HasTransparency(IBitmapSource<ColorBgra32> source, IImagingFactory imagingFactory)
+        {
+            SizeInt32 sourceSize = source.Size;
+            using IBitmap<ColorBgra32> rowCache = imagingFactory.CreateBitmap<ColorBgra32>(sourceSize.Width, 1);
+            using IBitmapLock<ColorBgra32> rowCacheLock = rowCache.Lock(BitmapLockOptions.ReadWrite);
+            RegionPtr<ColorBgra32> rowRegion = rowCacheLock.AsRegionPtr();
+
+            for (int y = 0; y < sourceSize.Height; ++y)
+            {
+                source.CopyPixels(rowRegion, new Point2Int32(0, y));
+                if (HasTransparency(rowRegion))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool HasTransparency(RegionPtr<ColorBgra32> region)

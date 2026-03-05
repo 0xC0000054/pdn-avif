@@ -413,7 +413,7 @@ namespace AvifFileType
             return rects;
         }
 
-        private static unsafe bool HasTransparency(RegionPtr<ColorBgra32> region)
+        private static bool HasTransparency(RegionPtr<ColorBgra32> region)
         {
             foreach (RegionRowPtr<ColorBgra32> row in region.Rows)
             {
@@ -429,7 +429,7 @@ namespace AvifFileType
             return false;
         }
 
-        private static unsafe bool IsGrayscaleImage(RegionPtr<ColorBgra32> region)
+        private static bool IsGrayscaleImage(RegionPtr<ColorBgra32> region)
         {
             foreach (RegionRowPtr<ColorBgra32> row in region.Rows)
             {

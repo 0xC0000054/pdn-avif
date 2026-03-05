@@ -206,7 +206,7 @@ namespace AvifFileType
             /// </summary>
             protected override void OnSave(IPropertyBasedFileTypeSaveContext context)
             {
-                IImagingFactory imagingFactory = this.Services.GetService<IImagingFactory>();
+                IImagingFactory imagingFactory = this.Services.GetService<IImagingFactory>()!;
 
                 IPropertyBasedFileTypeSaveOptions options = context.Options;
                 int quality = options.GetProperty<Int32Property>(PropertyNames.Quality)!.Value;

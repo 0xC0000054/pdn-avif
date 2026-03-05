@@ -10,7 +10,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using PaintDotNet.Avif;
+using PaintDotNet.FileTypes.Avif;
 using System;
 using System.Linq;
 using System.Collections.Generic;

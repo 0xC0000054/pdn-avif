@@ -146,17 +146,8 @@ namespace AvifFileType
 
             if (imageGridMetadata != null)
             {
-                // TODO: Instead of serializing the data to XML, maybe make use of IFileTypePropertyBag ability to deal with arbitrary T's that implement IParsable<T>
-                //       e.g. Add<int>(int) automatically calls ToString() on the int, and then [Try]GetValue<int>(...) will use IParsable<int>.[Try]Parse(...)
-                // customTx.Add("AvifImageGrid.TileColumnCount", imageGridMetadata.TileColumnCount);
-
-                string serializedValue = imageGridMetadata.SerializeToString();
-
-                if (serializedValue != null)
-                {
-                    using IFileTypeCustomMetadataTransaction customTx = doc.Metadata.Custom.CreateTransaction();
-                    customTx.Add(AvifMetadataNames.ImageGridName, serializedValue);
-                }
+                using IFileTypeCustomMetadataTransaction customTx = doc.Metadata.Custom.CreateTransaction();
+                imageGridMetadata.SerializeToPropertyBag(customTx);
             }
 
             IColorContext? colorContext = GetColorContext(reader, image, imagingFactory);

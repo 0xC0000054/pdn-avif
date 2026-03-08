@@ -115,6 +115,7 @@ namespace AvifFileType
             }
 
             ImageGridMetadata? imageGridMetadata = TryGetImageGridMetadata(document,
+                                                                           metadataFromLoad,
                                                                            options.encoderPreset,
                                                                            options.yuvFormat,
                                                                            preserveExistingTileSize);
@@ -634,16 +635,12 @@ namespace AvifFileType
                 {
                     if (preserveExistingTileSize)
                     {
-                        document.Metadata.Custom.TryGetValue(AvifMetadataNames.ImageGridName, out string? value);
-                        if (!string.IsNullOrEmpty(value))
-                        {
-                            ImageGridMetadata? serializedData = ImageGridMetadata.TryDeserialize(value);
+                        ImageGridMetadata? serializedData = ImageGridMetadata.TryDeserializeFromPropertyBag(document.Metadata.Custom);
 
-                            if (serializedData != null
-                                && serializedData.IsValidForImage((uint)document.Size.Width, (uint)document.Size.Height, yuvFormat))
-                            {
-                                metadata = serializedData;
-                            }
+                        if (serializedData != null
+                            && serializedData.IsValidForImage((uint)document.Size.Width, (uint)document.Size.Height, yuvFormat))
+                        {
+                            metadata = serializedData;
                         }
                     }
 

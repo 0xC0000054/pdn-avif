@@ -12,6 +12,7 @@
 
 using PaintDotNet;
 using PaintDotNet.Imaging;
+using System;
 
 namespace AvifFileType
 {
@@ -19,6 +20,11 @@ namespace AvifFileType
     {
         public static unsafe RegionPtr<T> AsRegionPtr<T>(this IBitmapLock bitmapLock) where T : unmanaged, INaturalPixelInfo
         {
+            if (default(T).PixelFormat != bitmapLock.PixelFormat)
+            {
+                throw new ArgumentException($"The pixel format of the bitmap lock must be {default(T).PixelFormat}.", nameof(bitmapLock));
+            }
+
             return new((T*)bitmapLock.Buffer, bitmapLock.Size, bitmapLock.BufferStride);
         }
     }

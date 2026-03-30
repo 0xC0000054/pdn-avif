@@ -21,7 +21,7 @@ namespace AvifFileType
 {
     internal static class AvifNative
     {
-        public static unsafe void CompressAlphaImage(Surface surface,
+        public static unsafe void CompressAlphaImage(RegionPtr<ColorBgra32> sourceRegion,
                                                      in EncoderOptions options,
                                                      AvifProgressCallback avifProgress,
                                                      ref uint progressDone,
@@ -30,10 +30,10 @@ namespace AvifFileType
         {
             BitmapData bitmapData = new BitmapData
             {
-                scan0 = surface.Scan0.VoidStar,
-                width = (uint)surface.Width,
-                height = (uint)surface.Height,
-                stride = (uint)surface.Stride,
+                scan0 = sourceRegion.Ptr,
+                width = (uint)sourceRegion.Width,
+                height = (uint)sourceRegion.Height,
+                stride = (uint)sourceRegion.Stride,
                 pixelFormat = BitmapDataPixelFormat.Bgra32
             };
 
@@ -74,14 +74,14 @@ namespace AvifFileType
                     HandleError(status, allocator.ExceptionInfo);
                 }
 
-                alpha = new CompressedAV1Image(allocator.GetCompressedAV1Data(alphaImage), surface.Width, surface.Height, YUVChromaSubsampling.Subsampling400);
+                alpha = new CompressedAV1Image(allocator.GetCompressedAV1Data(alphaImage), sourceRegion.Width, sourceRegion.Height, YUVChromaSubsampling.Subsampling400);
             }
 
             progressDone = progressContext.progressDone;
             GC.KeepAlive(avifProgress);
         }
 
-        public static unsafe void CompressColorImage(Surface surface,
+        public static unsafe void CompressColorImage(RegionPtr<ColorBgra32> sourceRegion,
                                                      in EncoderOptions options,
                                                      AvifProgressCallback avifProgress,
                                                      ref uint progressDone,
@@ -91,10 +91,10 @@ namespace AvifFileType
         {
             BitmapData bitmapData = new BitmapData
             {
-                scan0 = surface.Scan0.VoidStar,
-                width = (uint)surface.Width,
-                height = (uint)surface.Height,
-                stride = (uint)surface.Stride,
+                scan0 = sourceRegion.Ptr,
+                width = (uint)sourceRegion.Width,
+                height = (uint)sourceRegion.Height,
+                stride = (uint)sourceRegion.Stride,
                 pixelFormat = BitmapDataPixelFormat.Bgra32
             };
 
@@ -137,7 +137,7 @@ namespace AvifFileType
                     HandleError(status, allocator.ExceptionInfo);
                 }
 
-                color = new CompressedAV1Image(allocator.GetCompressedAV1Data(colorImage), surface.Width, surface.Height, options.yuvFormat);
+                color = new CompressedAV1Image(allocator.GetCompressedAV1Data(colorImage), sourceRegion.Width, sourceRegion.Height, options.yuvFormat);
             }
 
             progressDone = progressContext.progressDone;

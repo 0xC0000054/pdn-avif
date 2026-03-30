@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net90-windows</TargetFrameworks>
+    <TargetFrameworks>net10.0-windows</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
+    <!-- MSB3277 removes the harmless and unhelpful warning about assembly version "conflicts" (e.g. CommunityToolkit.HighPerformance) -->
+    <NoWarn>MSB3277</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="ARM64\**" />
@@ -34,20 +36,17 @@
     <Reference Include="PaintDotNet.Base">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
     </Reference>
-    <Reference Include="PaintDotNet.Collections">
-      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Collections.dll</HintPath>
-    </Reference>
     <Reference Include="PaintDotNet.ComponentModel">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.ComponentModel.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Core">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Core.dll</HintPath>
     </Reference>
-    <Reference Include="PaintDotNet.Data">
-      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Data.dll</HintPath>
+    <Reference Include="PaintDotNet.FileTypes">
+      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.FileTypes.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Framework">
-      <HintPath>..\..\..\Program Files\paint.net\PaintDotNet.Framework.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Framework.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Fundamentals">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Fundamentals.dll</HintPath>
@@ -59,13 +58,13 @@
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.PropertySystem.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Windows">
-      <HintPath>..\..\..\Program Files\paint.net\PaintDotNet.Windows.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Windows.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Windows.Core">
-      <HintPath>..\..\..\Program Files\paint.net\PaintDotNet.Windows.Core.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Windows.Core.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Windows.Framework">
-      <HintPath>..\..\..\Program Files\paint.net\PaintDotNet.Windows.Framework.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Windows.Framework.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

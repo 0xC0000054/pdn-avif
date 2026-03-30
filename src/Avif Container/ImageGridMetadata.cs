@@ -10,6 +10,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+using PaintDotNet.FileTypes;
 using System;
 using System.Globalization;
 
@@ -17,13 +18,6 @@ namespace AvifFileType.AvifContainer
 {
     internal sealed class ImageGridMetadata
     {
-        private const string TileColumnCountPropertyName = "TileColumnCount";
-        private const string TileRowCountPropertyName = "TileRowCount";
-        private const string OutputHeightPropertyName = "OutputHeight";
-        private const string OutputWidthPropertyName = "OutputWidth";
-        private const string TileImageHeightPropertyName = "TileImageHeight";
-        private const string TileImageWidthPropertyName = "TileImageWidth";
-
         private readonly Lazy<int> tileCount;
 
         public ImageGridMetadata(int tileColumnCount, int tileRowCount, uint outputHeight, uint outputWidth, uint tileImageHeight, uint tileImageWidth)
@@ -86,61 +80,36 @@ namespace AvifFileType.AvifContainer
                    && IsValidForYUVFormat(yuvFormat);
         }
 
-        public static ImageGridMetadata? TryDeserialize(string value)
+        public void SerializeToPropertyBag(IFileTypePropertyBag propertyBag)
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return null;
-            }
-
-            if (!value.StartsWith("<ImageGridMetadata", StringComparison.Ordinal))
-            {
-                return null;
-            }
-
-            int tileColumnCount = (int)GetPropertyValue(value, TileColumnCountPropertyName);
-            int tileRowCount = (int)GetPropertyValue(value, TileRowCountPropertyName);
-            uint outputHeight = GetPropertyValue(value, OutputHeightPropertyName);
-            uint outputWidth = GetPropertyValue(value, OutputWidthPropertyName);
-            uint tileImageHeight = GetPropertyValue(value, TileImageHeightPropertyName);
-            uint tileImageWidth = GetPropertyValue(value, TileImageWidthPropertyName);
-
-            return new ImageGridMetadata(tileColumnCount, tileRowCount, outputHeight, outputWidth, tileImageHeight, tileImageWidth);
+            propertyBag.Add($"{nameof(AvifFileType)}.{nameof(this.TileColumnCount)}", this.TileColumnCount);
+            propertyBag.Add($"{nameof(AvifFileType)}.{nameof(this.TileRowCount)}", this.TileRowCount);
+            propertyBag.Add($"{nameof(AvifFileType)}.{nameof(this.OutputHeight)}", this.OutputHeight);
+            propertyBag.Add($"{nameof(AvifFileType)}.{nameof(this.OutputWidth)}", this.OutputWidth);
+            propertyBag.Add($"{nameof(AvifFileType)}.{nameof(this.TileImageHeight)}", this.TileImageHeight);
+            propertyBag.Add($"{nameof(AvifFileType)}.{nameof(this.TileImageWidth)}", this.TileImageWidth);
         }
 
-        public string SerializeToString()
+        public static ImageGridMetadata? TryDeserializeFromPropertyBag(IReadOnlyFileTypePropertyBag propertyBag)
         {
-            return string.Format(CultureInfo.InvariantCulture,
-                                 "<ImageGridMetadata {0}=\"{1}\"{2}=\"{3}\"{4}=\"{5}\"{6}=\"{7}\"{8}=\"{9}\"{10}=\"{11}\" />",
-                                 TileColumnCountPropertyName,
-                                 this.TileColumnCount,
-                                 TileRowCountPropertyName,
-                                 this.TileRowCount,
-                                 OutputHeightPropertyName,
-                                 this.OutputHeight,
-                                 OutputWidthPropertyName,
-                                 this.OutputWidth,
-                                 TileImageHeightPropertyName,
-                                 this.TileImageHeight,
-                                 TileImageWidthPropertyName,
-                                 this.TileImageWidth);
+            if (propertyBag.TryGetValue($"{nameof(AvifFileType)}.{nameof(TileColumnCount)}", out int tileColumnCount) &&
+                propertyBag.TryGetValue($"{nameof(AvifFileType)}.{nameof(TileRowCount)}", out int tileRowCount) &&
+                propertyBag.TryGetValue($"{nameof(AvifFileType)}.{nameof(OutputHeight)}", out uint outputHeight) &&
+                propertyBag.TryGetValue($"{nameof(AvifFileType)}.{nameof(OutputWidth)}", out uint outputWidth) &&
+                propertyBag.TryGetValue($"{nameof(AvifFileType)}.{nameof(TileImageHeight)}", out uint tileImageHeight) &&
+                propertyBag.TryGetValue($"{nameof(AvifFileType)}.{nameof(TileImageWidth)}", out uint tileImageWidth))
+            {
+                return new ImageGridMetadata(tileColumnCount, tileRowCount, outputHeight, outputWidth, tileImageHeight, tileImageWidth);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private int GetTileCount()
         {
             return checked(this.TileColumnCount * this.TileRowCount);
-        }
-
-        private static uint GetPropertyValue(string haystack, string propertyName)
-        {
-            string needle = propertyName + "=\"";
-
-            int valueStartIndex = haystack.IndexOf(needle, StringComparison.Ordinal) + needle.Length;
-            int valueEndIndex = haystack.IndexOf('"', valueStartIndex);
-
-            string propertyValue = haystack.Substring(valueStartIndex, valueEndIndex - valueStartIndex);
-
-            return uint.Parse(propertyValue, CultureInfo.InvariantCulture);
         }
 
         private bool IsValidForYUVFormat(YUVChromaSubsampling yuvFormat)

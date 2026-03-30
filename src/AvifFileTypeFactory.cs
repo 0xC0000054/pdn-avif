@@ -10,16 +10,16 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-using PaintDotNet;
+using PaintDotNet.FileTypes;
 
 namespace AvifFileType
 {
     public sealed class AvifFileTypeFactory
-        : IFileTypeFactory2
+        : IFileTypeFactory
     {
-        public FileType[] GetFileTypeInstances(IFileTypeHost host)
+        public IFileType[] CreateFileTypes(IFileTypeHost host)
         {
-            return new[] { new AvifFileTypePlugin(host) };
+            return [new AvifFileTypePlugin(host)];
         }
     }
 }

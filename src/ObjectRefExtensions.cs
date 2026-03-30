@@ -22,7 +22,11 @@ namespace AvifFileType
             where T : class, IObjectRef
             where U : class, T
         {
-            objectRef?.Dispose();
+            if (!object.ReferenceEquals(objectRef, newObjectRef))
+            {
+                objectRef?.Dispose();
+            }
+
             return newObjectRef;
         }
     }

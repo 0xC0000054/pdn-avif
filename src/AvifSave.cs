@@ -115,7 +115,6 @@ namespace AvifFileType
             }
 
             ImageGridMetadata? imageGridMetadata = TryGetImageGridMetadata(document,
-                                                                           metadataFromLoad,
                                                                            options.encoderPreset,
                                                                            options.yuvFormat,
                                                                            preserveExistingTileSize);

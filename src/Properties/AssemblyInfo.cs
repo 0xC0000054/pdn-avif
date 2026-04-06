@@ -3,7 +3,7 @@
 // This file is part of pdn-avif, a FileType plugin for Paint.NET
 // that loads and saves AVIF images.
 //
-// Copyright (c) 2020-2025 Nicholas Hayes
+// Copyright (c) 2020-2026 Nicholas Hayes
 //
 // This file is licensed under the MIT License.
 // See LICENSE.txt for complete licensing and attribution information.
@@ -22,7 +22,7 @@ using System.Runtime.Versioning;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("null54")]
 [assembly: AssemblyProduct("AvifFileType")]
-[assembly: AssemblyCopyright("Copyright © 2025 Nicholas Hayes (aka null54)")]
+[assembly: AssemblyCopyright("Copyright © 2026 Nicholas Hayes (aka null54)")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -46,5 +46,5 @@ using System.Runtime.Versioning;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("3.13.1.1")]
-[assembly: AssemblyFileVersion("3.13.1.1")]
+[assembly: AssemblyVersion("3.13.2.1")]
+[assembly: AssemblyFileVersion("3.13.2.1")]
